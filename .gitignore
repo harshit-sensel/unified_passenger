@@ -1,0 +1,19 @@
+# Ignore large database dump file (GitHub max file size is 100MB)
+*.sql
+important files from manger/rds2_data.sql
+
+# .NET Core Build & Temporary files
+bin/
+obj/
+.vs/
+*.user
+*.lock
+
+# Android Build files
+.gradle/
+build/
+app/build/
+local.properties
+.idea/
+*.apk
+*.aar

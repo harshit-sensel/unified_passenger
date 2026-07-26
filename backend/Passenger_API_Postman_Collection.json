@@ -1,0 +1,224 @@
+{
+	"info": {
+		"_postman_id": "passenger-api-collection-v1",
+		"name": "Passenger App .NET Core REST APIs",
+		"description": "Postman Collection for Passenger Application Migrated .NET Core REST APIs",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Validate Phone Number",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"MobileNo\": \"9462317323\",\n  \"AppKey\": \"passenger\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:5228/api/auth/validate-phone",
+					"protocol": "http",
+					"host": ["localhost"],
+					"port": "5228",
+					"path": ["api", "auth", "validate-phone"]
+				}
+			}
+		},
+		{
+			"name": "2. Validate Device IMEI (Silent Login)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"Imei\": \"TEST_IMEI_12345\",\n  \"AppKey\": \"passenger\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:5228/api/auth/validate-imei",
+					"protocol": "http",
+					"host": ["localhost"],
+					"port": "5228",
+					"path": ["api", "auth", "validate-imei"]
+				}
+			}
+		},
+		{
+			"name": "3. Get Vehicles By Account",
+			"request": {
+				"method": "GET",
+				"url": {
+					"raw": "http://localhost:5228/api/vehicles/by-account?mobile=9462317323",
+					"protocol": "http",
+					"host": ["localhost"],
+					"port": "5228",
+					"path": ["api", "vehicles", "by-account"],
+					"query": [
+						{
+							"key": "mobile",
+							"value": "9462317323"
+						}
+					]
+				}
+			}
+		},
+		{
+			"name": "4. Get Drivers By Account",
+			"request": {
+				"method": "GET",
+				"url": {
+					"raw": "http://localhost:5228/api/drivers/by-account?mobile=9462317323",
+					"protocol": "http",
+					"host": ["localhost"],
+					"port": "5228",
+					"path": ["api", "drivers", "by-account"],
+					"query": [
+						{
+							"key": "mobile",
+							"value": "9462317323"
+						}
+					]
+				}
+			}
+		},
+		{
+			"name": "5. Get Safety Checklist Questions",
+			"request": {
+				"method": "GET",
+				"url": {
+					"raw": "http://localhost:5228/api/checklist/questions?mobile=9462317323",
+					"protocol": "http",
+					"host": ["localhost"],
+					"port": "5228",
+					"path": ["api", "checklist", "questions"],
+					"query": [
+						{
+							"key": "mobile",
+							"value": "9462317323"
+						}
+					]
+				}
+			}
+		},
+		{
+			"name": "6. Get Live Vehicle Position",
+			"request": {
+				"method": "GET",
+				"url": {
+					"raw": "http://localhost:5228/api/vehicle/position?psngrId=1&vehicleId=KA-01-ME-1234",
+					"protocol": "http",
+					"host": ["localhost"],
+					"port": "5228",
+					"path": ["api", "vehicle", "position"],
+					"query": [
+						{
+							"key": "psngrId",
+							"value": "1"
+						},
+						{
+							"key": "vehicleId",
+							"value": "KA-01-ME-1234"
+						}
+					]
+				}
+			}
+		},
+		{
+			"name": "7. Insert Safety Checklist Log",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"PsngrId\": \"1\",\n  \"VehicleId\": \"KA-01-ME-1234\",\n  \"Type\": \"TagIn\",\n  \"Lat\": \"12.9716\",\n  \"Lng\": \"77.5946\",\n  \"Imei\": \"TEST_IMEI_12345\",\n  \"Omr\": \"500\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:5228/api/checklist/insert",
+					"protocol": "http",
+					"host": ["localhost"],
+					"port": "5228",
+					"path": ["api", "checklist", "insert"]
+				}
+			}
+		},
+		{
+			"name": "8. Trigger Panic Alert",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"PsngrId\": \"1\",\n  \"VehicleId\": \"KA-01-ME-1234\",\n  \"Type\": \"Passenger\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:5228/api/alerts/panic",
+					"protocol": "http",
+					"host": ["localhost"],
+					"port": "5228",
+					"path": ["api", "alerts", "panic"]
+				}
+			}
+		},
+		{
+			"name": "9. Get Notifications",
+			"request": {
+				"method": "GET",
+				"url": {
+					"raw": "http://localhost:5228/api/notifications?psngrId=1",
+					"protocol": "http",
+					"host": ["localhost"],
+					"port": "5228",
+					"path": ["api", "notifications"],
+					"query": [
+						{
+							"key": "psngrId",
+							"value": "1"
+						}
+					]
+				}
+			}
+		},
+		{
+			"name": "10. Resolve QR Code",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"QRCode\": \"QR_KA_1234\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:5228/api/vehicle/resolve-qr",
+					"protocol": "http",
+					"host": ["localhost"],
+					"port": "5228",
+					"path": ["api", "vehicle", "resolve-qr"]
+				}
+			}
+		}
+	]
+}
