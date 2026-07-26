@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- QR icon with explicit 72dp size so it scales correctly in the grid -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Base: full-size transparent so drawable is 72dp x 72dp -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#00000000" />
+            <size android:width="72dp" android:height="72dp" />
+        </shape>
+    </item>
+    <!-- Top-left finder -->
+    <item android:left="4dp" android:top="4dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#3F51B5" />
+            <size android:width="20dp" android:height="20dp" />
+        </shape>
+    </item>
+    <item android:left="10dp" android:top="10dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#FFFFFF" />
+            <size android:width="8dp" android:height="8dp" />
+        </shape>
+    </item>
+    <!-- Top-right finder -->
+    <item android:left="48dp" android:top="4dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#3F51B5" />
+            <size android:width="20dp" android:height="20dp" />
+        </shape>
+    </item>
+    <item android:left="54dp" android:top="10dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#FFFFFF" />
+            <size android:width="8dp" android:height="8dp" />
+        </shape>
+    </item>
+    <!-- Bottom-left finder -->
+    <item android:left="4dp" android:top="48dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#3F51B5" />
+            <size android:width="20dp" android:height="20dp" />
+        </shape>
+    </item>
+    <item android:left="10dp" android:top="54dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#FFFFFF" />
+            <size android:width="8dp" android:height="8dp" />
+        </shape>
+    </item>
+    <!-- Center data blocks -->
+    <item android:left="28dp" android:top="28dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#3F51B5" />
+            <size android:width="6dp" android:height="6dp" />
+        </shape>
+    </item>
+    <item android:left="38dp" android:top="28dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#3F51B5" />
+            <size android:width="6dp" android:height="6dp" />
+        </shape>
+    </item>
+    <item android:left="28dp" android:top="38dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#3F51B5" />
+            <size android:width="6dp" android:height="6dp" />
+        </shape>
+    </item>
+    <item android:left="38dp" android:top="38dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#3F51B5" />
+            <size android:width="6dp" android:height="6dp" />
+        </shape>
+    </item>
+</layer-list>

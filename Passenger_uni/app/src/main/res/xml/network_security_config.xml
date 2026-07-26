@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Allow cleartext (HTTP) for map server; Android 9+ blocks it by default -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">demo.vehicletrackingsolution.co.in</domain>
+        <domain includeSubdomains="true">ui.vehicle-tracking.co.in</domain>
+    </domain-config>
+</network-security-config>

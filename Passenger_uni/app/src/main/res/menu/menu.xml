@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/menu_refresh"
+        android:icon="@drawable/refresh"
+        app:showAsAction="ifRoom"
+        android:title="Refresh"/>
+    <item
+        android:id="@+id/menu_tracking"
+        android:icon="@drawable/navigation"
+        app:showAsAction="ifRoom"
+        android:visible="false"
+        android:title="Tracking"/>
+    <item
+        android:id="@+id/menu_panic"
+        android:icon="@drawable/panic"
+        app:showAsAction="ifRoom"
+        android:title="Panic"/>
+    <item
+        android:id="@+id/menu_logout"
+        android:icon="@drawable/logout"
+        app:showAsAction="ifRoom"
+        android:title="Logout"/>
+</menu>

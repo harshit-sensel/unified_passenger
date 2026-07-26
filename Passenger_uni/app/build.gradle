@@ -1,0 +1,65 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 35
+
+    defaultConfig {
+        applicationId "com.sensel.passenger"
+        minSdkVersion 21
+        multiDexEnabled true
+        targetSdkVersion 35
+        versionCode 10
+        versionName "2.0"
+    }
+    packagingOptions {
+        exclude 'META-INF/DEPENDENCIES'
+        exclude 'META-INF/NOTICE'
+        exclude 'META-INF/LICENSE'
+    }
+
+    lintOptions {
+        checkReleaseBuilds false
+        abortOnError false
+    }
+    signingConfigs {
+        release {
+            if (project.hasProperty('PASSENGERPRO_RELEASE_STORE_FILE')) {
+                storeFile file(PASSENGERPRO_RELEASE_STORE_FILE)
+                storePassword PASSENGERPRO_RELEASE_STORE_PASSWORD
+                keyAlias PASSENGERPRO_RELEASE_KEY_ALIAS
+                keyPassword PASSENGERPRO_RELEASE_KEY_PASSWORD
+            }
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig project.hasProperty('PASSENGERPRO_RELEASE_STORE_FILE') ? signingConfigs.release : signingConfigs.debug
+        }
+    }
+    useLibrary 'org.apache.http.legacy'
+    compileOptions {
+        coreLibraryDesugaringEnabled true
+        sourceCompatibility = '11'
+        targetCompatibility = '11'
+    }
+    namespace 'com.sensel.passengerpro'
+}
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation files('libs/ksoap2-android-assembly-2.5.8-jar-with-dependencies.jar')
+    implementation files('libs/mail.jar')
+    implementation files('libs/activation.jar')
+    implementation files('libs/additionnal.jar')
+    testImplementation 'junit:junit:4.12'
+    implementation 'com.google.android.material:material:1.0.0'
+    implementation 'org.apache.httpcomponents:httpmime:4.3.1'
+    implementation 'com.google.code.gson:gson:2.3'
+    implementation files('libs/map_sdk_2.1.jar')
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.1.5'
+    implementation 'androidx.appcompat:appcompat:1.0.0'
+    implementation 'androidx.multidex:multidex:2.0.1'
+    implementation 'com.journeyapps:zxing-android-embedded:4.3.0'
+    implementation 'com.google.android.gms:play-services-location:21.3.0'
+}

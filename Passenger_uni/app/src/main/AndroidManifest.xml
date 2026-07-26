@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.READ_PRIVILEGED_PHONE_STATE"
+        tools:ignore="ProtectedPermissions" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-feature android:name="android.hardware.camera" android:required="true"  />
+    <uses-feature android:name="android.hardware.camera.autofocus" />
+    <queries>
+        <intent>
+            <action android:name="android.media.action.IMAGE_CAPTURE" />
+        </intent>
+    </queries>
+    <application
+        android:allowBackup="true"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme">
+
+        <activity android:name=".MainActivity"
+                  android:configChanges="orientation|screenSize">
+        </activity>
+        <activity android:name=".QRScannerActivity"
+                  android:configChanges="orientation|screenSize"
+                  android:screenOrientation="portrait">
+        </activity>
+        <activity android:name=".LoginActivity"
+                  android:configChanges="orientation|screenSize"
+                  android:theme="@style/Theme.AppCompat.NoActionBar"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+        <activity android:name=".TagOut"
+                  android:configChanges="orientation|screenSize">
+        </activity>
+        <activity android:name=".OOPs"
+                  android:configChanges="orientation|screenSize">
+        </activity>
+        <activity android:name=".VehicleInfo"
+                  android:configChanges="orientation|screenSize">
+        </activity>
+        <activity android:name=".TagTrack"
+                  android:configChanges="orientation|screenSize"
+                  android:screenOrientation="portrait"
+                  android:theme="@style/MyTheme">
+        </activity>
+        <activity android:name=".TrackOnMap"
+                  android:configChanges="orientation|screenSize"
+                  android:screenOrientation="portrait">
+        </activity>
+        <activity android:name=".TrackOnMapWithSelection"
+            android:configChanges="orientation|screenSize"
+            android:screenOrientation="portrait">
+        </activity>
+        <activity android:name=".TrackRegionVehiclesOnMap"
+            android:configChanges="orientation|screenSize"
+            android:screenOrientation="portrait">
+        </activity>
+        <activity android:name=".Notifications"
+                  android:label="Notifications"
+                  android:configChanges="orientation|screenSize"
+                  android:screenOrientation="portrait">
+        </activity>
+        <activity android:name=".HomeLocation"
+            android:label="Home Location"
+            android:configChanges="orientation|screenSize"
+            android:screenOrientation="portrait">
+        </activity>
+        <activity android:name=".HomeLocationOnMap"
+            android:label="Home Location On Map"
+            android:configChanges="orientation|screenSize"
+            android:screenOrientation="portrait">
+        </activity>
+        <service
+            android:name=".AlarmService"
+            android:enabled="true" >
+        </service>
+
+        <receiver
+            android:name=".AlarmReceiver"
+            android:enabled="true"
+            android:exported="true"
+            android:label="RestartServiceWhenStopped">
+            <intent-filter>
+                <action android:name="RestartSensor"/>
+            </intent-filter>
+        </receiver>
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="com.sensel.passengerpro.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/provider_paths"/>
+        </provider>
+
+    </application>
+
+</manifest>
