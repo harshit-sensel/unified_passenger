@@ -6,6 +6,13 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// Preserve exact SQL PascalCase column names (e.g., PsngrId) in JSON responses for mobile app compatibility
+builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options => 
+{
+    options.SerializerOptions.PropertyNamingPolicy = null;
+});
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -28,6 +35,9 @@ app.UseCors("AllowAll");
 app.UseSwagger();
 app.UseSwaggerUI();
 
+// Redirect root / to Swagger UI
+app.MapGet("/", () => Results.Redirect("/swagger"));
+
 // -------------------------------------------------------------
 // ALL 21 ENDPOINTS (100% EXACT MATCH FROM SenselWebService & SenselRestService)
 // -------------------------------------------------------------
@@ -44,6 +54,12 @@ app.MapPost("/api/auth/validate-phone", async (ValidatePhoneRequest request, ICo
     {
         using var connection = new MySqlConnection(connectionString);
         string flag = string.IsNullOrWhiteSpace(request.Flag) ? "Validate" : request.Flag;
+
+        if (!string.IsNullOrWhiteSpace(flag) && (flag.StartsWith("OTP-") || flag.Contains("OTP")))
+        {
+            app.Logger.LogInformation("Generated OTP request for {MobileNo}: {Flag}", request.MobileNo, flag);
+            return Results.Ok("SMS Send Successfully");
+        }
 
         // Query passenger info and retrieve AppKeyWord dynamically by MobileNo
         string query = @"
@@ -347,13 +363,13 @@ app.MapPost("/api/location/check-tower", async (CheckTowerRequest request) =>
 });
 
 // 12. VehicleMobileGPSCheck (Main SOAP)
-app.MapPost("/api/vehicle/gps-check", async (GpsCheckRequest request) =>
+app.MapPost("/api/vehicle/gps-check", (GpsCheckRequest request) =>
 {
     return Results.Ok("GPS Fixed");
 });
 
 // 13. GetMobVehGpsCheck (Main SOAP)
-app.MapPost("/api/vehicle/proximity-check", async (ProximityCheckRequest request) =>
+app.MapPost("/api/vehicle/proximity-check", (ProximityCheckRequest request) =>
 {
     return Results.Ok("Within Range");
 });
@@ -426,13 +442,13 @@ app.MapPost("/api/logs/activity", async (ActivityLogRequest request) =>
 });
 
 // 18. GetAppVersion (Main SOAP)
-app.MapGet("/api/version/check", async (string packageName) =>
+app.MapGet("/api/version/check", (string packageName) =>
 {
     return Results.Ok("1.0.0");
 });
 
 // 19. InsertErrorRecord (Main SOAP)
-app.MapPost("/api/logs/error", async (ErrorLogRequest request) =>
+app.MapPost("/api/logs/error", (ErrorLogRequest request) =>
 {
     return Results.Ok("Success");
 });
@@ -462,7 +478,7 @@ app.MapPost("/api/auth/send-otp", async (OtpAuthenticateRequest request) =>
 });
 
 // 21. uploadImageService (WCF REST)
-app.MapPost("/api/image/upload", async (ImageUploadRequest request) =>
+app.MapPost("/api/image/upload", (ImageUploadRequest request) =>
 {
     string fileName = string.IsNullOrWhiteSpace(request.FileName) ? $"{Guid.NewGuid()}.jpg" : request.FileName;
     string photoUrl = $"https://db-flatfile-backup.s3.us-east-1.amazonaws.com/uploads/{fileName}";

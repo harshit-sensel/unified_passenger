@@ -83,15 +83,21 @@ public class LoginActivity extends AppCompatActivity {
                                 });
                                 return;
                             }
+                            String userMenus = null;
                             try {
-                                String userMenus = webServices.GetMenusByUser(mobNo);
+                                userMenus = webServices.GetMenusByUser(mobNo);
                                 if (userMenus != null && !userMenus.isEmpty() && !userMenus.contains("No Data")) {
                                     appConstants.putShrdPrefValWithKey(getApplicationContext(), "UserMenus", userMenus);
                                 }
                             } catch (Exception ex) {
                                 android.util.Log.e("LoginActivity", "Error fetching UserMenus", ex);
                             }
-                            Intent i = new Intent(getApplicationContext(), MainActivity.class);
+                            Intent i;
+                            if (userMenus != null && userMenus.contains("checklist") && !userMenus.contains("dashboard")) {
+                                i = new Intent(getApplicationContext(), VehicleInfo.class);
+                            } else {
+                                i = new Intent(getApplicationContext(), MainActivity.class);
+                            }
                             i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                             startActivity(i);
                             runOnUiThread(new Runnable() {
@@ -218,15 +224,21 @@ public class LoginActivity extends AppCompatActivity {
                                     appConstants.putShrdPrefValWithKey(getApplicationContext(),"passengerinfo",passengerinfo);
                                     try {
                                         if (isNetworkAvailable()) {
+                                            String userMenus = null;
                                             try {
-                                                String userMenus = webServices.GetMenusByUser(tempMobileNo);
+                                                userMenus = webServices.GetMenusByUser(tempMobileNo);
                                                 if (userMenus != null && !userMenus.isEmpty() && !userMenus.contains("No Data")) {
                                                     appConstants.putShrdPrefValWithKey(getApplicationContext(), "UserMenus", userMenus);
                                                 }
                                             } catch (Exception ex) {
                                                 android.util.Log.e("LoginActivity", "Error fetching UserMenus on OTP submit", ex);
                                             }
-                                            Intent i = new Intent(getApplicationContext(), MainActivity.class);
+                                            Intent i;
+                                            if (userMenus != null && userMenus.contains("checklist") && !userMenus.contains("dashboard")) {
+                                                i = new Intent(getApplicationContext(), VehicleInfo.class);
+                                            } else {
+                                                i = new Intent(getApplicationContext(), MainActivity.class);
+                                            }
                                             i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                                             startActivity(i);
                                             runOnUiThread(new Runnable() {

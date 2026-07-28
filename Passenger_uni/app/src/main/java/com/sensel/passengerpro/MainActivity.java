@@ -133,6 +133,18 @@ public class MainActivity extends AppCompatActivity {
                         return;
                     }
                     sendOtpRequestAndTagIn(pendingOtpMobileNo);
+                } else if ("Pre-Trip Checklist".equals(label)) {
+                    Intent i = new Intent(MainActivity.this, VehicleInfo.class);
+                    i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(i);
+                } else if ("Home Location".equals(label)) {
+                    Intent i = new Intent(MainActivity.this, HomeLocation.class);
+                    i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(i);
+                } else if ("Notifications".equals(label)) {
+                    Intent i = new Intent(MainActivity.this, Notifications.class);
+                    i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(i);
                 } else if ("Track Your Vehicle".equals(label)) {
                     if (!isNetworkAvailable()) {
                         Toast.makeText(MainActivity.this, "No internet. Check your connection.", Toast.LENGTH_SHORT).show();
@@ -417,6 +429,36 @@ public class MainActivity extends AppCompatActivity {
                             if (!labels.contains("Panic")) {
                                 labels.add("Panic");
                                 icons.add(R.drawable.panic);
+                            }
+                            break;
+                        case "checklist":
+                            if (!labels.contains("Pre-Trip Checklist")) {
+                                labels.add("Pre-Trip Checklist");
+                                icons.add(android.R.drawable.ic_menu_agenda);
+                            }
+                            break;
+                        case "proximity_check":
+                            if (!labels.contains("Proximity Check")) {
+                                labels.add("Proximity Check");
+                                icons.add(android.R.drawable.ic_menu_compass);
+                            }
+                            break;
+                        case "vehicle_change":
+                            if (!labels.contains("Change Vehicle")) {
+                                labels.add("Change Vehicle");
+                                icons.add(android.R.drawable.ic_menu_directions);
+                            }
+                            break;
+                        case "home_location":
+                            if (!labels.contains("Home Location")) {
+                                labels.add("Home Location");
+                                icons.add(android.R.drawable.ic_menu_mylocation);
+                            }
+                            break;
+                        case "notifications":
+                            if (!labels.contains("Notifications")) {
+                                labels.add("Notifications");
+                                icons.add(android.R.drawable.ic_popup_reminder);
                             }
                             break;
                         case "tag_out":

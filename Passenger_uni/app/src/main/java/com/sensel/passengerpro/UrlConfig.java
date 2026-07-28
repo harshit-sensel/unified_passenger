@@ -7,8 +7,8 @@ package com.sensel.passengerpro;
 public class UrlConfig {
     public static String WSDL_TARGET_NAMESPACE = "http://tempuri.org/";
 
-    // New .NET Core REST API Base URL
-    public static String REST_BASE_URL = "http://localhost:5228/api/";
+    // New .NET Core REST API Base URL (10.0.2.2 for Android Studio Emulator)
+    public static String REST_BASE_URL = "http://10.0.2.2:5228/api/";
 
     public static String DOMAINURL1 = "https://ui.vehicle-tracking.co.in/";
     public static String DOMAINURL2 = "http://ui.vehicle-tracking.co.in/";
