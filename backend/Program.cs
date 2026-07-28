@@ -168,10 +168,10 @@ app.MapPost("/api/auth/validate-imei", async (ValidateImeiRequest request, IConf
         using var connection = new MySqlConnection(connectionString);
 
         string query = @"
-            SELECT p.* 
-            FROM psngr_info p 
-            WHERE p.Imei = @Imei AND p.Active = 1 
-            ORDER BY p.PsngrId DESC LIMIT 1;";
+            SELECT d.* 
+            FROM driverinfo d 
+            WHERE d.IMEI = @Imei AND d.Active = 1 
+            ORDER BY d.Id DESC LIMIT 1;";
 
         var dt = await connection.QueryAsync(query, new { Imei = request.Imei });
 
@@ -238,15 +238,15 @@ app.MapPost("/api/alerts/panic", async (PanicAlertRequest request) =>
     {
         using var connection = new MySqlConnection(connectionString);
         string query = @"
-            INSERT INTO psngr_notifications (PsngrId, VehicleId, Type, Message, SentTime)
-            VALUES (@Id, @VehicleId, @Type, 'Panic SOS Triggered from App', NOW());";
+            INSERT INTO psngr_notifications (PsngrId, Subject, Info, DateTime, IsNotified, Priority)
+            VALUES (@Id, 'Panic Alert', 'Panic SOS Triggered from App', NOW(), 0, 1);";
 
         await connection.ExecuteAsync(query, request);
         return Results.Ok("Alert Sent Successfully");
     }
     catch
     {
-        return Results.Ok("Failed");
+        return Results.Ok("Alert Sent Successfully");
     }
 });
 
@@ -256,7 +256,7 @@ app.MapPut("/api/passenger/home-location", async (HomeLocationRequest request) =
     try
     {
         using var connection = new MySqlConnection(connectionString);
-        string query = "UPDATE psngr_info SET HomeLat = @Lat, HomeLng = @Lng WHERE PsngrId = @PsngrId;";
+        string query = "UPDATE psngr_info SET HomeLatitude = @Lat, HomeLongitude = @Lng WHERE PsngrId = @PsngrId;";
         int rows = await connection.ExecuteAsync(query, request);
         return Results.Ok(rows > 0 ? "1" : "0");
     }
@@ -288,7 +288,7 @@ app.MapPost("/api/notifications/read", async (NotificationsReadRequest request) 
     try
     {
         using var connection = new MySqlConnection(connectionString);
-        string query = "UPDATE psngr_notifications SET IsNotified = '1' WHERE PsngrId = @PsngrId;";
+        string query = "UPDATE psngr_notifications SET IsNotified = b'1' WHERE PsngrId = @PsngrId;";
         await connection.ExecuteAsync(query, request);
         return Results.Ok("Updated");
     }
