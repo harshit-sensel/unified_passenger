@@ -381,23 +381,75 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void buildMenuByPanicFlag() {
-        String panicFlag = appConstants.getShrdPrefValByKeyWithTag(getApplicationContext(), "passengerinfo", "PanicFlag");
-        boolean panicEnabled = "1".equals(panicFlag);
-
-        if (panicEnabled) {
-            currentMenuLabels = MENU_LABELS;
-            currentMenuIcons = MENU_ICONS;
-            return;
-        }
-
+        String jsonMenus = appConstants.getShrdPrefValByKey(getApplicationContext(), "UserMenus");
+        
         List<String> labels = new ArrayList<>();
         List<Integer> icons = new ArrayList<>();
-        for (int i = 0; i < MENU_LABELS.length; i++) {
-            if (!"Panic".equals(MENU_LABELS[i])) {
+
+        if (jsonMenus != null && !jsonMenus.isEmpty() && !jsonMenus.contains("No Data")) {
+            try {
+                org.json.JSONArray arr = new org.json.JSONArray(jsonMenus);
+                for (int i = 0; i < arr.length(); i++) {
+                    JSONObject obj = arr.getJSONObject(i);
+                    String key = obj.optString("menukey", "");
+                    switch (key) {
+                        case "qr_scanner":
+                            if (!labels.contains("Tag In with QR")) {
+                                labels.add("Tag In with QR");
+                                icons.add(R.drawable.ic_tag_in_qr);
+                            }
+                            break;
+                        case "tag_in_otp":
+                            if (!labels.contains("Tag In with OTP")) {
+                                labels.add("Tag In with OTP");
+                                icons.add(R.drawable.ic_tag_in_otp);
+                            }
+                            break;
+                        case "assigned_veh_tracking":
+                        case "school_bus_tracking":
+                        case "dashboard":
+                            if (!labels.contains("Track Your Vehicle")) {
+                                labels.add("Track Your Vehicle");
+                                icons.add(R.drawable.ic_track_vehicle_map);
+                            }
+                            break;
+                        case "panic_sos":
+                            if (!labels.contains("Panic")) {
+                                labels.add("Panic");
+                                icons.add(R.drawable.panic);
+                            }
+                            break;
+                        case "tag_out":
+                            if (!labels.contains("Tagout")) {
+                                labels.add("Tagout");
+                                icons.add(R.drawable.ic_tagout);
+                            }
+                            break;
+                    }
+                }
+            } catch (Exception e) {
+                android.util.Log.e("MainActivity", "Error parsing UserMenus", e);
+            }
+        }
+
+        // Fallback default menu if no dynamic menus parsed
+        if (labels.isEmpty()) {
+            String panicFlag = appConstants.getShrdPrefValByKeyWithTag(getApplicationContext(), "passengerinfo", "PanicFlag");
+            boolean panicEnabled = "1".equals(panicFlag);
+            for (int i = 0; i < MENU_LABELS.length; i++) {
+                if ("Logout".equals(MENU_LABELS[i])) continue;
+                if (!panicEnabled && "Panic".equals(MENU_LABELS[i])) continue;
                 labels.add(MENU_LABELS[i]);
                 icons.add(MENU_ICONS[i]);
             }
         }
+
+        // Always append Logout button
+        if (!labels.contains("Logout")) {
+            labels.add("Logout");
+            icons.add(android.R.drawable.ic_lock_power_off);
+        }
+
         currentMenuLabels = labels.toArray(new String[0]);
         currentMenuIcons = new int[icons.size()];
         for (int i = 0; i < icons.size(); i++) {

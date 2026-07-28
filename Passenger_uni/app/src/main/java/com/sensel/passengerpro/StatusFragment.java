@@ -85,14 +85,24 @@ public class StatusFragment extends Fragment {
             btnTag.setVisibility(View.VISIBLE);
             tagrow.setVisibility(View.GONE);
             txttagInTime.setVisibility(View.GONE);
-            String appKeyWord=appConstants.getShrdPrefValByKeyWithTag(getActivity().getApplicationContext(), "passengerinfo", "AppKeyWord");
-            if(appKeyWord.contains("-VLU")&&appKeyWord.contains("-DT")) {
-                String[] str = appKeyWord.split("-");
-                tagInCondition=true;
+            String userMenus = appConstants.getShrdPrefValByKey(getActivity().getApplicationContext(), "UserMenus");
+            String appKeyWord = appConstants.getShrdPrefValByKeyWithTag(getActivity().getApplicationContext(), "passengerinfo", "AppKeyWord");
+            boolean hasProximityCheck = (userMenus != null && userMenus.contains("proximity_check")) || (appKeyWord != null && appKeyWord.contains("-VLU") && appKeyWord.contains("-DT"));
+            boolean hasVehicleChange = (userMenus != null && userMenus.contains("vehicle_change")) || (appKeyWord != null && appKeyWord.contains("-AVC1"));
+
+            if (hasProximityCheck) {
+                tagInCondition = true;
+                timeThreshold = 15;
+                distThreshold = 50;
                 try {
-                    timeThreshold = Integer.valueOf(str[1].replace("VLU", ""));
-                    distThreshold = Integer.valueOf(str[2].replace("DT", ""));
+                    if (appKeyWord != null && appKeyWord.contains("-VLU") && appKeyWord.contains("-DT")) {
+                        String[] str = appKeyWord.split("-");
+                        timeThreshold = Integer.valueOf(str[1].replace("VLU", ""));
+                        distThreshold = Integer.valueOf(str[2].replace("DT", ""));
+                    }
                 } catch (Exception e) {
+                    timeThreshold = 15;
+                    distThreshold = 50;
                 }
                 String params="TagIn allowed only when <br><b>1)</b> Atleast one update of <b>"+TagTrack.vehicleid+"</b> has to be there in last <b>"
                         +timeThreshold+" minutes</b>.<br><b>2) "+TagTrack.vehicleid+"</b> has to be there in the range of <b>"+distThreshold+" meters</b>.";
@@ -103,7 +113,7 @@ public class StatusFragment extends Fragment {
                 tagInCondition = false;
                 taginCondition.setVisibility(View.GONE);
             }
-            if(appKeyWord.contains("-AVC1")){
+            if (hasVehicleChange) {
                 vehChangeLink.setVisibility(View.VISIBLE);
                 new Thread(new Runnable() {
                     @Override

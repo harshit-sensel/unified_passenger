@@ -47,9 +47,8 @@ app.MapPost("/api/auth/validate-phone", async (ValidatePhoneRequest request, ICo
 
         // Query passenger info and retrieve AppKeyWord dynamically by MobileNo
         string query = @"
-            SELECT p.*, c.AppKeyWord 
+            SELECT p.* 
             FROM psngr_info p 
-            LEFT JOIN psngr_config c ON p.AccountId = c.AccountId 
             WHERE p.MobileNo = @MobileNo AND p.Active = 1";
 
         if (flag == "Tag")
@@ -169,9 +168,8 @@ app.MapPost("/api/auth/validate-imei", async (ValidateImeiRequest request, IConf
         using var connection = new MySqlConnection(connectionString);
 
         string query = @"
-            SELECT p.*, c.AppKeyWord 
+            SELECT p.* 
             FROM psngr_info p 
-            LEFT JOIN psngr_config c ON p.AccountId = c.AccountId 
             WHERE p.Imei = @Imei AND p.Active = 1 
             ORDER BY p.PsngrId DESC LIMIT 1;";
 

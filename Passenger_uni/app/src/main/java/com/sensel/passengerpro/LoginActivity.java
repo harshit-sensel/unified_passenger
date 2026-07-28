@@ -70,7 +70,8 @@ public class LoginActivity extends AppCompatActivity {
                 public void run() {
                     try {
                         if (isNetworkAvailable()) {
-                            appConstants.putShrdPrefValWithKey(getApplicationContext(), "passengerinfo", webServices.GetPsngrInfoWithValidation(appConstants.getShrdPrefValByKeyWithTag(getApplicationContext(), "passengerinfo", "MobileNo"), "Validate"));
+                            String mobNo = appConstants.getShrdPrefValByKeyWithTag(getApplicationContext(), "passengerinfo", "MobileNo");
+                            appConstants.putShrdPrefValWithKey(getApplicationContext(), "passengerinfo", webServices.GetPsngrInfoWithValidation(mobNo, "Validate"));
                             passengerinfo = appConstants.getShrdPrefValByKey(getApplicationContext(), "passengerinfo");
                             if (passengerinfo != null && passengerinfo.contains("No Data")) {
                                 appConstants.putShrdPrefValWithKey(getApplicationContext(), "passengerinfo", null);
@@ -81,6 +82,14 @@ public class LoginActivity extends AppCompatActivity {
                                     }
                                 });
                                 return;
+                            }
+                            try {
+                                String userMenus = webServices.GetMenusByUser(mobNo);
+                                if (userMenus != null && !userMenus.isEmpty() && !userMenus.contains("No Data")) {
+                                    appConstants.putShrdPrefValWithKey(getApplicationContext(), "UserMenus", userMenus);
+                                }
+                            } catch (Exception ex) {
+                                android.util.Log.e("LoginActivity", "Error fetching UserMenus", ex);
                             }
                             Intent i = new Intent(getApplicationContext(), MainActivity.class);
                             i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -209,6 +218,14 @@ public class LoginActivity extends AppCompatActivity {
                                     appConstants.putShrdPrefValWithKey(getApplicationContext(),"passengerinfo",passengerinfo);
                                     try {
                                         if (isNetworkAvailable()) {
+                                            try {
+                                                String userMenus = webServices.GetMenusByUser(tempMobileNo);
+                                                if (userMenus != null && !userMenus.isEmpty() && !userMenus.contains("No Data")) {
+                                                    appConstants.putShrdPrefValWithKey(getApplicationContext(), "UserMenus", userMenus);
+                                                }
+                                            } catch (Exception ex) {
+                                                android.util.Log.e("LoginActivity", "Error fetching UserMenus on OTP submit", ex);
+                                            }
                                             Intent i = new Intent(getApplicationContext(), MainActivity.class);
                                             i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                                             startActivity(i);

@@ -78,6 +78,20 @@ public class WebServices {
         return GetPsngrInfoWithValidation(mobileno, flag);
     }
 
+    // Dynamic Menu Fetching API
+    public String GetMenusByUser(String mobileno) {
+        try {
+            JSONObject json = new JSONObject();
+            json.put("MobileNo", mobileno != null ? mobileno : "");
+            json.put("Username", mobileno != null ? mobileno : "");
+            return makeHttpRequest("auth/get-menus", "POST", json.toString());
+        } catch (Exception e) {
+            Log.e(TAG, "Error in GetMenusByUser", e);
+            return "[]";
+        }
+    }
+
+
     // 2. IMEI Silent Auto-Login Validation
     public String GetPsngrInfoWithValidationWithImei(String imei, String flag) {
         try {

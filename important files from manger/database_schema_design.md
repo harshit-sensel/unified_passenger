@@ -63,14 +63,14 @@ By inserting clean feature keys into `mobileappmenu` and registering roles into 
 
 ---
 
-### Table 2: `Roles` *(Master Roles)*
-* **Usage**: Defines permission levels across customer accounts using exactly 2 passenger roles.
+### Table 2: `Roles` *(Master Passenger Roles)*
+* **Usage**: Defines permission levels across customer accounts using dedicated passenger roles.
 
 #### Master Role Data:
 | ID | RoleName | RoleType | Description |
 | :---: | :--- | :--- | :--- |
-| **1** | **`"default_user"`** | `"Menu"` | Standard Passenger / Employee User *(Default role for all users)* |
-| **2** | **`"account_manager"`** | `"Menu"` | Corporate Transport Manager / Account Supervisor |
+| **176** | **`"passenger_default"`** | `"MobileAppMenu"` | Standard Passenger / Employee User *(Default role for all users)* |
+| **177** | **`"passenger_account_manager"`** | `"MobileAppMenu"` | Corporate Transport Manager / Account Supervisor |
 
 ---
 
@@ -80,9 +80,9 @@ By inserting clean feature keys into `mobileappmenu` and registering roles into 
 #### Sample Mapping Data:
 | Id (PK) | MobileAppMenuId | RoleId | Feature Unlocked in Mobile App |
 | :---: | :---: | :---: | :--- |
-| **1** | **501** | **1 (`default_user`)** | Grid Dashboard (`MainActivity`) |
-| **2** | **503** | **1 (`default_user`)** | Live Map Tracking (`TrackOnMap`) |
-| **3..10** | **501** through **512** | **2 (`account_manager`)** | **Full Access to All 12 Screens** |
+| **1** | **501** | **176 (`passenger_default`)** | Grid Dashboard (`MainActivity`) |
+| **2** | **503** | **176 (`passenger_default`)** | Live Map Tracking (`TrackOnMap`) |
+| **3..10** | **501** through **512** | **177 (`passenger_account_manager`)** | **Full Access to All 12 Screens** |
 
 ---
 
@@ -92,8 +92,8 @@ By inserting clean feature keys into `mobileappmenu` and registering roles into 
 #### Sample User Role Mapping:
 | UserId (MobileNo) | RoleId | Role Name Assigned |
 | :---: | :---: | :--- |
-| `"8800406561"` | **1** | `default_user` (Grid Dashboard + Map Track) |
-| `"9911444476"` | **2** | `account_manager` (Full Manager Access) |
+| `"8800406561"` | **176** | `passenger_default` (Grid Dashboard + Map Track) |
+| `"9160445553"` | **177** | `passenger_account_manager` (Full Manager Access) |
 
 ---
 
@@ -114,7 +114,7 @@ INNER JOIN UsersInRoles ur ON ur.RoleId = r.ID
 WHERE ur.UserId = '8800406561';
 ```
 
-*(Note: If a user has no explicit row in `UsersInRoles`, the backend automatically falls back to fetching features for `RoleId = 1` - `default_user`, ensuring 100% backward compatibility for all existing users).*
+*(Note: If a user has no explicit row in `UsersInRoles`, the backend automatically falls back to fetching features for `RoleId = 176` - `passenger_default`, ensuring 100% backward compatibility for all existing users).*
 
 ### Step 3: Backend Returns JSON Response to Mobile App
 The API returns the user profile and their allowed features:
@@ -125,7 +125,7 @@ The API returns the user profile and their allowed features:
   "PsngrName": "Sachin Kumar",
   "MobileNo": "8800406561",
   "AccountId": 2100,
-  "RoleName": "default_user",
+  "RoleName": "passenger_default",
   "Features": [
     { "Id": 501, "menukey": "dashboard", "menuvalue": "Grid Icon Dashboard" },
     { "Id": 503, "menukey": "assigned_veh_tracking", "menuvalue": "Assigned Vehicle Tracking" },
@@ -162,7 +162,7 @@ CREATE TABLE IF NOT EXISTS mobileappmenu (
     menuvalue VARCHAR(100) NOT NULL
 );
 
--- 2. Create mobileappmenuinroles table (matches live database structure)
+-- 2. Create mobileappmenuinroles table (matches production screenshot: Id, MobileAppMenuId, RoleId)
 CREATE TABLE IF NOT EXISTS mobileappmenuinroles (
     Id INT AUTO_INCREMENT PRIMARY KEY,
     MobileAppMenuId INT NOT NULL,
@@ -171,8 +171,8 @@ CREATE TABLE IF NOT EXISTS mobileappmenuinroles (
 
 -- 3. Insert Master Roles into Roles table
 INSERT INTO Roles (ID, RoleName, RoleType) VALUES
-(1, 'default_user', 'Menu'),
-(2, 'account_manager', 'Menu')
+(176, 'passenger_default', 'MobileAppMenu'),
+(177, 'passenger_account_manager', 'MobileAppMenu')
 ON DUPLICATE KEY UPDATE RoleName=VALUES(RoleName);
 
 -- 4. Insert All 12 Passenger App Features into mobileappmenu table
@@ -193,8 +193,8 @@ ON DUPLICATE KEY UPDATE menuvalue=VALUES(menuvalue);
 
 -- 5. Assign Features to Roles in mobileappmenuinroles table
 INSERT INTO mobileappmenuinroles (MobileAppMenuId, RoleId) VALUES
-(501, 1), (503, 1), (507, 1), (508, 1), (509, 1), (510, 1), (511, 1), (512, 1), -- default_user gets Passenger Features
-(501, 2), (502, 2), (503, 2), (504, 2), (505, 2), (506, 2), (507, 2), (508, 2), (509, 2), (510, 2), (511, 2), (512, 2); -- account_manager gets All 12 Features
+(501, 176), (503, 176), (507, 176), (508, 176), (509, 176), (510, 176), (511, 176), (512, 176), -- passenger_default gets Passenger Features
+(501, 177), (502, 177), (503, 177), (504, 177), (505, 177), (506, 177), (507, 177), (508, 177), (509, 177), (510, 177), (511, 177), (512, 177); -- passenger_account_manager gets All 12 Features
 ```
 
 ---
