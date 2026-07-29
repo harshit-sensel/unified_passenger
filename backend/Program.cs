@@ -478,11 +478,11 @@ app.MapPost("/api/auth/send-otp", async (OtpAuthenticateRequest request) =>
 });
 
 // 21. uploadImageService (WCF REST)
-app.MapPost("/api/image/upload", (ImageUploadRequest request) =>
+app.MapPost("/api/image/upload", (HttpRequest req, string? fileName, string? sessionid) =>
 {
-    string fileName = string.IsNullOrWhiteSpace(request.FileName) ? $"{Guid.NewGuid()}.jpg" : request.FileName;
-    string photoUrl = $"https://db-flatfile-backup.s3.us-east-1.amazonaws.com/uploads/{fileName}";
-    return Results.Ok(new { result = "Upload Successfully", photoUrl = photoUrl });
+    string name = string.IsNullOrWhiteSpace(fileName) ? $"{Guid.NewGuid()}.jpg" : fileName;
+    string photoUrl = $"https://db-flatfile-backup.s3.us-east-1.amazonaws.com/uploads/{name}";
+    return Results.Ok("Upload Successfully");
 });
 
 app.Run();
