@@ -1,47 +1,56 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                android:id="@+id/relative"
-                android:layout_width="fill_parent"
-                android:layout_height="fill_parent"
-                android:layout_marginTop="15dp">
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/relative"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_menu_card"
+    android:elevation="2dp"
+    android:orientation="horizontal"
+    android:padding="16dp">
 
+    <!-- Soft Indigo Icon Container Box -->
+    <FrameLayout
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:layout_marginEnd="14dp"
+        android:background="@drawable/bg_icon_container"
+        android:backgroundTint="#E0E7FF"
+        android:padding="8dp">
 
-    <ImageView
-        android:id="@+id/icon"
-        android:layout_width="70dp"
-        android:layout_height="70dp"
-        android:layout_marginLeft="5dp"
-        android:padding="5dp"
-        android:src="@drawable/bell"/>
+        <ImageView
+            android:id="@+id/icon"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_notifications_modern" />
+    </FrameLayout>
 
-
-    <TextView
-        android:id="@+id/title"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_toRightOf="@+id/icon"
-        android:paddingLeft="5dp"
-        android:paddingTop="4dp"
-        android:textSize="16dp"
-        android:textStyle="bold"/>
+        android:layout_weight="1"
+        android:orientation="vertical">
 
-    <WebView
-        android:id="@+id/webview"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/title"
-        android:layout_toRightOf="@+id/icon">
+        <TextView
+            android:id="@+id/title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#0F172A"
+            android:textSize="15sp"
+            android:textStyle="bold" />
 
-    </WebView>
+        <WebView
+            android:id="@+id/webview"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp" />
 
-    <TextView
-        android:id="@+id/date"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/webview"
-        android:layout_toRightOf="@+id/icon"
-        android:gravity="right"
-        android:paddingLeft="5dp"
-        android:textColor="#75000000"
-        android:textSize="12dp"/>
-</RelativeLayout>
+        <TextView
+            android:id="@+id/date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:textColor="#94A3B8"
+            android:textSize="12sp" />
+    </LinearLayout>
+</LinearLayout>

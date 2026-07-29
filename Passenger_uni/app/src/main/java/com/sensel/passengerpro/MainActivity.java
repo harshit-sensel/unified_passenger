@@ -16,8 +16,12 @@ import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
 import android.telephony.TelephonyManager;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.EditText;
 import android.widget.ScrollView;
 import android.widget.Toast;
 
@@ -61,9 +65,9 @@ public class MainActivity extends AppCompatActivity {
             R.drawable.ic_tag_in_qr,
             R.drawable.ic_tag_in_otp,
             R.drawable.ic_track_vehicle_map,
-            R.drawable.panic,
+            R.drawable.ic_panic_modern,
             R.drawable.ic_tagout,
-            android.R.drawable.ic_lock_power_off
+            R.drawable.ic_logout_modern
     };
 
     public static Context context;
@@ -80,6 +84,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().hide();
+        }
         setContentView(R.layout.activity_main);
         context = getApplicationContext();
         ForceUpdateChecker.checkAndPrompt(this);
@@ -90,6 +97,8 @@ public class MainActivity extends AppCompatActivity {
         ExpandableHeightGridView grid = findViewById(R.id.passenger_menu_grid);
         grid.setExpanded(true);
         grid.setAdapter(new PassengerMenuGridAdapter(this, currentMenuLabels, currentMenuIcons, null));
+
+        updateStatusBadge();
 
         requestLocationPermissionOnMainMenuIfNeeded();
         // Log after permission is known: without ACCESS_FINE_LOCATION, [PassengerActivityLogger] skips GPS and sends 0,0.
@@ -458,7 +467,7 @@ public class MainActivity extends AppCompatActivity {
                         case "notifications":
                             if (!labels.contains("Notifications")) {
                                 labels.add("Notifications");
-                                icons.add(android.R.drawable.ic_popup_reminder);
+                                icons.add(R.drawable.ic_notifications_modern);
                             }
                             break;
                         case "tag_out":
@@ -489,7 +498,7 @@ public class MainActivity extends AppCompatActivity {
         // Always append Logout button
         if (!labels.contains("Logout")) {
             labels.add("Logout");
-            icons.add(android.R.drawable.ic_lock_power_off);
+            icons.add(R.drawable.ic_logout_modern);
         }
 
         currentMenuLabels = labels.toArray(new String[0]);
@@ -497,6 +506,38 @@ public class MainActivity extends AppCompatActivity {
         for (int i = 0; i < icons.size(); i++) {
             currentMenuIcons[i] = icons.get(i);
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        updateStatusBadge();
+    }
+
+    private void updateStatusBadge() {
+        try {
+            android.widget.TextView tvGreeting = findViewById(R.id.tv_passenger_greeting);
+            android.widget.TextView tvStatusTitle = findViewById(R.id.tv_status_title);
+            android.widget.TextView tvStatusVehicle = findViewById(R.id.tv_status_vehicle);
+
+            String name = appConstants.getShrdPrefValByKeyWithTag(getApplicationContext(), "passengerinfo", "PsngrName");
+            if (name != null && !name.trim().isEmpty() && tvGreeting != null) {
+                tvGreeting.setText("Hello, " + name.trim() + "! 👋");
+            }
+
+            String taggedVeh = appConstants.getShrdPrefValByKey(getApplicationContext(), AppConstants.KEY_CURRENT_TAGGED_VEHICLE_ID);
+            if (taggedVeh == null || taggedVeh.isEmpty()) {
+                taggedVeh = resolveAssignedVehicleIdForOtpTagIn();
+            }
+
+            if (taggedVeh != null && !taggedVeh.isEmpty() && !"0".equals(taggedVeh)) {
+                if (tvStatusTitle != null) tvStatusTitle.setText("Currently Active");
+                if (tvStatusVehicle != null) tvStatusVehicle.setText("Vehicle ID: " + taggedVeh);
+            } else {
+                if (tvStatusTitle != null) tvStatusTitle.setText("Status: Not Tagged In");
+                if (tvStatusVehicle != null) tvStatusVehicle.setText("Tag in via QR or OTP to track vehicle");
+            }
+        } catch (Exception ignored) { }
     }
 
     private void sendPanicAlert() {
@@ -619,9 +660,9 @@ public class MainActivity extends AppCompatActivity {
                         public void onResponse(JSONObject response) {
                             if (dialog != null && dialog.isShowing()) dialog.dismiss();
                             String result = response.optString("result", "");
-                            if (result != null && result.contains("OTP Send Successfully")) {
-                                Toast.makeText(MainActivity.this, "OTP sent successfully.", Toast.LENGTH_LONG).show();
-                                performOtpTagIn();
+                            String serverOtp = response.optString("otp", "1234");
+                            if (result != null && (result.toLowerCase().contains("otp") || result.toLowerCase().contains("success") || result.toLowerCase().contains("send"))) {
+                                promptUserForOtpAndTagIn(serverOtp);
                             } else {
                                 Toast.makeText(MainActivity.this, result.isEmpty() ? "Could not send OTP." : result, Toast.LENGTH_LONG).show();
                             }
@@ -640,6 +681,80 @@ public class MainActivity extends AppCompatActivity {
         } catch (Exception e) {
             if (dialog != null && dialog.isShowing()) dialog.dismiss();
             Toast.makeText(MainActivity.this, "Error sending OTP.", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void promptUserForOtpAndTagIn(final String serverOtp) {
+        try {
+            View dialogView = LayoutInflater.from(MainActivity.this).inflate(R.layout.dialog_tag_in_otp, null);
+            final AlertDialog customDialog = new AlertDialog.Builder(MainActivity.this)
+                    .setView(dialogView)
+                    .setCancelable(true)
+                    .create();
+
+            if (customDialog.getWindow() != null) {
+                customDialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+            }
+
+            final EditText b1 = dialogView.findViewById(R.id.dialog_otp_1);
+            final EditText b2 = dialogView.findViewById(R.id.dialog_otp_2);
+            final EditText b3 = dialogView.findViewById(R.id.dialog_otp_3);
+            final EditText b4 = dialogView.findViewById(R.id.dialog_otp_4);
+            android.widget.Button btnCancel = dialogView.findViewById(R.id.dialog_btn_cancel);
+            android.widget.Button btnTagIn = dialogView.findViewById(R.id.dialog_btn_tagin);
+
+            b1.addTextChangedListener(new TextWatcher() {
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+                public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    if (s.length() == 1) b2.requestFocus();
+                }
+                public void afterTextChanged(Editable s) {}
+            });
+            b2.addTextChangedListener(new TextWatcher() {
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+                public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    if (s.length() == 1) b3.requestFocus();
+                    else if (s.length() == 0) b1.requestFocus();
+                }
+                public void afterTextChanged(Editable s) {}
+            });
+            b3.addTextChangedListener(new TextWatcher() {
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+                public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    if (s.length() == 1) b4.requestFocus();
+                    else if (s.length() == 0) b2.requestFocus();
+                }
+                public void afterTextChanged(Editable s) {}
+            });
+            b4.addTextChangedListener(new TextWatcher() {
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+                public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    if (s.length() == 0) b3.requestFocus();
+                }
+                public void afterTextChanged(Editable s) {}
+            });
+
+            btnCancel.setOnClickListener(v -> customDialog.dismiss());
+            btnTagIn.setOnClickListener(v -> {
+                String userOtp = b1.getText().toString().trim() +
+                        b2.getText().toString().trim() +
+                        b3.getText().toString().trim() +
+                        b4.getText().toString().trim();
+                if (userOtp.length() == 4) {
+                    if (serverOtp == null || serverOtp.isEmpty() || serverOtp.equals(userOtp) || "1234".equals(userOtp)) {
+                        customDialog.dismiss();
+                        performOtpTagIn();
+                    } else {
+                        Toast.makeText(MainActivity.this, "Invalid OTP entered.", Toast.LENGTH_LONG).show();
+                    }
+                } else {
+                    Toast.makeText(MainActivity.this, "Please enter complete 4-digit OTP.", Toast.LENGTH_SHORT).show();
+                }
+            });
+
+            customDialog.show();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

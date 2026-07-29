@@ -1,92 +1,177 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:orientation="vertical"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"
-              android:id="@+id/activity_checklist"
-              android:background="@color/gray">
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/activity_checklist"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F8FAFC">
+
+    <!-- Top Royal Blue Header -->
     <LinearLayout
+        android:id="@+id/header_container"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="140dp"
+        android:background="@drawable/bg_header_blue"
         android:orientation="vertical"
-        android:paddingLeft="30dp"
-        android:paddingTop="30dp">
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
-        <TextView
-            android:layout_width="90dp"
-            android:layout_height="wrap_content"
-            android:text="VehicleId"/>
+        android:paddingHorizontal="20dp"
+        android:paddingTop="28dp">
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:id="@+id/vehicleid"
-            android:textStyle="bold"/>
-    </LinearLayout>
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
-        <TextView
-            android:layout_width="90dp"
-            android:layout_height="wrap_content"
-            android:text="TagIn Time"/>
+            android:text="Vehicle Tag Out"
+            android:textColor="#93C5FD"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:id="@+id/tagInTime"
-            android:textStyle="bold"/>
+            android:layout_marginTop="4dp"
+            android:text="Confirm Vehicle Tag Out"
+            android:textColor="#FFFFFF"
+            android:textSize="22sp"
+            android:textStyle="bold" />
     </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/header_container"
+        android:layout_marginTop="-25dp"
+        android:fillViewport="true">
+
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
-            <TextView
-                android:layout_width="90dp"
+            android:orientation="vertical"
+            android:paddingHorizontal="16dp"
+            android:paddingBottom="24dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="TagIn OMR"/>
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/tagInOMR"
-                android:textStyle="bold"/>
+                android:background="@drawable/bg_login_card"
+                android:elevation="4dp"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <!-- Vehicle Info Summary -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    android:background="@drawable/bg_phone_input"
+                    android:orientation="vertical"
+                    android:padding="14dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="6dp"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="110dp"
+                            android:layout_height="wrap_content"
+                            android:text="Vehicle ID:"
+                            android:textColor="#64748B"
+                            android:textSize="14sp" />
+
+                        <TextView
+                            android:id="@+id/vehicleid"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="#0F172A"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="6dp"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="110dp"
+                            android:layout_height="wrap_content"
+                            android:text="Tag In Time:"
+                            android:textColor="#64748B"
+                            android:textSize="14sp" />
+
+                        <TextView
+                            android:id="@+id/tagInTime"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="#0F172A"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="110dp"
+                            android:layout_height="wrap_content"
+                            android:text="Tag In OMR:"
+                            android:textColor="#64748B"
+                            android:textSize="14sp" />
+
+                        <TextView
+                            android:id="@+id/tagInOMR"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="#0F172A"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Odometer Photo Section -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="24dp"
+                    android:background="@drawable/bg_phone_input"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="14dp">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Tagout Odometer Photo"
+                        android:textColor="#0F172A"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <ImageView
+                        android:id="@+id/image_camera"
+                        android:layout_width="56dp"
+                        android:layout_height="56dp"
+                        android:contentDescription="@null"
+                        android:onClick="onClick"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/file_add" />
+                </LinearLayout>
+
+                <!-- Tag Out Action Button -->
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/btnTagOut"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:background="@drawable/bg_login_button"
+                    android:elevation="2dp"
+                    android:text="TAG OUT  ➔"
+                    android:textColor="#FFFFFF"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
         </LinearLayout>
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Tagout Odometer Reading"
-                android:textStyle="bold"
-                android:layout_gravity="center_vertical"
-                android:paddingEnd="8dp" />
-
-            <ImageView
-                android:layout_width="60dp"
-                android:layout_height="60dp"
-                android:id="@+id/image_camera"
-                android:onClick="onClick"
-                android:layout_gravity="center_vertical"
-                android:src="@drawable/file_add" />
-        </LinearLayout>
-
-    </LinearLayout>
-    <androidx.appcompat.widget.AppCompatButton
-        android:id="@+id/btnTagOut"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="50dp"
-        android:layout_marginLeft="20dp"
-        android:layout_marginRight="20dp"
-        android:padding="12dp"
-        android:textSize="18dp"
-        android:textColor="#ffffff"
-        android:background="#508fff"
-        android:text="Tag Out"/>
-
-</LinearLayout>
+    </ScrollView>
+</RelativeLayout>

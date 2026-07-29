@@ -1,194 +1,269 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F8FAFC">
+
+    <!-- Top Royal Blue Header -->
+    <LinearLayout
+        android:id="@+id/header_container"
+        android:layout_width="match_parent"
+        android:layout_height="140dp"
+        android:background="@drawable/bg_header_blue"
+        android:orientation="vertical"
+        android:paddingHorizontal="20dp"
+        android:paddingTop="28dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Vehicle Info"
+            android:textColor="#93C5FD"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Select Vehicle &amp; Driver"
+            android:textColor="#FFFFFF"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/header_container"
+        android:layout_marginTop="-25dp"
+        android:fillViewport="true">
+
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:fillViewport="true">
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:orientation="vertical"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent">
-    <TextView
-        android:layout_marginTop="20dp"
-        android:paddingLeft="20dp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Select Vehicle"
-        android:textSize="18dp"
-        android:textColor="@color/colorPrimaryDark"/>
-
-
-    <AutoCompleteTextView
-        android:id="@+id/autoVehText"
-        android:layout_marginLeft="20dp"
-        android:layout_marginRight="20dp"
-        android:textSize="18dp"
-        android:hint="Type vehicleid"
-        android:digits="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-        android:singleLine="true"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:maxLength="25"/>
-    <TextView
-        android:layout_marginTop="20dp"
-        android:paddingLeft="20dp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Enter Vehicle"
-        android:textSize="18dp"
-        android:id="@+id/txt"
-        android:visibility="gone"
-        android:textColor="@color/colorPrimaryDark"/>
-    <EditText
-        android:textSize="18dp"
-        android:layout_marginLeft="20dp"
-        android:layout_marginRight="20dp"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Enter VehicleId"
-        android:maxLength="15"
-        android:digits="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-        android:id="@+id/edittxt"
-        android:visibility="gone"/>
-    <RadioGroup
-        android:id="@+id/radioType"
-        android:paddingLeft="20dp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginTop="20dp">
-
-        <RadioButton
-            android:id="@+id/rbAssigned"
-            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Assigned Driver"
-            android:checked="true"/>
+            android:orientation="vertical"
+            android:paddingHorizontal="16dp"
+            android:paddingBottom="24dp">
 
-        <RadioButton
-            android:id="@+id/rbChange"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Driver Change"/>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_login_card"
+                android:elevation="4dp"
+                android:orientation="vertical"
+                android:padding="20dp">
 
-    </RadioGroup>
-    <TextView
-        android:layout_marginTop="20dp"
-        android:paddingLeft="20dp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/type"
-        android:text="Assigned Driver"
-        android:textSize="18dp"
-        android:textColor="@color/colorPrimaryDark"/>
+                <!-- Vehicle Selection Label -->
+                <TextView
+                    android:id="@+id/lbl_select_veh"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:text="SELECT VEHICLE"
+                    android:textColor="#475569"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
 
+                <!-- AutoComplete Vehicle ID Box -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    android:background="@drawable/bg_phone_input"
+                    android:paddingHorizontal="14dp"
+                    android:paddingVertical="10dp">
 
-    <AutoCompleteTextView
-        android:id="@+id/autoText"
-        android:layout_marginLeft="20dp"
-        android:layout_marginRight="20dp"
-        android:textSize="18dp"
-        android:hint="Type driver name"
-        android:singleLine="true"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:enabled="false"/>
+                    <AutoCompleteTextView
+                        android:id="@+id/autoVehText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@null"
+                        android:digits="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+                        android:hint="Type vehicle ID"
+                        android:singleLine="true"
+                        android:textColor="#0F172A"
+                        android:textColorHint="#94A3B8"
+                        android:textSize="15sp" />
+                </LinearLayout>
 
-    <TextView
-        android:layout_marginTop="20dp"
-        android:paddingLeft="20dp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Enter Driver Details"
-        android:textSize="18dp"
-        android:id="@+id/dritxt"
-        android:visibility="gone"
-        android:textColor="@color/colorPrimaryDark"/>
-    <EditText
-        android:textSize="18dp"
-        android:layout_marginLeft="20dp"
-        android:layout_marginRight="20dp"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Enter Driver Details"
-        android:maxLength="30"
-        android:digits="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ 0123456789"
-        android:id="@+id/driedittxt"
-        android:visibility="gone"/>
+                <TextView
+                    android:id="@+id/txt"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:text="ENTER VEHICLE"
+                    android:textColor="#475569"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
 
-    <!--<TextView
-        android:layout_marginTop="20dp"
-        android:paddingLeft="20dp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Driver Image"
-        android:textSize="18dp"
-        android:textColor="@color/colorPrimaryDark"/>
-    <ImageView
-        android:paddingLeft="20dp"
-        android:layout_width="120dp"
-        android:layout_height="120dp"
-        android:id="@+id/driver_image"
-        android:onClick="onClick"
-        android:src="@drawable/file_add" />-->
-    <TextView
-        android:layout_marginTop="20dp"
-        android:paddingLeft="20dp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/zonetxt"
-        android:text="Select Zone"
-        android:textSize="18dp"
-        android:visibility="gone"
-        android:textColor="@color/colorPrimaryDark"/>
+                <EditText
+                    android:id="@+id/edittxt"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    android:background="@drawable/bg_phone_input"
+                    android:digits="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+                    android:hint="Enter vehicle ID"
+                    android:maxLength="15"
+                    android:paddingHorizontal="14dp"
+                    android:paddingVertical="10dp"
+                    android:textColor="#0F172A"
+                    android:textSize="15sp"
+                    android:visibility="gone" />
 
+                <!-- RadioGroup Assignment Toggles -->
+                <RadioGroup
+                    android:id="@+id/radioType"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    android:orientation="horizontal">
 
-    <AutoCompleteTextView
-        android:id="@+id/zoneautoTxt"
-        android:layout_marginLeft="20dp"
-        android:layout_marginRight="20dp"
-        android:textSize="18dp"
-        android:hint="Type Zone"
-        android:singleLine="true"
-        android:visibility="gone"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+                    <RadioButton
+                        android:id="@+id/rbAssigned"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:checked="true"
+                        android:text="Assigned Driver"
+                        android:textColor="#1E293B"
+                        android:textSize="14sp" />
 
-    <TextView
-        android:layout_marginTop="20dp"
-        android:paddingLeft="20dp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/twrtxt"
-        android:text="Select Tower ID"
-        android:textSize="18dp"
-        android:visibility="gone"
-        android:textColor="@color/colorPrimaryDark"/>
+                    <RadioButton
+                        android:id="@+id/rbChange"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Driver Change"
+                        android:textColor="#1E293B"
+                        android:textSize="14sp" />
+                </RadioGroup>
 
+                <!-- Driver Name Label -->
+                <TextView
+                    android:id="@+id/type"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:text="ASSIGNED DRIVER"
+                    android:textColor="#475569"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
 
-    <AutoCompleteTextView
-        android:id="@+id/twrautoTxt"
-        android:layout_marginLeft="20dp"
-        android:layout_marginRight="20dp"
-        android:textSize="18dp"
-        android:hint="Type Tower ID"
-        android:singleLine="true"
-        android:visibility="gone"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    android:background="@drawable/bg_phone_input"
+                    android:paddingHorizontal="14dp"
+                    android:paddingVertical="10dp">
 
-    <androidx.appcompat.widget.AppCompatButton
-        android:id="@+id/btn"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:layout_marginBottom="20dp"
-        android:layout_marginLeft="20dp"
-        android:layout_marginRight="20dp"
-        android:padding="12dp"
-        android:textSize="18dp"
-        android:textColor="#ffffff"
-        android:background="#508fff"
-        android:text="Continue"/>
+                    <AutoCompleteTextView
+                        android:id="@+id/autoText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@null"
+                        android:enabled="false"
+                        android:hint="Type driver name"
+                        android:singleLine="true"
+                        android:textColor="#0F172A"
+                        android:textColorHint="#94A3B8"
+                        android:textSize="15sp" />
+                </LinearLayout>
 
-</LinearLayout>
+                <TextView
+                    android:id="@+id/dritxt"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:text="DRIVER DETAILS"
+                    android:textColor="#475569"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
+
+                <EditText
+                    android:id="@+id/driedittxt"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    android:background="@drawable/bg_phone_input"
+                    android:digits="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ 0123456789"
+                    android:hint="Enter driver details"
+                    android:maxLength="30"
+                    android:paddingHorizontal="14dp"
+                    android:paddingVertical="10dp"
+                    android:textColor="#0F172A"
+                    android:textSize="15sp"
+                    android:visibility="gone" />
+
+                <!-- Optional Zone & Tower ID -->
+                <TextView
+                    android:id="@+id/zonetxt"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:text="ZONE"
+                    android:textColor="#475569"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
+
+                <AutoCompleteTextView
+                    android:id="@+id/zoneautoTxt"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    android:background="@drawable/bg_phone_input"
+                    android:hint="Type zone"
+                    android:paddingHorizontal="14dp"
+                    android:paddingVertical="10dp"
+                    android:singleLine="true"
+                    android:textColor="#0F172A"
+                    android:textSize="15sp"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/twrtxt"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:text="TOWER ID"
+                    android:textColor="#475569"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
+
+                <AutoCompleteTextView
+                    android:id="@+id/twrautoTxt"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    android:background="@drawable/bg_phone_input"
+                    android:hint="Type tower ID"
+                    android:paddingHorizontal="14dp"
+                    android:paddingVertical="10dp"
+                    android:singleLine="true"
+                    android:textColor="#0F172A"
+                    android:textSize="15sp"
+                    android:visibility="gone" />
+
+                <!-- Action Button -->
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/btn"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/bg_login_button"
+                    android:elevation="2dp"
+                    android:text="CONTINUE  ➔"
+                    android:textColor="#FFFFFF"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+        </LinearLayout>
     </ScrollView>
+</RelativeLayout>

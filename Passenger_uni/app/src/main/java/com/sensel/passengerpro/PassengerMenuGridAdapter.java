@@ -49,6 +49,7 @@ public class PassengerMenuGridAdapter extends BaseAdapter {
 
         TextView textView = grid.findViewById(R.id.gridview_text);
         ImageView imageView = grid.findViewById(R.id.gridview_image);
+        View iconBox = grid.findViewById(R.id.icon_box_container);
 
         textView.setText(labels[position]);
         if (isEmpty != null && position < isEmpty.length && isEmpty[position]) {
@@ -58,6 +59,29 @@ public class PassengerMenuGridAdapter extends BaseAdapter {
         } else {
             imageView.setVisibility(View.VISIBLE);
             imageView.setImageResource(iconResIds[position]);
+
+            String label = labels[position];
+            if (iconBox != null && label != null) {
+                if (label.contains("QR")) {
+                    iconBox.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFFEEF2FF));
+                } else if (label.contains("OTP")) {
+                    iconBox.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFFE0F2FE));
+                } else if (label.contains("Track")) {
+                    iconBox.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFFF3E8FF));
+                } else if (label.contains("Tagout") || label.contains("Tag Out")) {
+                    iconBox.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFFDCFCE7));
+                } else if (label.contains("Location")) {
+                    iconBox.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFFFEF3C7));
+                } else if (label.contains("Notif")) {
+                    iconBox.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFFE0E7FF));
+                } else if (label.contains("Panic")) {
+                    iconBox.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFFFEE2E2));
+                } else if (label.contains("Logout")) {
+                    iconBox.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFFFFE4E6));
+                } else {
+                    iconBox.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFFCCFBF1));
+                }
+            }
         }
         return grid;
     }

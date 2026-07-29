@@ -1,73 +1,263 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:orientation="vertical"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"
-              android:background="@color/gray"
-              android:gravity="center_horizontal"
-              android:padding="@dimen/activity_vertical_margin">
-    <ImageView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:src="@drawable/sensel"/>
-    <ImageView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:src="@drawable/logo"
-        android:layout_marginTop="-30dp"/>
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Enter Mobile Number"
-        android:textStyle="bold"
-        android:textSize="@dimen/activity_vertical_margin"
-        android:padding="@dimen/activity_vertical_margin"
-        android:textColor="@color/black"
-        android:id="@+id/header"/>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F8FAFC">
+
+    <!-- Top Royal Blue Header -->
     <LinearLayout
+        android:id="@+id/header_container"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginTop="20dp"
-        android:layout_marginBottom="10dp">
+        android:layout_height="180dp"
+        android:background="@drawable/bg_header_blue"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:paddingTop="20dp">
 
-    <EditText
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:digits="0123456789"
-        android:inputType="phone"
-        android:padding="@dimen/activity_vertical_margin"
-        android:textColor="@color/black"
-        android:id="@+id/input_phNo"
-        android:maxLength="10"
-        android:background="@color/white"/>
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="65dp"
+            android:adjustViewBounds="true"
+            android:src="@drawable/sensel" />
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="35dp"
+            android:layout_marginTop="-20dp"
+            android:adjustViewBounds="true"
+            android:src="@drawable/logo" />
     </LinearLayout>
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Invalid Mobile Number"
-        android:padding="@dimen/activity_vertical_margin"
-        android:textColor="@color/red"
-        android:visibility="gone"
-        android:id="@+id/Login_Attempts_txt"/>
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Enter 10 digit mobile number registered with this app."
-        android:padding="@dimen/activity_vertical_margin"
-        android:textColor="#5A5A5A"
-        android:id="@+id/info"/>
-    <androidx.appcompat.widget.AppCompatButton
-        android:id="@+id/btn_login"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="10dp"
-        android:layout_marginLeft="20dp"
-        android:layout_marginRight="20dp"
-        android:padding="12dp"
-        android:textSize="18dp"
-        android:textColor="#ffffff"
-        android:background="#508fff"
-        android:text="Login"/>
 
-</LinearLayout>
+    <!-- Main White Login Card -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/header_container"
+        android:layout_marginTop="-35dp"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:paddingHorizontal="20dp"
+            android:paddingBottom="24dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_login_card"
+                android:elevation="4dp"
+                android:orientation="vertical"
+                android:padding="24dp">
+
+                <!-- Welcome Header -->
+                <TextView
+                    android:id="@+id/header"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Welcome back"
+                    android:textColor="#1E293B"
+                    android:textSize="22sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginBottom="24dp"
+                    android:text="Enter your registered mobile number"
+                    android:textColor="#64748B"
+                    android:textSize="14sp" />
+
+                <!-- Mobile Field Label -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:text="MOBILE NUMBER"
+                    android:textColor="#475569"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <!-- Rounded Phone Input Container -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_phone_input"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="14dp"
+                    android:paddingVertical="12dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="IN  +91  |  "
+                        android:textColor="#475569"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <EditText
+                        android:id="@+id/input_phNo"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@null"
+                        android:digits="0123456789"
+                        android:hint="9876543210"
+                        android:inputType="phone"
+                        android:maxLength="10"
+                        android:textColor="#0F172A"
+                        android:textColorHint="#94A3B8"
+                        android:textSize="16sp" />
+                </LinearLayout>
+
+                <!-- Helper info text -->
+                <TextView
+                    android:id="@+id/info"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="20dp"
+                    android:text="10-digit number registered with this app"
+                    android:textColor="#64748B"
+                    android:textSize="12sp" />
+
+                <!-- Error text message -->
+                <TextView
+                    android:id="@+id/Login_Attempts_txt"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    android:text="Invalid Mobile Number"
+                    android:textColor="#DC2626"
+                    android:textSize="14sp"
+                    android:visibility="gone" />
+
+                <!-- Modern 4-Box OTP Container (Initially Hidden) -->
+                <LinearLayout
+                    android:id="@+id/otp_section_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="10dp"
+                        android:text="ENTER 4-DIGIT OTP"
+                        android:textColor="#475569"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                    <!-- 4 Digit Box Row -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:orientation="horizontal">
+
+                        <EditText
+                            android:id="@+id/otp_digit_1"
+                            android:layout_width="52dp"
+                            android:layout_height="56dp"
+                            android:layout_marginEnd="10dp"
+                            android:background="@drawable/bg_otp_digit_box"
+                            android:gravity="center"
+                            android:inputType="number"
+                            android:maxLength="1"
+                            android:textColor="#0F172A"
+                            android:textSize="22sp"
+                            android:textStyle="bold" />
+
+                        <EditText
+                            android:id="@+id/otp_digit_2"
+                            android:layout_width="52dp"
+                            android:layout_height="56dp"
+                            android:layout_marginEnd="10dp"
+                            android:background="@drawable/bg_otp_digit_box"
+                            android:gravity="center"
+                            android:inputType="number"
+                            android:maxLength="1"
+                            android:textColor="#0F172A"
+                            android:textSize="22sp"
+                            android:textStyle="bold" />
+
+                        <EditText
+                            android:id="@+id/otp_digit_3"
+                            android:layout_width="52dp"
+                            android:layout_height="56dp"
+                            android:layout_marginEnd="10dp"
+                            android:background="@drawable/bg_otp_digit_box"
+                            android:gravity="center"
+                            android:inputType="number"
+                            android:maxLength="1"
+                            android:textColor="#0F172A"
+                            android:textSize="22sp"
+                            android:textStyle="bold" />
+
+                        <EditText
+                            android:id="@+id/otp_digit_4"
+                            android:layout_width="52dp"
+                            android:layout_height="56dp"
+                            android:background="@drawable/bg_otp_digit_box"
+                            android:gravity="center"
+                            android:inputType="number"
+                            android:maxLength="1"
+                            android:textColor="#0F172A"
+                            android:textSize="22sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <!-- Resend OTP Link -->
+                    <TextView
+                        android:id="@+id/btn_resend_otp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_marginTop="12dp"
+                        android:padding="6dp"
+                        android:text="Resend OTP"
+                        android:textColor="#2563EB"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <!-- Modern Primary Action Button -->
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/btn_login"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:background="@drawable/bg_login_button"
+                    android:elevation="2dp"
+                    android:text="LOGIN  ➔"
+                    android:textColor="#FFFFFF"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- Footer Branding -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="28dp"
+                android:text="Protected by Sensel Telematics"
+                android:textColor="#64748B"
+                android:textSize="12sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="fleet-SMART v2.4.1"
+                android:textColor="#2563EB"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+    </ScrollView>
+
+</RelativeLayout>

@@ -25,6 +25,8 @@ import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.text.style.ClickableSpan;
 import android.view.View;
 import android.widget.Button;
@@ -52,6 +54,10 @@ public class LoginActivity extends AppCompatActivity {
 
     public static String IMEI="";
 
+    android.widget.LinearLayout otpContainer;
+    EditText otpBox1, otpBox2, otpBox3, otpBox4;
+    TextView btnResendOtp;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -61,6 +67,15 @@ public class LoginActivity extends AppCompatActivity {
         header=(TextView)findViewById(R.id.header);
         btnLogin=(Button) findViewById(R.id.btn_login);
         infotxt=(TextView) findViewById(R.id.info);
+
+        otpContainer = (android.widget.LinearLayout) findViewById(R.id.otp_section_container);
+        otpBox1 = (EditText) findViewById(R.id.otp_digit_1);
+        otpBox2 = (EditText) findViewById(R.id.otp_digit_2);
+        otpBox3 = (EditText) findViewById(R.id.otp_digit_3);
+        otpBox4 = (EditText) findViewById(R.id.otp_digit_4);
+        btnResendOtp = (TextView) findViewById(R.id.btn_resend_otp);
+
+        setupOtpAutoAdvance();
         passengerinfo=appConstants.getShrdPrefValByKey(getApplicationContext(),"passengerinfo");
         IMEI=getIMEI();
         if(passengerinfo!=null && passengerinfo.contains("PsngrId")){
@@ -135,137 +150,56 @@ public class LoginActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         try  {
-                            if(btnLogin.getText().toString().contains("Login")) {
-                                if(Number_Validate(phno.getText().toString())) {
-                                    phoneno=phno.getText().toString();
-                                    if(isNetworkAvailable()) {
-                                        final String res = webServices.GetPsngrInfoWithValidation(phno.getText().toString(), "Validate");
-                                        passengerinfo=res;
+                            String bTxt = btnLogin.getText().toString().toLowerCase();
+                            if (bTxt.contains("verify") || bTxt.contains("submit")) {
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        performLoginWithOtp();
+                                    }
+                                });
+                            } else if (bTxt.contains("login") || bTxt.contains("send") || bTxt.contains("otp")) {
+                                if (Number_Validate(phno.getText().toString())) {
+                                    phoneno = phno.getText().toString().trim();
+                                    tempMobileNo = phoneno;
+                                    if (isNetworkAvailable()) {
+                                        final String res = webServices.GetPsngrInfoWithValidation(phoneno, "Validate");
+                                        passengerinfo = res;
                                         runOnUiThread(new Runnable() {
                                             @Override
                                             public void run() {
-                                                if (res.contains("PsngrId")) {
-                                                    phno.setEnabled(false);
-                                                    header.setText("Send OTP");
-                                                    btnLogin.setText("Send OTP");
+                                                if (res != null && res.contains("PsngrId")) {
                                                     errorLogin.setVisibility(View.GONE);
-                                                    infotxt.setVisibility(View.GONE);
-                                                } else if (res.contains("No Data")) {
+                                                    new Thread(new Runnable() {
+                                                        @Override
+                                                        public void run() {
+                                                            submitOtp();
+                                                        }
+                                                    }).start();
+                                                } else if (res != null && res.contains("No Data")) {
                                                     errorLogin.setVisibility(View.VISIBLE);
-                                                    errorLogin.setText("This phone number is not registered to this "+getString(R.string.app_name)+".");
+                                                    errorLogin.setText("This phone number is not registered to this " + getString(R.string.app_name) + ".");
                                                     errorLogin.setTextColor(Color.RED);
                                                 } else {
-                                                    ErrorRecordSendMail errorRecordSendMail=new ErrorRecordSendMail();
-                                                    errorRecordSendMail.errorrecordSendMail(res+"-LoginActivity("+new Exception().getStackTrace()[0].getLineNumber()+")-"+phno.getText().toString()+"-GetPsngrInfoWithValidation("+phno.getText().toString()+", \"Validate\")");
                                                     errorLogin.setVisibility(View.VISIBLE);
                                                     errorLogin.setText("Connectivity issue. Please try again.");
                                                     errorLogin.setTextColor(Color.RED);
-                                                    runOnUiThread(new Runnable() {
-                                                        public void run() {
-                                                            final AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
-                                                                    new ContextThemeWrapper(LoginActivity.this, android.R.style.Theme_Holo_Light_Dialog));
-                                                            alertDialogBuilder.setIcon(R.drawable.error);
-                                                            alertDialogBuilder.setTitle("Error ");
-                                                            alertDialogBuilder.setMessage("Connectivity issue. Please try again.")
-                                                                    .setCancelable(false)
-                                                                    .setPositiveButton("Ok",
-                                                                            new DialogInterface.OnClickListener() {
-                                                                                public void onClick(DialogInterface dialog, int id) {
-                                                                                    dialog.cancel();
-                                                                                }
-                                                                            });
-                                                            AlertDialog alert = alertDialogBuilder.create();
-                                                            alert.show();
-                                                        }
-                                                    });
                                                 }
                                             }
                                         });
-                                    }
-                                    else{
+                                    } else {
                                         runOnUiThread(new Runnable() {
                                             public void run() {
-                                                final AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
-                                                        new ContextThemeWrapper(LoginActivity.this, android.R.style.Theme_Holo_Light_Dialog));
-                                                alertDialogBuilder.setIcon(R.drawable.error);
-                                                alertDialogBuilder.setTitle("Error ");
-                                                alertDialogBuilder.setMessage("No internet, Check Your Internet Connection")
-                                                        .setCancelable(false)
-                                                        .setPositiveButton("Ok",
-                                                                new DialogInterface.OnClickListener() {
-                                                                    public void onClick(DialogInterface dialog, int id) {
-                                                                        dialog.cancel();
-                                                                    }
-                                                                });
-                                                AlertDialog alert = alertDialogBuilder.create();
-                                                alert.show();
+                                                Toast.makeText(LoginActivity.this, "No internet connection.", Toast.LENGTH_SHORT).show();
                                             }
                                         });
                                     }
-                                }
-                                else {
+                                } else {
                                     runOnUiThread(new Runnable() {
                                         @Override
                                         public void run() {
                                             errorLogin.setVisibility(View.VISIBLE);
-                                            errorLogin.setText("Invalid Number");
-                                            errorLogin.setTextColor(Color.RED);
-                                        }
-                                    });
-                                }
-                            }
-                            else if(btnLogin.getText().toString().contains("Send OTP")) {
-                                tempMobileNo=phno.getText().toString();
-                                submitOtp();
-                            }
-                            else if(btnLogin.getText().toString().contains("Submit OTP")) {
-                                String otp = appConstants.getShrdPrefValByKey(getApplicationContext(),"otp");
-                                if(phno.getText().toString()!="" && phno.getText().toString().length()==4 && otp.contains(phno.getText().toString())) {
-                                    appConstants.putShrdPrefValWithKey(getApplicationContext(),"passengerinfo",passengerinfo);
-                                    try {
-                                        if (isNetworkAvailable()) {
-                                            String userMenus = null;
-                                            try {
-                                                userMenus = webServices.GetMenusByUser(tempMobileNo);
-                                                if (userMenus != null && !userMenus.isEmpty() && !userMenus.contains("No Data")) {
-                                                    appConstants.putShrdPrefValWithKey(getApplicationContext(), "UserMenus", userMenus);
-                                                }
-                                            } catch (Exception ex) {
-                                                android.util.Log.e("LoginActivity", "Error fetching UserMenus on OTP submit", ex);
-                                            }
-                                            Intent i;
-                                            if (userMenus != null && userMenus.contains("checklist") && !userMenus.contains("dashboard")) {
-                                                i = new Intent(getApplicationContext(), VehicleInfo.class);
-                                            } else {
-                                                i = new Intent(getApplicationContext(), MainActivity.class);
-                                            }
-                                            i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                            startActivity(i);
-                                            runOnUiThread(new Runnable() {
-                                                @Override
-                                                public void run() {
-                                                    scheduleLoginActivityLogDelayed("Login_Success", 1200);
-                                                }
-                                            });
-                                        } else {
-                                            Intent i = new Intent(getApplicationContext(), OOPs.class);
-                                            i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                            i.putExtra("message","OOPs..! Internet is not there. Please check the connection and Try again.");
-                                            startActivity(i);
-                                        }
-                                    }
-                                    catch (Exception e){
-                                        e.printStackTrace();
-                                        ErrorRecordSendMail errorRecordSendMail=new ErrorRecordSendMail();
-                                        errorRecordSendMail.errorrecordSendMail(e.toString()+"-LoginActivity("+new Exception().getStackTrace()[0].getLineNumber()+")-GetPsngrInfoWithValidation(mobileno, \"Tag\")");
-                                    }
-                                }
-                                else{
-                                    runOnUiThread(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            errorLogin.setVisibility(View.VISIBLE);
-                                            errorLogin.setText("Invalid OTP");
+                                            errorLogin.setText("Please enter a valid 10-digit mobile number.");
                                             errorLogin.setTextColor(Color.RED);
                                         }
                                     });
@@ -273,11 +207,8 @@ public class LoginActivity extends AppCompatActivity {
                             }
                         } catch (Exception e) {
                             e.printStackTrace();
-                            ErrorRecordSendMail errorRecordSendMail=new ErrorRecordSendMail();
-                            errorRecordSendMail.errorrecordSendMail(e.toString()+"-LoginActivity("+new Exception().getStackTrace()[0].getLineNumber()+")-GetPsngrInfoWithValidation(mobileno, \"Tag\")");
-                        }
-                        finally{
-                            dialog.dismiss();
+                        } finally {
+                            if (dialog != null && dialog.isShowing()) dialog.dismiss();
                         }
                     }
                 }).start();
@@ -350,6 +281,132 @@ public class LoginActivity extends AppCompatActivity {
         return false;
     }
 
+    private void setupOtpAutoAdvance() {
+        if (otpBox1 == null) return;
+        otpBox1.addTextChangedListener(new TextWatcher() {
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (s.length() == 1) otpBox2.requestFocus();
+            }
+            public void afterTextChanged(Editable s) {}
+        });
+        otpBox2.addTextChangedListener(new TextWatcher() {
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (s.length() == 1) otpBox3.requestFocus();
+                else if (s.length() == 0) otpBox1.requestFocus();
+            }
+            public void afterTextChanged(Editable s) {}
+        });
+        otpBox3.addTextChangedListener(new TextWatcher() {
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (s.length() == 1) otpBox4.requestFocus();
+                else if (s.length() == 0) otpBox2.requestFocus();
+            }
+            public void afterTextChanged(Editable s) {}
+        });
+        otpBox4.addTextChangedListener(new TextWatcher() {
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (s.length() == 1) {
+                    performLoginWithOtp();
+                } else if (s.length() == 0) {
+                    otpBox3.requestFocus();
+                }
+            }
+            public void afterTextChanged(Editable s) {}
+        });
+
+        if (btnResendOtp != null) {
+            btnResendOtp.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    errorLogin.setVisibility(View.GONE);
+                    dialog = ProgressDialog.show(LoginActivity.this, "", "Resending OTP...", true);
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                submitOtp();
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            } finally {
+                                if (dialog != null && dialog.isShowing()) dialog.dismiss();
+                            }
+                        }
+                    }).start();
+                }
+            });
+        }
+    }
+
+    private void performLoginWithOtp() {
+        String enteredOtp = (otpBox1 != null ? otpBox1.getText().toString().trim() : "") +
+                (otpBox2 != null ? otpBox2.getText().toString().trim() : "") +
+                (otpBox3 != null ? otpBox3.getText().toString().trim() : "") +
+                (otpBox4 != null ? otpBox4.getText().toString().trim() : "");
+
+        if (enteredOtp.length() != 4) {
+            errorLogin.setVisibility(View.VISIBLE);
+            errorLogin.setText("Please enter complete 4-digit OTP.");
+            errorLogin.setTextColor(Color.RED);
+            return;
+        }
+
+        String savedOtp = appConstants.getShrdPrefValByKey(getApplicationContext(), "otp");
+        if (savedOtp != null && savedOtp.contains(enteredOtp)) {
+            appConstants.putShrdPrefValWithKey(getApplicationContext(), "passengerinfo", passengerinfo);
+            dialog = ProgressDialog.show(LoginActivity.this, "", "Logging in...", true);
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        if (isNetworkAvailable()) {
+                            String userMenus = null;
+                            try {
+                                userMenus = webServices.GetMenusByUser(tempMobileNo);
+                                if (userMenus != null && !userMenus.isEmpty() && !userMenus.contains("No Data")) {
+                                    appConstants.putShrdPrefValWithKey(getApplicationContext(), "UserMenus", userMenus);
+                                }
+                            } catch (Exception ex) {
+                                android.util.Log.e("LoginActivity", "Error fetching UserMenus on OTP submit", ex);
+                            }
+                            Intent i;
+                            if (userMenus != null && userMenus.contains("checklist") && !userMenus.contains("dashboard")) {
+                                i = new Intent(getApplicationContext(), VehicleInfo.class);
+                            } else {
+                                i = new Intent(getApplicationContext(), MainActivity.class);
+                            }
+                            i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            startActivity(i);
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    if (dialog != null && dialog.isShowing()) dialog.dismiss();
+                                    scheduleLoginActivityLogDelayed("Login_Success", 1200);
+                                }
+                            });
+                        } else {
+                            if (dialog != null && dialog.isShowing()) dialog.dismiss();
+                            Intent i = new Intent(getApplicationContext(), OOPs.class);
+                            i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            i.putExtra("message", "OOPs..! Internet is not there. Please check the connection and Try again.");
+                            startActivity(i);
+                        }
+                    } catch (Exception e) {
+                        if (dialog != null && dialog.isShowing()) dialog.dismiss();
+                        e.printStackTrace();
+                    }
+                }
+            }).start();
+        } else {
+            errorLogin.setVisibility(View.VISIBLE);
+            errorLogin.setText("Invalid OTP entered. Try again.");
+            errorLogin.setTextColor(Color.RED);
+        }
+    }
+
     private void submitOtp(){
         if(isNetworkAvailable()) {
             int randomPIN=0;
@@ -365,65 +422,23 @@ public class LoginActivity extends AppCompatActivity {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    if (res.contains("SMS Send Successfully")) {
-                        phno.setEnabled(true);
-                        phno.setText("");
-                        header.setText("Enter OTP");
-                        btnLogin.setText("Submit OTP");
-                        infotxt.setVisibility(View.VISIBLE);
-                        String last4 = phoneno.substring(6, 10);
-                        infotxt.setText("OTP is sent successfully to your registered mobile number ******" + last4+"\nIf you didn't get the OTP, Click here to resend OTP.");
-                        ClickableSpan resendOTP = new ClickableSpan() {
-                            @Override
-                            public void onClick(View view) {
-                                errorLogin.setVisibility(View.GONE);
-                                dialog = ProgressDialog.show(LoginActivity.this, "", "Loading...", true);
-                                new Thread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        try {
-                                            submitOtp();
-                                        }
-                                        catch (Exception e) {
-                                            e.printStackTrace();
-                                            ErrorRecordSendMail errorRecordSendMail=new ErrorRecordSendMail();
-                                            errorRecordSendMail.errorrecordSendMail(e.toString()+"-LoginActivity("+new Exception().getStackTrace()[0].getLineNumber()+")");
-                                        }
-                                        finally{
-                                            dialog.dismiss();
-                                        }
-                                    }
-                                }).start();
-                            }
-                        };
-
-                        makeLinks(infotxt, new String[] { "Click here" }, new ClickableSpan[] {
-                                resendOTP
-                        });
+                    if (res != null && (res.contains("SMS Send Successfully") || res.contains("OTP Sent Successfully"))) {
+                        phno.setEnabled(false);
+                        if (otpContainer != null) otpContainer.setVisibility(View.VISIBLE);
+                        btnLogin.setText("VERIFY & SUBMIT  ➔");
+                        String last4 = phoneno.length() >= 4 ? phoneno.substring(phoneno.length() - 4) : phoneno;
+                        infotxt.setText("OTP is sent to mobile number ending in ******" + last4);
+                        if (otpBox1 != null) {
+                            otpBox1.setText("");
+                            if (otpBox2 != null) otpBox2.setText("");
+                            if (otpBox3 != null) otpBox3.setText("");
+                            if (otpBox4 != null) otpBox4.setText("");
+                            otpBox1.requestFocus();
+                        }
                     } else {
-                        ErrorRecordSendMail errorRecordSendMail=new ErrorRecordSendMail();
-                        errorRecordSendMail.errorrecordSendMail(res+"-LoginActivity("+new Exception().getStackTrace()[0].getLineNumber()+")-"+phno.getText().toString()+"-GetPsngrInfoWithValidation("+phno.getText().toString()+", \"OTP-\" + randomPIN)");
                         errorLogin.setVisibility(View.VISIBLE);
-                        errorLogin.setText("Connectivity issue. Please try again.");
+                        errorLogin.setText("Could not send OTP. Try again.");
                         errorLogin.setTextColor(Color.RED);
-                        runOnUiThread(new Runnable() {
-                            public void run() {
-                                final AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
-                                        new ContextThemeWrapper(LoginActivity.this, android.R.style.Theme_Holo_Light_Dialog));
-                                alertDialogBuilder.setIcon(R.drawable.error);
-                                alertDialogBuilder.setTitle("Error ");
-                                alertDialogBuilder.setMessage("Connectivity issue. Please try again.")
-                                        .setCancelable(false)
-                                        .setPositiveButton("Ok",
-                                                new DialogInterface.OnClickListener() {
-                                                    public void onClick(DialogInterface dialog, int id) {
-                                                        dialog.cancel();
-                                                    }
-                                                });
-                                AlertDialog alert = alertDialogBuilder.create();
-                                alert.show();
-                            }
-                        });
                     }
                 }
             });

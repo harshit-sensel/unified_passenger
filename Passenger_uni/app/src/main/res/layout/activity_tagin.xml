@@ -1,46 +1,75 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/activity_checklist"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/gray"
-    android:orientation="vertical">
+    android:background="#F8FAFC">
+
+    <!-- Top Royal Blue Header -->
+    <LinearLayout
+        android:id="@+id/header_container"
+        android:layout_width="match_parent"
+        android:layout_height="140dp"
+        android:background="@drawable/bg_header_blue"
+        android:orientation="vertical"
+        android:paddingHorizontal="20dp"
+        android:paddingTop="28dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="QR Vehicle Scan"
+            android:textColor="#93C5FD"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Tag In with QR Code"
+            android:textColor="#FFFFFF"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+    </LinearLayout>
 
     <LinearLayout
         android:id="@+id/main_layout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="5dp"
-        android:layout_marginRight="5dp"
-        android:background="@color/white"
-        android:orientation="vertical">
-
-        <ListView
-            android:id="@+id/listRules"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"></ListView>
-    </LinearLayout>
-    <!--<View
-        android:layout_width="fill_parent"
-        android:layout_height="3dip"
-        android:background="@color/gray" />
-    <LinearLayout
-        android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_below="@id/header_container"
+        android:layout_marginTop="-25dp"
         android:orientation="vertical"
-        android:layout_marginBottom="50dp">
-
-    </LinearLayout>-->
-    <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp">
+        android:paddingHorizontal="16dp"
+        android:paddingBottom="16dp">
 
         <LinearLayout
-            android:id="@+id/image_container"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
+            android:background="@drawable/bg_login_card"
+            android:elevation="4dp"
             android:orientation="vertical"
-            android:padding="8dp" />
-    </ScrollView>
-</LinearLayout>
+            android:padding="16dp">
+
+            <ListView
+                android:id="@+id/listRules"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:divider="@null"
+                android:dividerHeight="8dp" />
+
+            <ScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp">
+
+                <LinearLayout
+                    android:id="@+id/image_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" />
+            </ScrollView>
+
+        </LinearLayout>
+    </LinearLayout>
+</RelativeLayout>

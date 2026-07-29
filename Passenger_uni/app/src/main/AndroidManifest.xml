@@ -30,11 +30,13 @@
         android:theme="@style/AppTheme">
 
         <activity android:name=".MainActivity"
-                  android:configChanges="orientation|screenSize">
+                  android:configChanges="orientation|screenSize"
+                  android:theme="@style/Theme.AppCompat.NoActionBar">
         </activity>
         <activity android:name=".QRScannerActivity"
                   android:configChanges="orientation|screenSize"
-                  android:screenOrientation="portrait">
+                  android:screenOrientation="portrait"
+                  android:theme="@style/Theme.AppCompat.NoActionBar">
         </activity>
         <activity android:name=".LoginActivity"
                   android:configChanges="orientation|screenSize"
@@ -46,13 +48,16 @@
             </intent-filter>
         </activity>
         <activity android:name=".TagOut"
-                  android:configChanges="orientation|screenSize">
+                  android:configChanges="orientation|screenSize"
+                  android:theme="@style/Theme.AppCompat.NoActionBar">
         </activity>
         <activity android:name=".OOPs"
-                  android:configChanges="orientation|screenSize">
+                  android:configChanges="orientation|screenSize"
+                  android:theme="@style/Theme.AppCompat.NoActionBar">
         </activity>
         <activity android:name=".VehicleInfo"
-                  android:configChanges="orientation|screenSize">
+                  android:configChanges="orientation|screenSize"
+                  android:theme="@style/Theme.AppCompat.NoActionBar">
         </activity>
         <activity android:name=".TagTrack"
                   android:configChanges="orientation|screenSize"
@@ -74,12 +79,14 @@
         <activity android:name=".Notifications"
                   android:label="Notifications"
                   android:configChanges="orientation|screenSize"
-                  android:screenOrientation="portrait">
+                  android:screenOrientation="portrait"
+                  android:theme="@style/Theme.AppCompat.NoActionBar">
         </activity>
         <activity android:name=".HomeLocation"
             android:label="Home Location"
             android:configChanges="orientation|screenSize"
-            android:screenOrientation="portrait">
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.AppCompat.NoActionBar">
         </activity>
         <activity android:name=".HomeLocationOnMap"
             android:label="Home Location On Map"

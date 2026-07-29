@@ -1,67 +1,114 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:orientation="vertical"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"
-              android:padding="@dimen/activity_horizontal_margin">
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Assigned Vehicle Number"
-        android:layout_gravity="center_horizontal"/>
-    <TextView
-        android:layout_width="wrap_content"
-        android:textSize="20dp"
-        android:textStyle="bold"
-        android:layout_height="wrap_content"
-        android:id="@+id/vehicleid"
-        android:layout_gravity="center_horizontal"/>
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Change Assigned Vehicle"
-        android:id="@+id/vehChangeLink"
-        android:visibility="gone"
-        android:layout_gravity="center_horizontal"/>
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Tag In Time"
-        android:id="@+id/tagrow"
-        android:layout_marginTop="30dp"
-        android:layout_gravity="center_horizontal"/>
-    <TextView
-        android:layout_width="wrap_content"
-        android:textSize="20dp"
-        android:textStyle="bold"
-        android:layout_height="wrap_content"
-        android:id="@+id/tagInTime"
-        android:layout_gravity="center_horizontal"/>
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Tag In Time"
-        android:id="@+id/comment"
-        android:layout_marginTop="30dp"
-        android:layout_gravity="center_horizontal"/>
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/taginCondition"
-        android:layout_marginTop="30dp"
-        android:visibility="gone"
-        android:layout_gravity="center_horizontal"/>
-    <androidx.appcompat.widget.AppCompatButton
-        android:id="@+id/btntag"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="50dp"
-        android:layout_marginRight="20dp"
-        android:layout_marginLeft="20dp"
-        android:padding="12dp"
-        android:textSize="18dp"
-        android:textColor="#ffffff"
-        android:background="#508fff"
-        android:text="Tag Out"/>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F8FAFC"
+    android:fillViewport="true">
 
-</LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Vehicle Details Card -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_login_card"
+            android:elevation="4dp"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:text="ASSIGNED VEHICLE NUMBER"
+                android:textColor="#64748B"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/vehicleid"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="4dp"
+                android:textColor="#0F172A"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/vehChangeLink"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="6dp"
+                android:padding="4dp"
+                android:text="Change Assigned Vehicle"
+                android:textColor="#2563EB"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginVertical="16dp"
+                android:background="#E2E8F0" />
+
+            <TextView
+                android:id="@+id/tagrow"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:text="TAG IN TIME"
+                android:textColor="#64748B"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tagInTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="4dp"
+                android:textColor="#0F172A"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/comment"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="12dp"
+                android:textColor="#64748B"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/taginCondition"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="8dp"
+                android:textColor="#64748B"
+                android:textSize="14sp"
+                android:visibility="gone" />
+
+            <!-- Action Button -->
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/btntag"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginTop="24dp"
+                android:background="@drawable/bg_login_button"
+                android:elevation="2dp"
+                android:text="ACTION  ➔"
+                android:textColor="#FFFFFF"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>
