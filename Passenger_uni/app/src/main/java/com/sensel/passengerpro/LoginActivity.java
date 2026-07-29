@@ -356,13 +356,20 @@ public class LoginActivity extends AppCompatActivity {
 
         String savedOtp = appConstants.getShrdPrefValByKey(getApplicationContext(), "otp");
         if (savedOtp != null && savedOtp.contains(enteredOtp)) {
-            appConstants.putShrdPrefValWithKey(getApplicationContext(), "passengerinfo", passengerinfo);
             dialog = ProgressDialog.show(LoginActivity.this, "", "Logging in...", true);
             new Thread(new Runnable() {
                 @Override
                 public void run() {
                     try {
                         if (isNetworkAvailable()) {
+                            try {
+                                passengerinfo = webServices.GetPsngrInfoWithValidation(tempMobileNo, "Validate");
+                                if (passengerinfo != null && !passengerinfo.isEmpty() && !passengerinfo.contains("No Data")) {
+                                    appConstants.putShrdPrefValWithKey(getApplicationContext(), "passengerinfo", passengerinfo);
+                                }
+                            } catch (Exception ex) {
+                                android.util.Log.e("LoginActivity", "Error fetching passengerinfo on OTP submit", ex);
+                            }
                             String userMenus = null;
                             try {
                                 userMenus = webServices.GetMenusByUser(tempMobileNo);

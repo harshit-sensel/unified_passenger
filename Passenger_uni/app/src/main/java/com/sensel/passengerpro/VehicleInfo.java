@@ -115,6 +115,10 @@ public class VehicleInfo extends AppCompatActivity {
         rbChange=(RadioButton) findViewById(R.id.rbChange);
         rgp=(RadioGroup) findViewById(R.id.radioType);
         txtType=(TextView) findViewById(R.id.type);
+        if (txtType != null) {
+            boolean isAssignedChecked = rbAssigned != null && rbAssigned.isChecked();
+            txtType.setText(isAssignedChecked ? "Assigned Driver" : "Driver Change");
+        }
         txt=(TextView) findViewById(R.id.txt);
         editText=(EditText) findViewById(R.id.edittxt);
         dritxt=(TextView) findViewById(R.id.dritxt);
@@ -127,12 +131,45 @@ public class VehicleInfo extends AppCompatActivity {
         passengerinfo = appConstants.getShrdPrefValByKey(getApplicationContext(),"passengerinfo");
         mobileno = appConstants.getShrdPrefValByKeyWithTag(getApplicationContext(),"passengerinfo","MobileNo");
         accountid = appConstants.getShrdPrefValByKeyWithTag(getApplicationContext(), "passengerinfo", "AccountId");
-        rgp.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
 
-            @Override
-            public void onCheckedChanged(RadioGroup group, int checkedId)
-            {
-                try {
+        android.widget.ImageView btnRefresh = findViewById(R.id.btn_refresh);
+        android.widget.ImageView btnLogout = findViewById(R.id.btn_logout);
+
+        if (btnRefresh != null) {
+            btnRefresh.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    finish();
+                    startActivity(getIntent());
+                }
+            });
+        }
+
+        if (btnLogout != null) {
+            btnLogout.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    appConstants.putShrdPrefValWithKey(getApplicationContext(), "passengerinfo", "");
+                    appConstants.putShrdPrefValWithKey(getApplicationContext(), "UserMenus", "");
+                    Intent intent = new Intent(VehicleInfo.this, LoginActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    startActivity(intent);
+                    finish();
+                }
+            });
+        }
+
+        if (rgp != null) {
+            rgp.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+
+                @Override
+                public void onCheckedChanged(RadioGroup group, int checkedId)
+                {
+                    if (txtType != null) {
+                        boolean isAssignedChecked = rbAssigned != null && rbAssigned.isChecked();
+                        txtType.setText(isAssignedChecked ? "Assigned Driver" : "Driver Change");
+                    }
+                    try {
                     // TODO Auto-generated method stub
                     if (rbAssigned.isChecked()) {
                         dritxt.setVisibility(View.GONE);
@@ -278,6 +315,7 @@ public class VehicleInfo extends AppCompatActivity {
                 }
             }
         });
+        }
         dialog = ProgressDialog.show(VehicleInfo.this, "", "Loading...", true);
         new Thread(new Runnable() {
             @Override

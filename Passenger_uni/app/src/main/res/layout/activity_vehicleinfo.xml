@@ -4,39 +4,71 @@
     android:layout_height="match_parent"
     android:background="#F8FAFC">
 
-    <!-- Top Royal Blue Header -->
-    <LinearLayout
+    <!-- Top Royal Blue Header with Refresh & Logout Icons -->
+    <RelativeLayout
         android:id="@+id/header_container"
         android:layout_width="match_parent"
-        android:layout_height="140dp"
+        android:layout_height="130dp"
         android:background="@drawable/bg_header_blue"
-        android:orientation="vertical"
         android:paddingHorizontal="20dp"
-        android:paddingTop="28dp">
+        android:paddingTop="24dp">
 
-        <TextView
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Vehicle Info"
-            android:textColor="#93C5FD"
-            android:textSize="13sp"
-            android:textStyle="bold" />
+            android:layout_alignParentStart="true"
+            android:orientation="vertical">
 
-        <TextView
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Passenger App"
+                android:textColor="#FFFFFF"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Select Vehicle &amp; Driver"
+                android:textColor="#93C5FD"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <!-- Right Side Header Icons (Refresh & Logout) -->
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="Select Vehicle &amp; Driver"
-            android:textColor="#FFFFFF"
-            android:textSize="22sp"
-            android:textStyle="bold" />
-    </LinearLayout>
+            android:layout_alignParentEnd="true"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:id="@+id/btn_refresh"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_marginEnd="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Refresh"
+                android:padding="6dp"
+                android:src="@drawable/refresh" />
+
+            <ImageView
+                android:id="@+id/btn_logout"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Logout"
+                android:padding="6dp"
+                android:src="@drawable/ic_logout_modern" />
+        </LinearLayout>
+    </RelativeLayout>
 
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@id/header_container"
-        android:layout_marginTop="-25dp"
+        android:layout_marginTop="-20dp"
         android:fillViewport="true">
 
         <LinearLayout
@@ -80,7 +112,7 @@
                         android:layout_height="wrap_content"
                         android:background="@null"
                         android:digits="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-                        android:hint="Type vehicle ID"
+                        android:hint="Type vehicleid"
                         android:singleLine="true"
                         android:textColor="#0F172A"
                         android:textColorHint="#94A3B8"
@@ -105,7 +137,7 @@
                     android:layout_marginBottom="16dp"
                     android:background="@drawable/bg_phone_input"
                     android:digits="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-                    android:hint="Enter vehicle ID"
+                    android:hint="Enter vehicleId"
                     android:maxLength="15"
                     android:paddingHorizontal="14dp"
                     android:paddingVertical="10dp"
@@ -126,6 +158,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
+                        android:buttonTint="#2563EB"
                         android:checked="true"
                         android:text="Assigned Driver"
                         android:textColor="#1E293B"
@@ -136,12 +169,13 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
+                        android:buttonTint="#2563EB"
                         android:text="Driver Change"
                         android:textColor="#1E293B"
                         android:textSize="14sp" />
                 </RadioGroup>
 
-                <!-- Driver Name Label -->
+                <!-- Dynamic Driver Label (Assigned Driver / Driver Change) -->
                 <TextView
                     android:id="@+id/type"
                     android:layout_width="wrap_content"
@@ -205,7 +239,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="8dp"
-                    android:text="ZONE"
+                    android:text="SELECT ZONE"
                     android:textColor="#475569"
                     android:textSize="12sp"
                     android:textStyle="bold"
@@ -230,7 +264,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="8dp"
-                    android:text="TOWER ID"
+                    android:text="SELECT TOWER ID"
                     android:textColor="#475569"
                     android:textSize="12sp"
                     android:textStyle="bold"
