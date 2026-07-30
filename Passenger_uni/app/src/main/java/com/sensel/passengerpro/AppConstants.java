@@ -34,6 +34,12 @@ public class AppConstants {
         SharedPreferences pref = context.getSharedPreferences(shrdPrefTag, MODE_PRIVATE);
         return pref.getString(key,null);
     }
+    public void setJwtToken(Context context, String token) {
+        putShrdPrefValWithKey(context, "jwt_auth_token", token);
+    }
+    public String getJwtToken(Context context) {
+        return getShrdPrefValByKey(context, "jwt_auth_token");
+    }
     public String getShrdPrefValByKeyWithTag(Context context,String Key,String Tag){
         SharedPreferences pref = context.getSharedPreferences(shrdPrefTag, MODE_PRIVATE);
         String info = pref.getString(Key,null);

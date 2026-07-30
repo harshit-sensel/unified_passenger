@@ -15,6 +15,7 @@ import java.net.URL;
 public class WebServices {
 
     private static final String TAG = "WebServices_REST";
+    public static String currentJwtToken = null;
 
     // Helper method to make HTTP REST requests
     private String makeHttpRequest(String endpoint, String method, String jsonBody) {
@@ -25,6 +26,10 @@ public class WebServices {
             conn.setRequestMethod(method);
             conn.setRequestProperty("Content-Type", "application/json");
             conn.setRequestProperty("Accept", "application/json");
+            conn.setRequestProperty(UrlConfig.HEADER_APP_KEY, UrlConfig.API_SECURITY_KEY);
+            if (currentJwtToken != null && !currentJwtToken.isEmpty()) {
+                conn.setRequestProperty(UrlConfig.HEADER_AUTHORIZATION, "Bearer " + currentJwtToken);
+            }
             conn.setConnectTimeout(10000);
             conn.setReadTimeout(10000);
 
@@ -335,7 +340,18 @@ public class WebServices {
         try {
             JSONObject json = new JSONObject();
             json.put("MobileNo", mobileno);
-            return makeHttpRequest("auth/send-otp", "POST", json.toString());
+            String response = makeHttpRequest("auth/send-otp", "POST", json.toString());
+            if (response != null && response.startsWith("{")) {
+                try {
+                    JSONObject respJson = new JSONObject(response);
+                    if (respJson.has("token")) {
+                        currentJwtToken = respJson.getString("token");
+                    }
+                } catch (Exception ex) {
+                    Log.e(TAG, "Error parsing JWT token from OTP auth response", ex);
+                }
+            }
+            return response;
         } catch (Exception e) {
             return "Failed";
         }

@@ -10,6 +10,10 @@ public class UrlConfig {
     // New .NET Core REST API Base URL (127.0.0.1 with adb reverse for Physical Phone & Emulator)
     public static String REST_BASE_URL = "http://127.0.0.1:5228/api/";
 
+    public static final String API_SECURITY_KEY = "Passenger_SecretPassphrase_2026";
+    public static final String HEADER_APP_KEY = "X-App-Key";
+    public static final String HEADER_AUTHORIZATION = "Authorization";
+
     public static String DOMAINURL1 = "https://ui.vehicle-tracking.co.in/";
     public static String DOMAINURL2 = "http://ui.vehicle-tracking.co.in/";
     public static String DOMAINURL3 = "https://ui.vehicle-tracking.co.in/";

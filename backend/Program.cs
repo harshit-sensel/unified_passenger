@@ -1,4 +1,8 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 using Dapper;
+using Microsoft.IdentityModel.Tokens;
 using MySqlConnector;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -25,11 +29,58 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Load connection string dynamically from appsettings.json
+// Load connection string and security secrets dynamically from appsettings.json
 string connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found in appsettings.json.");
+string appKeySecret = builder.Configuration["SecuritySettings:AppKeySecret"] ?? "Passenger_SecretPassphrase_2026";
+string jwtSecretKey = builder.Configuration["JwtSettings:SecretKey"] ?? "PassengerApp_SuperSecret_JWT_Signing_Key_2026_SenselTelematics!";
 
 app.UseCors("AllowAll");
+
+// -------------------------------------------------------------
+// 1. GLOBAL ERROR MASKING MIDDLEWARE
+// -------------------------------------------------------------
+app.Use(async (context, next) =>
+{
+    try
+    {
+        await next();
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogError(ex, "Unhandled API Exception at {Path}", context.Request.Path);
+        if (!context.Response.HasStarted)
+        {
+            context.Response.StatusCode = 500;
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsync("{\"error\":\"500 Internal Server Error\",\"message\":\"An unexpected error occurred. Please try again.\"}");
+        }
+    }
+});
+
+// -------------------------------------------------------------
+// 2. API KEY LOCK MIDDLEWARE (X-App-Key)
+// -------------------------------------------------------------
+app.Use(async (context, next) =>
+{
+    string path = context.Request.Path.Value ?? "";
+    // Allow Swagger and root UI without API Key
+    if (path == "/" || path.StartsWith("/swagger") || path.StartsWith("/index.html") || path.Contains("favicon"))
+    {
+        await next();
+        return;
+    }
+
+    if (!context.Request.Headers.TryGetValue("X-App-Key", out var extractedKey) || extractedKey != appKeySecret)
+    {
+        context.Response.StatusCode = 401;
+        context.Response.ContentType = "application/json";
+        await context.Response.WriteAsync("{\"error\":\"401 Unauthorized\",\"message\":\"Access Denied: Missing or Invalid API Security Key (X-App-Key)\"}");
+        return;
+    }
+
+    await next();
+});
 
 // Configure Swagger UI
 app.UseSwagger();
@@ -37,6 +88,28 @@ app.UseSwaggerUI();
 
 // Redirect root / to Swagger UI
 app.MapGet("/", () => Results.Redirect("/swagger"));
+
+// JWT Token Generator Helper
+string GenerateJwtToken(string userId, string mobileNo)
+{
+    var tokenHandler = new JwtSecurityTokenHandler();
+    var key = Encoding.UTF8.GetBytes(jwtSecretKey);
+    var tokenDescriptor = new SecurityTokenDescriptor
+    {
+        Subject = new ClaimsIdentity(new[]
+        {
+            new Claim(ClaimTypes.NameIdentifier, userId ?? ""),
+            new Claim("MobileNo", mobileNo ?? ""),
+            new Claim("App", "Passenger")
+        }),
+        Expires = DateTime.UtcNow.AddDays(7),
+        Issuer = builder.Configuration["JwtSettings:Issuer"] ?? "SenselBackend",
+        Audience = builder.Configuration["JwtSettings:Audience"] ?? "PassengerApp",
+        SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+    };
+    var token = tokenHandler.CreateToken(tokenDescriptor);
+    return tokenHandler.WriteToken(token);
+}
 
 // -------------------------------------------------------------
 // ALL 21 ENDPOINTS (100% EXACT MATCH FROM SenselWebService & SenselRestService)
@@ -59,6 +132,27 @@ app.MapPost("/api/auth/validate-phone", async (ValidatePhoneRequest request, ICo
         {
             app.Logger.LogInformation("Generated OTP request for {MobileNo}: {Flag}", request.MobileNo, flag);
             return Results.Ok("SMS Send Successfully");
+        }
+
+        if (flag == "Vehicles")
+        {
+            string vehSql = "SELECT DISTINCT VehicleID, VehicleInfo AS Driver FROM vehicles LIMIT 50;";
+            var vehs = await connection.QueryAsync(vehSql);
+            return Results.Ok(vehs);
+        }
+
+        if (flag == "Drivers")
+        {
+            string driSql = "SELECT DriverId, Name AS Driver, LicenceNo, MobileNo FROM driverinfo LIMIT 50;";
+            var dris = await connection.QueryAsync(driSql);
+            return Results.Ok(dris);
+        }
+
+        if (flag == "Zones" || flag == "Towers")
+        {
+            string twrSql = "SELECT DISTINCT ZoneName, TowerName FROM psngr_tower_locations LIMIT 50;";
+            var twrs = await connection.QueryAsync(twrSql);
+            return Results.Ok(twrs);
         }
 
         // Query passenger info and retrieve AppKeyWord dynamically by MobileNo
@@ -89,7 +183,7 @@ app.MapPost("/api/auth/validate-phone", async (ValidatePhoneRequest request, ICo
     }
 });
 
-// Dedicated GetMenusByUser Endpoint (POST)
+// 2. GetMenusByUser (Dedicated Endpoint)
 app.MapPost("/api/auth/get-menus", async (GetMenusRequest request) =>
 {
     string targetUser = !string.IsNullOrWhiteSpace(request.MobileNo) ? request.MobileNo : request.Username;
@@ -109,70 +203,24 @@ app.MapPost("/api/auth/get-menus", async (GetMenusRequest request) =>
             INNER JOIN UsersInRoles ur ON ur.RoleId = r.ID 
             WHERE ur.UserId = @UserId;";
 
-        var menus = await connection.QueryAsync(query, new { UserId = targetUser });
+        var dt = await connection.QueryAsync(query, new { UserId = targetUser });
 
-        // Fallback: If user has no explicit role assigned yet, return default passenger menus
-        if (!menus.Any())
+        if (!dt.Any())
         {
-            var defaultMenus = new List<object>
-            {
-                new { Id = 501, menukey = "dashboard", menuvalue = "Grid Icon Dashboard" },
-                new { Id = 503, menukey = "assigned_veh_tracking", menuvalue = "Assigned Vehicle Tracking" },
-                new { Id = 512, menukey = "panic_sos", menuvalue = "Emergency Panic SOS" }
-            };
-            return Results.Ok(defaultMenus);
+            return Results.Ok("No Data");
         }
 
-        return Results.Ok(menus);
+        return Results.Ok(dt);
     }
-    catch
+    catch (Exception ex)
     {
+        app.Logger.LogError(ex, "Error executing GetMenusByUser for user: {User}", targetUser);
         return Results.Ok(new List<object>());
     }
 });
 
-// Dedicated GetMenusByUser Endpoint (GET)
-app.MapGet("/api/auth/get-menus", async (string username) =>
-{
-    if (string.IsNullOrWhiteSpace(username))
-    {
-        return Results.Ok(new List<object>());
-    }
-
-    try
-    {
-        using var connection = new MySqlConnection(connectionString);
-        string query = @"
-            SELECT db.Id, db.menukey, db.menuvalue 
-            FROM mobileappmenu db 
-            INNER JOIN mobileappmenuinroles dr ON dr.MobileAppMenuId = db.Id 
-            INNER JOIN Roles r ON r.ID = dr.RoleId 
-            INNER JOIN UsersInRoles ur ON ur.RoleId = r.ID 
-            WHERE ur.UserId = @UserId;";
-
-        var menus = await connection.QueryAsync(query, new { UserId = username });
-
-        if (!menus.Any())
-        {
-            var defaultMenus = new List<object>
-            {
-                new { Id = 501, menukey = "dashboard", menuvalue = "Grid Icon Dashboard" },
-                new { Id = 503, menukey = "assigned_veh_tracking", menuvalue = "Assigned Vehicle Tracking" },
-                new { Id = 512, menukey = "panic_sos", menuvalue = "Emergency Panic SOS" }
-            };
-            return Results.Ok(defaultMenus);
-        }
-
-        return Results.Ok(menus);
-    }
-    catch
-    {
-        return Results.Ok(new List<object>());
-    }
-});
-
-// 2. GetPsngrInfoWithValidationWithImei (Main SOAP)
-app.MapPost("/api/auth/validate-imei", async (ValidateImeiRequest request, IConfiguration config) =>
+// 3. GetPsngrInfoWithValidation_IMEI (Auto-Login SOAP)
+app.MapPost("/api/auth/validate-imei", async (ValidateImeiRequest request) =>
 {
     if (string.IsNullOrWhiteSpace(request.Imei))
     {
@@ -182,12 +230,12 @@ app.MapPost("/api/auth/validate-imei", async (ValidateImeiRequest request, IConf
     try
     {
         using var connection = new MySqlConnection(connectionString);
-
         string query = @"
-            SELECT d.* 
-            FROM driverinfo d 
-            WHERE d.IMEI = @Imei AND d.Active = 1 
-            ORDER BY d.Id DESC LIMIT 1;";
+            SELECT p.* 
+            FROM psngr_info p 
+            INNER JOIN vehicles v ON v.AccountID = p.AccountId
+            WHERE v.VehicleID = @Imei AND p.Active = 1
+            LIMIT 1;";
 
         var dt = await connection.QueryAsync(query, new { Imei = request.Imei });
 
@@ -200,260 +248,259 @@ app.MapPost("/api/auth/validate-imei", async (ValidateImeiRequest request, IConf
     }
     catch (Exception ex)
     {
-        app.Logger.LogError(ex, "Error executing GetPsngrInfoWithValidationWithImei.");
+        app.Logger.LogError(ex, "Error executing GetPsngrInfoWithValidation_IMEI.");
         return Results.Ok("No Data");
     }
 });
 
-// 3. GetVehiclePositionForPsngrApp (Main SOAP)
-app.MapGet("/api/vehicle/position", async (string psngrID, string vehicleId) =>
-{
-    try
-    {
-        using var connection = new MySqlConnection(connectionString);
-        string query = @"
-            SELECT p.lat AS Latitude, p.lng AS Longitude, p.speed AS Speed, 
-                   p.datetime AS DateTime, p.ignition AS Ignition, p.location AS Location
-            FROM positiondata p 
-            INNER JOIN vehicles v ON p.vehicleid = v.vehicleid 
-            WHERE v.vehicleid = @VehicleId 
-            ORDER BY p.datetime DESC LIMIT 1;";
-
-        var data = await connection.QueryAsync(query, new { VehicleId = vehicleId });
-        return Results.Ok(data);
-    }
-    catch
-    {
-        return Results.Ok(new List<object>());
-    }
-});
-
-// 4. InsertPsngrChecklistNew3 (Main SOAP)
-app.MapPost("/api/checklist/insert", async (ChecklistInsertRequest request) =>
-{
-    try
-    {
-        using var connection = new MySqlConnection(connectionString);
-        string query = @"
-            INSERT INTO psngr_chklist (PsngrId, VehicleId, Type, Rules, DriverId, Imei, Lat, Lng, DriverDetails, Omr, DriverImage, TowerName, Vehiclephoto, TaginOdometerPhoto, TagoutOdometerPhoto, CreatedOn)
-            VALUES (@PsngrId, @VehicleId, @Type, @Rules, @DriverId, @Imei, @Lat, @Lng, @DriverDetails, @Omr, @DriverImage, @TowerName, @Vehiclephoto, @TaginOdometerPhoto, @TagoutOdometerPhoto, NOW());";
-
-        await connection.ExecuteAsync(query, request);
-        return Results.Ok("Inserted Successfully");
-    }
-    catch
-    {
-        return Results.Ok("Failed to insert");
-    }
-});
-
-// 5. InsertPanicAlertFromApp (Main SOAP)
-app.MapPost("/api/alerts/panic", async (PanicAlertRequest request) =>
-{
-    try
-    {
-        using var connection = new MySqlConnection(connectionString);
-        string query = @"
-            INSERT INTO psngr_notifications (PsngrId, Subject, Info, DateTime, IsNotified, Priority)
-            VALUES (@Id, 'Panic Alert', 'Panic SOS Triggered from App', NOW(), 0, 1);";
-
-        await connection.ExecuteAsync(query, request);
-        return Results.Ok("Alert Sent Successfully");
-    }
-    catch
-    {
-        return Results.Ok("Alert Sent Successfully");
-    }
-});
-
-// 6. UpdatePsngrHomeLocation (Main SOAP)
-app.MapPut("/api/passenger/home-location", async (HomeLocationRequest request) =>
-{
-    try
-    {
-        using var connection = new MySqlConnection(connectionString);
-        string query = "UPDATE psngr_info SET HomeLatitude = @Lat, HomeLongitude = @Lng WHERE PsngrId = @PsngrId;";
-        int rows = await connection.ExecuteAsync(query, request);
-        return Results.Ok(rows > 0 ? "1" : "0");
-    }
-    catch
-    {
-        return Results.Ok("0");
-    }
-});
-
-// 7. GetPsngrNotifications (Main SOAP)
-app.MapGet("/api/notifications", async (string psngrId) =>
-{
-    try
-    {
-        using var connection = new MySqlConnection(connectionString);
-        string query = "SELECT * FROM psngr_notifications WHERE PsngrId = @PsngrId ORDER BY SentTime DESC LIMIT 50;";
-        var data = await connection.QueryAsync(query, new { PsngrId = psngrId });
-        return Results.Ok(data);
-    }
-    catch
-    {
-        return Results.Ok(new List<object>());
-    }
-});
-
-// 8. PsngrNotificationNotified (Main SOAP)
-app.MapPost("/api/notifications/read", async (NotificationsReadRequest request) =>
-{
-    try
-    {
-        using var connection = new MySqlConnection(connectionString);
-        string query = "UPDATE psngr_notifications SET IsNotified = b'1' WHERE PsngrId = @PsngrId;";
-        await connection.ExecuteAsync(query, request);
-        return Results.Ok("Updated");
-    }
-    catch
-    {
-        return Results.Ok("Failed");
-    }
-});
-
-// 9. GetVehicleidByQRCode (Main SOAP)
-app.MapPost("/api/vehicle/resolve-qr", async (ResolveQrRequest request) =>
-{
-    try
-    {
-        using var connection = new MySqlConnection(connectionString);
-        string query = "SELECT VehicleId FROM vehicleqrmapping WHERE QRCode = @QRCode LIMIT 1;";
-        var vehicleId = await connection.QueryFirstOrDefaultAsync<string>(query, new { QRCode = request.QRCode });
-        return Results.Ok(string.IsNullOrWhiteSpace(vehicleId) ? "Invalid QRCode" : vehicleId);
-    }
-    catch
-    {
-        return Results.Ok("Invalid QRCode");
-    }
-});
-
-// 10. GetPsngrTowerLocations (Main SOAP)
-app.MapGet("/api/location/towers", async (string mobileno, string zone, string enteredkey) =>
-{
-    try
-    {
-        using var connection = new MySqlConnection(connectionString);
-        string query = "SELECT * FROM psngr_tower_locations WHERE MobileNo = @MobileNo AND Zone = @Zone;";
-        var data = await connection.QueryAsync(query, new { MobileNo = mobileno, Zone = zone });
-        return Results.Ok(data);
-    }
-    catch
-    {
-        return Results.Ok(new List<object>());
-    }
-});
-
-// 11. CheckPsngrTowerLocation (Main SOAP)
-app.MapPost("/api/location/check-tower", async (CheckTowerRequest request) =>
-{
-    try
-    {
-        using var connection = new MySqlConnection(connectionString);
-        string query = "SELECT COUNT(*) FROM psngr_tower_locations WHERE MobileNo = @MobileNo AND TowerName = @TowerName;";
-        int count = await connection.ExecuteScalarAsync<int>(query, request);
-        return Results.Ok(count > 0 ? "true" : "false");
-    }
-    catch
-    {
-        return Results.Ok("false");
-    }
-});
-
-// 12. VehicleMobileGPSCheck (Main SOAP)
-app.MapPost("/api/vehicle/gps-check", (GpsCheckRequest request) =>
-{
-    return Results.Ok("GPS Fixed");
-});
-
-// 13. GetMobVehGpsCheck (Main SOAP)
-app.MapPost("/api/vehicle/proximity-check", (ProximityCheckRequest request) =>
-{
-    return Results.Ok("Within Range");
-});
-
-// 14. GetVehiclesByAccountId (Main SOAP)
-app.MapGet("/api/vehicles/by-account", async (string accountId) =>
-{
-    try
-    {
-        using var connection = new MySqlConnection(connectionString);
-        string query = "SELECT vehicleid AS VehicleID, vehicleinfo AS VehicleInfo FROM vehicles WHERE AccountId = @AccountId LIMIT 1;";
-        var data = await connection.QueryFirstOrDefaultAsync(query, new { AccountId = accountId });
-        return Results.Ok(data ?? new { VehicleID = "", VehicleInfo = "No Data" });
-    }
-    catch
-    {
-        return Results.Ok(new { VehicleID = "", VehicleInfo = "No Data" });
-    }
-});
-
-// 15. UpdtPsngrAssgndVeh (Main SOAP)
+// 4. UpdatePsngrVehicleId (SOAP)
 app.MapPost("/api/passenger/assign-vehicle", async (AssignVehicleRequest request) =>
 {
     try
     {
         using var connection = new MySqlConnection(connectionString);
-        string query = "UPDATE psngr_info SET AssignedVehicle = @VehicleId WHERE PsngrId = @PsngrId;";
-        int rows = await connection.ExecuteAsync(query, request);
-        return Results.Ok(rows > 0 ? "1" : "0");
+        string sql = "UPDATE psngr_info SET AssignedVehicleId = @VehicleId WHERE PsngrId = @PsngrId;";
+        int rows = await connection.ExecuteAsync(sql, new { VehicleId = request.VehicleId, PsngrId = request.PsngrId });
+        return Results.Ok(rows > 0 ? "Success" : "Failed");
     }
-    catch
+    catch (Exception ex)
     {
-        return Results.Ok("0");
+        app.Logger.LogError(ex, "Error updating passenger vehicle ID.");
+        return Results.Ok("Failed");
     }
 });
 
-// 16. GetDropDownForApp (Main SOAP)
-app.MapGet("/api/checklist/dropdown", async (string appName, string key) =>
+// 5. InsertPsngrChecklist (SOAP)
+app.MapPost("/api/checklist/insert", async (ChecklistInsertRequest request) =>
 {
     try
     {
         using var connection = new MySqlConnection(connectionString);
-        string query = "SELECT DropdownValue FROM mobiledropdowns WHERE KeyName = @KeyName;";
-        var data = await connection.QueryAsync<string>(query, new { KeyName = key });
-        return Results.Ok(data);
+        string sql = @"
+            INSERT INTO psngr_tag (PsngrId, VehicleId, TagInTime, TagInOMR, IsActive)
+            VALUES (@PsngrId, @VehicleId, NOW(), @Omr, 1);
+            UPDATE psngr_info SET IsLogged = 1, AssignedVehicleId = @VehicleId WHERE PsngrId = @PsngrId;";
+        
+        await connection.ExecuteAsync(sql, new { PsngrId = request.PsngrId, VehicleId = request.VehicleId, Omr = request.Omr });
+        return Results.Ok("Checklist Saved Successfully");
     }
-    catch
+    catch (Exception ex)
     {
-        return Results.Ok(new List<string>());
+        app.Logger.LogError(ex, "Error inserting passenger checklist.");
+        return Results.Ok("Failed");
     }
 });
 
-// 17. KeepPassengerProuseractivitylog (Main SOAP)
+// 6. InsertPsngrChecklistTagout (SOAP)
+app.MapPost("/api/checklist/tagout", async (ChecklistInsertRequest request) =>
+{
+    try
+    {
+        using var connection = new MySqlConnection(connectionString);
+        string sql = @"
+            UPDATE psngr_tag SET TagOutTime = NOW(), TagOutOMR = @Omr, IsActive = 0 WHERE PsngrId = @PsngrId AND IsActive = 1;
+            UPDATE psngr_info SET IsLogged = 0 WHERE PsngrId = @PsngrId;";
+        
+        await connection.ExecuteAsync(sql, new { PsngrId = request.PsngrId, Omr = request.Omr });
+        return Results.Ok("Tag Out Successfully");
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogError(ex, "Error executing tag out.");
+        return Results.Ok("Failed");
+    }
+});
+
+// 7. InsertPanicAlert (SOAP)
+app.MapPost("/api/alerts/panic", async (PanicAlertRequest request) =>
+{
+    try
+    {
+        using var connection = new MySqlConnection(connectionString);
+        string sql = "INSERT INTO panic_alerts (PsngrId, VehicleId, AlertTime, Type) VALUES (@Id, @VehicleId, NOW(), @Type);";
+        await connection.ExecuteAsync(sql, new { Id = request.Id, VehicleId = request.VehicleId, Type = request.Type });
+        return Results.Ok("Alert Sent Successfully");
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogError(ex, "Error inserting panic alert.");
+        return Results.Ok("Failed");
+    }
+});
+
+// 8. UpdateHomeLocation (SOAP)
+app.MapPost("/api/location/home/update", async (HomeLocationRequest request) =>
+{
+    try
+    {
+        using var connection = new MySqlConnection(connectionString);
+        string sql = "UPDATE psngr_info SET HomeLatitude = @Lat, HomeLongitude = @Lng WHERE PsngrId = @PsngrId;";
+        await connection.ExecuteAsync(sql, new { Lat = request.Lat, Lng = request.Lng, PsngrId = request.PsngrId });
+        return Results.Ok("Location Updated Successfully");
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogError(ex, "Error updating home location.");
+        return Results.Ok("Failed");
+    }
+});
+
+// 9. UpdateNotificationsRead (SOAP)
+app.MapPost("/api/notifications/mark-read", async (NotificationsReadRequest request) =>
+{
+    try
+    {
+        using var connection = new MySqlConnection(connectionString);
+        string sql = "UPDATE notifications SET IsRead = 1 WHERE PsngrId = @PsngrId;";
+        await connection.ExecuteAsync(sql, new { PsngrId = request.PsngrId });
+        return Results.Ok("Success");
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogError(ex, "Error marking notifications as read.");
+        return Results.Ok("Failed");
+    }
+});
+
+// 10. CheckPsngrTowerLocation (SOAP)
+app.MapPost("/api/location/check-tower", async (CheckTowerRequest request) =>
+{
+    try
+    {
+        using var connection = new MySqlConnection(connectionString);
+        string sql = "SELECT * FROM psngr_tower_locations WHERE TowerName = @TowerName LIMIT 1;";
+        var dt = await connection.QueryAsync(sql, new { TowerName = request.TowerName });
+        return Results.Ok(dt.Any() ? dt : "No Data");
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogError(ex, "Error checking tower location.");
+        return Results.Ok("No Data");
+    }
+});
+
+// 11. GPSCheckWithGeofence (SOAP)
+app.MapPost("/api/location/gps-check", async (GpsCheckRequest request) =>
+{
+    return Results.Ok("Inside Geofence");
+});
+
+// 12. ProximityCheck (SOAP)
+app.MapPost("/api/location/proximity-check", async (ProximityCheckRequest request) =>
+{
+    return Results.Ok("Proximity Validated");
+});
+
+// 13. InsertPassengerActivityLog (SOAP)
 app.MapPost("/api/logs/activity", async (ActivityLogRequest request) =>
 {
     try
     {
         using var connection = new MySqlConnection(connectionString);
-        string query = @"
-            INSERT INTO passengeractivitylog (PassengerId, VehicleId, Page, Lat, Lng, AppVersion, LoggedTime)
-            VALUES (@PassengerId, @VehicleId, @Page, @Lat, @Lng, @AppVersion, NOW());";
-
-        await connection.ExecuteAsync(query, request);
+        string sql = "INSERT INTO passenger_activity_logs (PsngrId, VehicleId, Page, LogTime) VALUES (@PassengerId, @VehicleId, @Page, NOW());";
+        await connection.ExecuteAsync(sql, new { PassengerId = request.PassengerId, VehicleId = request.VehicleId, Page = request.Page });
         return Results.Ok("Logged");
     }
-    catch
+    catch (Exception ex)
     {
-        return Results.Ok("Logged");
+        app.Logger.LogError(ex, "Error logging passenger activity.");
+        return Results.Ok("Failed");
     }
 });
 
-// 18. GetAppVersion (Main SOAP)
-app.MapGet("/api/version/check", (string packageName) =>
+// 14. ErrorRecordSendMail (SOAP)
+app.MapPost("/api/logs/error", async (ErrorLogRequest request) =>
 {
-    return Results.Ok("1.0.0");
+    app.Logger.LogError("Client Logged Error: {Error}", request.Error);
+    return Results.Ok("Logged");
 });
 
-// 19. InsertErrorRecord (Main SOAP)
-app.MapPost("/api/logs/error", (ErrorLogRequest request) =>
+// 15. ResolveQRCode (SOAP)
+app.MapPost("/api/qr/resolve", async (ResolveQrRequest request) =>
 {
-    return Results.Ok("Success");
+    try
+    {
+        using var connection = new MySqlConnection(connectionString);
+        string sql = "SELECT VehicleID FROM vehicles WHERE QRCode = @QRCode LIMIT 1;";
+        var dt = await connection.QuerySingleOrDefaultAsync<string>(sql, new { QRCode = request.QRCode });
+        return Results.Ok(dt ?? "Invalid QR");
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogError(ex, "Error resolving QR code.");
+        return Results.Ok("Invalid QR");
+    }
 });
 
-// 20. PassengerProApp_Authenticate (WCF REST)
+// 16. GetVehiclesByAccount (WCF REST)
+app.MapGet("/api/vehicles/by-account", async (string accountid) =>
+{
+    try
+    {
+        using var connection = new MySqlConnection(connectionString);
+        string sql = "SELECT VehicleID, IconType, LocationDataType FROM vehicles WHERE AccountID = @AccountId;";
+        var dt = await connection.QueryAsync(sql, new { AccountId = accountid });
+        return Results.Ok(dt);
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogError(ex, "Error getting vehicles by account.");
+        return Results.Ok(new List<object>());
+    }
+});
+
+// 17. GetDriversByAccount (WCF REST)
+app.MapGet("/api/drivers/by-account", async (string accountid) =>
+{
+    try
+    {
+        using var connection = new MySqlConnection(connectionString);
+        string sql = "SELECT DriverId, Name, LicenceNo, MobileNo FROM driverinfo WHERE AccountId = @AccountId AND Active = 1;";
+        var dt = await connection.QueryAsync(sql, new { AccountId = accountid });
+        return Results.Ok(dt);
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogError(ex, "Error getting drivers by account.");
+        return Results.Ok(new List<object>());
+    }
+});
+
+// 18. GetNotifications (WCF REST)
+app.MapGet("/api/notifications/by-passenger", async (string psngrid) =>
+{
+    try
+    {
+        using var connection = new MySqlConnection(connectionString);
+        string sql = "SELECT * FROM notifications WHERE PsngrId = @PsngrId ORDER BY CreatedAt DESC LIMIT 20;";
+        var dt = await connection.QueryAsync(sql, new { PsngrId = psngrid });
+        return Results.Ok(dt);
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogError(ex, "Error getting notifications.");
+        return Results.Ok(new List<object>());
+    }
+});
+
+// 19. GetTowersAndZones (WCF REST)
+app.MapGet("/api/location/towers", async () =>
+{
+    try
+    {
+        using var connection = new MySqlConnection(connectionString);
+        string sql = "SELECT DISTINCT ZoneName, TowerName FROM psngr_tower_locations;";
+        var dt = await connection.QueryAsync(sql);
+        return Results.Ok(dt);
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogError(ex, "Error getting towers.");
+        return Results.Ok(new List<object>());
+    }
+});
+
+// 20. PassengerProApp_Authenticate (REST)
 app.MapPost("/api/auth/send-otp", async (OtpAuthenticateRequest request) =>
 {
     try
@@ -464,16 +511,18 @@ app.MapPost("/api/auth/send-otp", async (OtpAuthenticateRequest request) =>
 
         if (!dt.Any())
         {
-            return Results.Ok(new { result = "Mobile Number Not Registered", otp = "" });
+            return Results.Ok(new { result = "Mobile Number Not Registered", otp = "", token = "" });
         }
 
         string otpPin = request.MobileNo == "1020304050" ? "9080" : "123456";
-        return Results.Ok(new { result = "OTP Sent Successfully", otp = otpPin });
+        string jwtToken = GenerateJwtToken(request.MobileNo, request.MobileNo);
+
+        return Results.Ok(new { result = "OTP Sent Successfully", otp = otpPin, token = jwtToken });
     }
     catch (Exception ex)
     {
         app.Logger.LogError(ex, "Error in PassengerProApp_Authenticate.");
-        return Results.Ok(new { result = "Failed to send OTP", otp = "" });
+        return Results.Ok(new { result = "Failed to send OTP", otp = "", token = "" });
     }
 });
 
@@ -511,5 +560,3 @@ public record ResolveQrRequest(string QRCode);
 public record OtpAuthenticateRequest(string MobileNo);
 public record ImageUploadRequest(string Base64Image, string FileName);
 public record GetMenusRequest(string Username = "", string MobileNo = "");
-
-
