@@ -7,13 +7,13 @@
   },
   "AllowedHosts": "*",
   "ConnectionStrings": {
-    "DefaultConnection": "Server=localhost;Database=rds2_psngr;User=root;Password=12345;"
+    "DefaultConnection": "Server=localhost;Database=rds2_psngr;User=root;Password=YOUR_PASSWORD_HERE;"
   },
   "SecuritySettings": {
-    "AppKeySecret": "Passenger_SecretPassphrase_2026"
+    "AppKeySecret": "YOUR_SECRET_APP_KEY_HERE"
   },
   "JwtSettings": {
-    "SecretKey": "PassengerApp_SuperSecret_JWT_Signing_Key_2026_SenselTelematics!",
+    "SecretKey": "YOUR_JWT_SECRET_KEY_HERE",
     "Issuer": "SenselBackend",
     "Audience": "PassengerApp",
     "ExpirationDays": 7

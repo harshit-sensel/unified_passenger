@@ -2,6 +2,11 @@
 *.sql
 important files from manger/rds2_data.sql
 
+# Sensitive backend config (Passphrase & Database Passwords)
+backend/appsettings.json
+backend/appsettings.Development.json
+backend/appsettings.Production.json
+
 # .NET Core Build & Temporary files
 bin/
 obj/
