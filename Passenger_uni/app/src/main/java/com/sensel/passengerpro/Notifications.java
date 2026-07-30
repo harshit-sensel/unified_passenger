@@ -43,6 +43,20 @@ public class Notifications extends AppCompatActivity {
         setContentView(R.layout.notifications);
         PassengerActivityLogger.log(this, "Notifications");
 
+        // Log CLICK_NOTIFICATIONS activity audit event
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    String mobileNo = appConstants.getShrdPrefValByKeyWithTag(getApplicationContext(), "passengerinfo", "MobileNo");
+                    String accountIdStr = appConstants.getShrdPrefValByKeyWithTag(getApplicationContext(), "passengerinfo", "AccountId");
+                    int accountId = 0;
+                    try { if (accountIdStr != null) accountId = Integer.parseInt(accountIdStr); } catch (Exception ignored) {}
+                    webServices.logAuditActivity(mobileNo, accountId, "CLICK_NOTIFICATIONS", "", "");
+                } catch (Exception ignored) {}
+            }
+        }).start();
+
         ActionBar actionBar = getSupportActionBar();
 
         if (actionBar != null){

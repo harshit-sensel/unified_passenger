@@ -149,8 +149,24 @@ public class VehicleInfo extends AppCompatActivity {
             btnLogout.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    // Log LOGOUT activity audit event
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                String mobileNo = appConstants.getShrdPrefValByKeyWithTag(getApplicationContext(), "passengerinfo", "MobileNo");
+                                String accountIdStr = appConstants.getShrdPrefValByKeyWithTag(getApplicationContext(), "passengerinfo", "AccountId");
+                                int accountId = 0;
+                                try { if (accountIdStr != null) accountId = Integer.parseInt(accountIdStr); } catch (Exception ignored) {}
+                                webServices.logAuditActivity(mobileNo, accountId, "LOGOUT", "", "");
+                            } catch (Exception ignored) {}
+                        }
+                    }).start();
+
                     appConstants.putShrdPrefValWithKey(getApplicationContext(), "passengerinfo", "");
                     appConstants.putShrdPrefValWithKey(getApplicationContext(), "UserMenus", "");
+                    appConstants.setJwtToken(getApplicationContext(), "");
+                    WebServices.currentJwtToken = "";
                     Intent intent = new Intent(VehicleInfo.this, LoginActivity.class);
                     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                     startActivity(intent);

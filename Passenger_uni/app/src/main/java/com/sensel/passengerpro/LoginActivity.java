@@ -379,19 +379,64 @@ public class LoginActivity extends AppCompatActivity {
                             } catch (Exception ex) {
                                 android.util.Log.e("LoginActivity", "Error fetching UserMenus on OTP submit", ex);
                             }
-                            Intent i;
-                            if (userMenus != null && userMenus.contains("checklist") && !userMenus.contains("dashboard")) {
-                                i = new Intent(getApplicationContext(), VehicleInfo.class);
-                            } else {
-                                i = new Intent(getApplicationContext(), MainActivity.class);
+                            String accountIdStr = appConstants.getShrdPrefValByKeyWithTag(getApplicationContext(), "passengerinfo", "AccountId");
+                            int accountId = 0;
+                            try { if (accountIdStr != null) accountId = Integer.parseInt(accountIdStr); } catch (Exception ignored) {}
+
+                            AccountConfig accountConfig = null;
+                            boolean privacyAccepted = true;
+                            try {
+                                if (accountId > 0) {
+                                    String configJson = webServices.GetAccountConfig(accountId);
+                                    accountConfig = AccountConfig.fromJson(configJson);
+                                    
+                                    // Log LOGIN activity audit event
+                                    if (accountConfig != null && accountConfig.activityLogEnabled) {
+                                        webServices.logAuditActivity(tempMobileNo, accountId, "LOGIN", "", "");
+                                    }
+
+                                    // Check Privacy Policy Acceptance Status
+                                    if (accountConfig != null && accountConfig.privacyPolicyEnabled) {
+                                        String privacyResp = webServices.CheckPrivacyAccepted(tempMobileNo);
+                                        if (privacyResp != null && privacyResp.contains("\"accepted\":false")) {
+                                            privacyAccepted = false;
+                                        }
+                                    }
+                                }
+                            } catch (Exception ex) {
+                                android.util.Log.e("LoginActivity", "Error fetching AccountConfig / Privacy status", ex);
                             }
-                            i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                            startActivity(i);
+
+                            final Intent targetIntent;
+                            if (userMenus != null && userMenus.contains("checklist") && !userMenus.contains("dashboard")) {
+                                targetIntent = new Intent(getApplicationContext(), VehicleInfo.class);
+                            } else {
+                                targetIntent = new Intent(getApplicationContext(), MainActivity.class);
+                            }
+                            targetIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+                            final boolean finalPrivacyAccepted = privacyAccepted;
+                            final AccountConfig finalAccountConfig = accountConfig;
+                            final int finalAccountId = accountId;
+
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
                                     if (dialog != null && dialog.isShowing()) dialog.dismiss();
                                     scheduleLoginActivityLogDelayed("Login_Success", 1200);
+
+                                    if (!finalPrivacyAccepted && finalAccountConfig != null && finalAccountConfig.privacyPolicyEnabled) {
+                                        PrivacyPolicyDialog.show(LoginActivity.this, tempMobileNo, finalAccountId, finalAccountConfig.privacyPolicyText, new PrivacyPolicyDialog.OnPrivacyPolicyAcceptedListener() {
+                                            @Override
+                                            public void onAccepted() {
+                                                startActivity(targetIntent);
+                                                finish();
+                                            }
+                                        });
+                                    } else {
+                                        startActivity(targetIntent);
+                                        finish();
+                                    }
                                 }
                             });
                         } else {

@@ -220,6 +220,21 @@ public class QRScannerActivity extends AppCompatActivity {
                             if (insertResult != null && insertResult.contains("Inserted Successfully")) {
                                 appConstants.putShrdPrefValWithKey(getApplicationContext(), AppConstants.KEY_CURRENT_TAGGED_VEHICLE_ID, vehicleId);
                                 Toast.makeText(QRScannerActivity.this, "Tag In done successfully.", Toast.LENGTH_LONG).show();
+                                
+                                // Log TAG_IN activity audit event
+                                new Thread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        try {
+                                            String mobileNo = appConstants.getShrdPrefValByKeyWithTag(getApplicationContext(), "passengerinfo", "MobileNo");
+                                            String accountIdStr = appConstants.getShrdPrefValByKeyWithTag(getApplicationContext(), "passengerinfo", "AccountId");
+                                            int accountId = 0;
+                                            try { if (accountIdStr != null) accountId = Integer.parseInt(accountIdStr); } catch (Exception ignored) {}
+                                            webServices.logAuditActivity(mobileNo, accountId, "TAG_IN", lat, lng);
+                                        } catch (Exception ignored) {}
+                                    }
+                                }).start();
+
                                 Intent i = new Intent(QRScannerActivity.this, MainActivity.class);
                                 i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                                 startActivity(i);

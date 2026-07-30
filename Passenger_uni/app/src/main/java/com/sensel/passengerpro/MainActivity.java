@@ -297,11 +297,28 @@ public class MainActivity extends AppCompatActivity {
                             .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface d, int id) {
+                                    // Log LOGOUT activity audit event
+                                    new Thread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            try {
+                                                String mobileNo = appConstants.getShrdPrefValByKeyWithTag(getApplicationContext(), "passengerinfo", "MobileNo");
+                                                String accountIdStr = appConstants.getShrdPrefValByKeyWithTag(getApplicationContext(), "passengerinfo", "AccountId");
+                                                int accountId = 0;
+                                                try { if (accountIdStr != null) accountId = Integer.parseInt(accountIdStr); } catch (Exception ignored) {}
+                                                webServices.logAuditActivity(mobileNo, accountId, "LOGOUT", "", "");
+                                            } catch (Exception ignored) {}
+                                        }
+                                    }).start();
+
                                     PassengerActivityLogger.logLogout(getApplicationContext(),
                                             appConstants.getShrdPrefValByKeyWithTag(getApplicationContext(), "passengerinfo", "PsngrId"),
                                             appConstants.getShrdPrefValByKey(getApplicationContext(), AppConstants.KEY_CURRENT_TAGGED_VEHICLE_ID),
                                             appConstants.getShrdPrefValByKey(getApplicationContext(), "passengerinfo"));
                                     appConstants.putShrdPrefValWithKey(getApplicationContext(), "passengerinfo", null);
+                                    appConstants.putShrdPrefValWithKey(getApplicationContext(), "UserMenus", null);
+                                    appConstants.setJwtToken(getApplicationContext(), "");
+                                    WebServices.currentJwtToken = "";
                                     Intent i = new Intent(MainActivity.this, LoginActivity.class);
                                     i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                                     startActivity(i);
@@ -557,6 +574,19 @@ public class MainActivity extends AppCompatActivity {
                             pd.dismiss();
                             if (res != null && res.toLowerCase().contains("success")) {
                                 Toast.makeText(MainActivity.this, "Panic alert sent successfully.", Toast.LENGTH_SHORT).show();
+                                // Log PANIC_ALERT activity audit event
+                                new Thread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        try {
+                                            String mobileNo = appConstants.getShrdPrefValByKeyWithTag(getApplicationContext(), "passengerinfo", "MobileNo");
+                                            String accountIdStr = appConstants.getShrdPrefValByKeyWithTag(getApplicationContext(), "passengerinfo", "AccountId");
+                                            int accountId = 0;
+                                            try { if (accountIdStr != null) accountId = Integer.parseInt(accountIdStr); } catch (Exception ignored) {}
+                                            webServices.logAuditActivity(mobileNo, accountId, "PANIC_ALERT", "", "");
+                                        } catch (Exception ignored) {}
+                                    }
+                                }).start();
                             } else {
                                 Toast.makeText(MainActivity.this, "Failed to send panic alert. Try again.", Toast.LENGTH_SHORT).show();
                             }

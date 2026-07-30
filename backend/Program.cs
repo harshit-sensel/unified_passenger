@@ -391,20 +391,86 @@ app.MapPost("/api/location/proximity-check", async (ProximityCheckRequest reques
     return Results.Ok("Proximity Validated");
 });
 
-// 13. InsertPassengerActivityLog (SOAP)
-app.MapPost("/api/logs/activity", async (ActivityLogRequest request) =>
+// 13. InsertPassengerActivityLog & Mobile App Audit Logging
+app.MapPost("/api/logs/activity", async (ActivityLogEntryRequest request) =>
 {
     try
     {
         using var connection = new MySqlConnection(connectionString);
-        string sql = "INSERT INTO passenger_activity_logs (PsngrId, VehicleId, Page, LogTime) VALUES (@PassengerId, @VehicleId, @Page, NOW());";
-        await connection.ExecuteAsync(sql, new { PassengerId = request.PassengerId, VehicleId = request.VehicleId, Page = request.Page });
+        string pkgName = string.IsNullOrWhiteSpace(request.PackageName) ? "com.sensel.passenger" : request.PackageName;
+        string sql = @"
+            INSERT INTO mobileapp_activitylog (MobileNo, AccountId, PackageName, Activity, Latitude, Longitude, CreatedAt)
+            VALUES (@MobileNo, @AccountId, @PackageName, @Activity, @Latitude, @Longitude, NOW());";
+
+        await connection.ExecuteAsync(sql, new {
+            MobileNo = request.MobileNo,
+            AccountId = request.AccountId,
+            PackageName = pkgName,
+            Activity = request.Activity,
+            Latitude = request.Latitude,
+            Longitude = request.Longitude
+        });
         return Results.Ok("Logged");
     }
     catch (Exception ex)
     {
-        app.Logger.LogError(ex, "Error logging passenger activity.");
+        app.Logger.LogError(ex, "Error logging activity into mobileapp_activitylog.");
         return Results.Ok("Failed");
+    }
+});
+
+// 13a. Get Account Remote Feature Configurations (NEW)
+app.MapGet("/api/config/by-account", async (int accountId) =>
+{
+    try
+    {
+        using var connection = new MySqlConnection(connectionString);
+        string query = @"
+            SELECT AccountId, AutoLogoutEnabled, AutoLogoutTimeoutMinutes, TwoFactorAuthEnabled, 
+                   ActivityLogEnabled, ForceUpdateEnabled, MinRequiredVersion, PrivacyPolicyEnabled, PrivacyPolicyText 
+            FROM mobile_app_configurable 
+            WHERE AccountId = @AccountId LIMIT 1;";
+
+        var config = await connection.QuerySingleOrDefaultAsync(query, new { AccountId = accountId });
+        if (config != null)
+        {
+            return Results.Ok(config);
+        }
+
+        // Fallback configuration if account row does not exist in mobile_app_configurable
+        return Results.Ok(new {
+            AccountId = accountId,
+            AutoLogoutEnabled = 0,
+            AutoLogoutTimeoutMinutes = 15,
+            TwoFactorAuthEnabled = 0,
+            ActivityLogEnabled = 1,
+            ForceUpdateEnabled = 0,
+            MinRequiredVersion = "2.0.0",
+            PrivacyPolicyEnabled = 0,
+            PrivacyPolicyText = ""
+        });
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogError(ex, "Error fetching account config for AccountId: {AccountId}", accountId);
+        return Results.Ok(new { AccountId = accountId, AutoLogoutEnabled = 0, AutoLogoutTimeoutMinutes = 15, TwoFactorAuthEnabled = 0, ActivityLogEnabled = 0, ForceUpdateEnabled = 0, MinRequiredVersion = "2.0.0", PrivacyPolicyEnabled = 0, PrivacyPolicyText = "" });
+    }
+});
+
+// 13b. Check Privacy Policy Acceptance Status (NEW)
+app.MapGet("/api/config/check-privacy-accepted", async (string mobileNo) =>
+{
+    try
+    {
+        using var connection = new MySqlConnection(connectionString);
+        string query = "SELECT COUNT(*) FROM mobileapp_activitylog WHERE MobileNo = @MobileNo AND Activity = 'PRIVACY_POLICY_ACCEPTED';";
+        int count = await connection.ExecuteScalarAsync<int>(query, new { MobileNo = mobileNo });
+        return Results.Ok(new { accepted = count > 0 });
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogError(ex, "Error checking privacy policy acceptance for MobileNo: {MobileNo}", mobileNo);
+        return Results.Ok(new { accepted = false });
     }
 });
 
@@ -555,6 +621,7 @@ public record CheckTowerRequest(string MobileNo, string TowerName);
 public record GpsCheckRequest(string VehicleId, string Source, string SourceId, string Lat, string Lng);
 public record ProximityCheckRequest(string VehicleId, string Source, string SourceId, string TimeThreshold, string DistThreshold, string Lat, string Lng);
 public record ActivityLogRequest(string PassengerId, string VehicleId, string Page, string Lat, string Lng, string AppVersion);
+public record ActivityLogEntryRequest(string MobileNo, int AccountId, string PackageName = "com.sensel.passenger", string Activity = "", string Latitude = "", string Longitude = "");
 public record ErrorLogRequest(string Error, string DateTime);
 public record ResolveQrRequest(string QRCode);
 public record OtpAuthenticateRequest(string MobileNo);

@@ -356,4 +356,30 @@ public class WebServices {
             return "Failed";
         }
     }
+
+    // 21. Get Account Remote Configuration
+    public String GetAccountConfig(int accountId) {
+        return makeHttpRequest("config/by-account?accountId=" + accountId, "GET", null);
+    }
+
+    // 22. Check Privacy Policy Acceptance Status
+    public String CheckPrivacyAccepted(String mobileNo) {
+        return makeHttpRequest("config/check-privacy-accepted?mobileNo=" + mobileNo, "GET", null);
+    }
+
+    // 23. Log Granular Activity Audit Entry
+    public String logAuditActivity(String mobileNo, int accountId, String activity, String lat, String lng) {
+        try {
+            JSONObject json = new JSONObject();
+            json.put("MobileNo", mobileNo);
+            json.put("AccountId", accountId);
+            json.put("PackageName", "com.sensel.passenger");
+            json.put("Activity", activity);
+            json.put("Latitude", lat);
+            json.put("Longitude", lng);
+            return makeHttpRequest("logs/activity", "POST", json.toString());
+        } catch (Exception e) {
+            return "Failed";
+        }
+    }
 }

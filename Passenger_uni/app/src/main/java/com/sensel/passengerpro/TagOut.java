@@ -536,6 +536,19 @@ public class TagOut extends AppCompatActivity {
                         String imagepath=imagecapturepath.substring(imagecapturepath.lastIndexOf("/") + 1);
                         String result = webServices.InsertPsngrChecklist(psngrId, "", "TagOut", "", "", "","",Imei,str[0],str[1],"","",OMR,"","","","","","",fileName);
                         if (result.contains("Inserted Successfully")) {
+                            // Log TAG_OUT activity audit event
+                            new Thread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    try {
+                                        String accountIdStr = appConstants.getShrdPrefValByKeyWithTag(getApplicationContext(), "passengerinfo", "AccountId");
+                                        int accountId = 0;
+                                        try { if (accountIdStr != null) accountId = Integer.parseInt(accountIdStr); } catch (Exception ignored) {}
+                                        webServices.logAuditActivity(mobileno, accountId, "TAG_OUT", str[0], str[1]);
+                                    } catch (Exception ignored) {}
+                                }
+                            }).start();
+
                             runOnUiThread(new Runnable() {
                                 public void run() {
                                     final AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
