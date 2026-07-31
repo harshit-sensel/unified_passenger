@@ -28,6 +28,17 @@ public class HomeLocation extends AppCompatActivity {
             actionBar.setDisplayHomeAsUpEnabled(true);
             actionBar.setHomeButtonEnabled(true);
         }
+
+        View btnBack = findViewById(R.id.btn_back);
+        if (btnBack != null) {
+            btnBack.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    finish();
+                }
+            });
+        }
+
         Button btnChangeLocation=(Button) findViewById(R.id.btnChangeLocation);
         TextView txtVehicleId=(TextView) findViewById(R.id.vehicleid);
         TextView txtLatLng=(TextView) findViewById(R.id.latlng);

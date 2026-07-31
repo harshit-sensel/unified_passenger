@@ -64,6 +64,15 @@ public class Notifications extends AppCompatActivity {
             actionBar.setHomeButtonEnabled(true);
         }
         cont=this.getApplicationContext();
+        View btnBack = findViewById(R.id.btn_back);
+        if (btnBack != null) {
+            btnBack.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    finish();
+                }
+            });
+        }
         rowItems = new ArrayList<RowItem>();
         textView = (TextView) findViewById(R.id.text);
         textView.setVisibility(View.GONE);
