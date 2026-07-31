@@ -237,7 +237,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="28dp"
-                android:text="Protected by Sensel Telematics"
+                android:text="Powered by Sensel Telematics"
                 android:textColor="#64748B"
                 android:textSize="12sp" />
 
@@ -245,7 +245,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:text="fleet-SMART v2.4.1"
+                android:text="Passenger App v2.4.1"
                 android:textColor="#2563EB"
                 android:textSize="12sp"
                 android:textStyle="bold" />
