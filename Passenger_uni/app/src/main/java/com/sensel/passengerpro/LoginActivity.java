@@ -461,20 +461,20 @@ public class LoginActivity extends AppCompatActivity {
 
     private void submitOtp(){
         if(isNetworkAvailable()) {
-            int randomPIN=0;
-            if(phoneno.contains("1020304050"))
-            {
-                randomPIN=9080;
-            }
-            else {
-                randomPIN = (int) (Math.random() * 9000) + 1000;
-            }
-            appConstants.putShrdPrefValWithKey(getApplicationContext(),"otp", String.valueOf(randomPIN));
-            final String res = webServices.GetPsngrInfoWithValidation(tempMobileNo, "OTP-" + randomPIN);
+            final String res = webServices.PassengerProApp_Authenticate(tempMobileNo);
+            try {
+                if (res != null && res.startsWith("{")) {
+                    org.json.JSONObject obj = new org.json.JSONObject(res);
+                    if (obj.has("otp")) {
+                        String backendOtp = obj.getString("otp");
+                        appConstants.putShrdPrefValWithKey(getApplicationContext(), "otp", backendOtp);
+                    }
+                }
+            } catch (Exception ignored) {}
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    if (res != null && (res.contains("SMS Send Successfully") || res.contains("OTP Sent Successfully"))) {
+                    if (res != null && (res.contains("OTP Sent Successfully") || res.contains("SMS Send Successfully"))) {
                         phno.setEnabled(false);
                         if (otpContainer != null) otpContainer.setVisibility(View.VISIBLE);
                         btnLogin.setText("VERIFY & SUBMIT  ➔");

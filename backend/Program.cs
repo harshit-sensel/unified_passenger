@@ -580,7 +580,11 @@ app.MapPost("/api/auth/send-otp", async (OtpAuthenticateRequest request) =>
             return Results.Ok(new { result = "Mobile Number Not Registered", otp = "", token = "" });
         }
 
-        string otpPin = request.MobileNo == "1020304050" ? "9080" : "123456";
+        string otpPin = request.MobileNo == "1020304050" ? "9080" : Random.Shared.Next(1000, 9999).ToString();
+        app.Logger.LogInformation("==================================================");
+        app.Logger.LogInformation("🔑 GENERATED OTP FOR {MobileNo}: {OTP}", request.MobileNo, otpPin);
+        app.Logger.LogInformation("==================================================");
+
         string jwtToken = GenerateJwtToken(request.MobileNo, request.MobileNo);
 
         return Results.Ok(new { result = "OTP Sent Successfully", otp = otpPin, token = jwtToken });
