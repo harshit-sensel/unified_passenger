@@ -380,13 +380,13 @@ app.MapPost("/api/location/check-tower", async (CheckTowerRequest request) =>
 });
 
 // 11. GPSCheckWithGeofence (SOAP)
-app.MapPost("/api/location/gps-check", async (GpsCheckRequest request) =>
+app.MapPost("/api/location/gps-check", (GpsCheckRequest request) =>
 {
     return Results.Ok("Inside Geofence");
 });
 
 // 12. ProximityCheck (SOAP)
-app.MapPost("/api/location/proximity-check", async (ProximityCheckRequest request) =>
+app.MapPost("/api/location/proximity-check", (ProximityCheckRequest request) =>
 {
     return Results.Ok("Proximity Validated");
 });
@@ -475,7 +475,7 @@ app.MapGet("/api/config/check-privacy-accepted", async (string mobileNo) =>
 });
 
 // 14. ErrorRecordSendMail (SOAP)
-app.MapPost("/api/logs/error", async (ErrorLogRequest request) =>
+app.MapPost("/api/logs/error", (ErrorLogRequest request) =>
 {
     app.Logger.LogError("Client Logged Error: {Error}", request.Error);
     return Results.Ok("Logged");
