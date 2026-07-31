@@ -23,9 +23,11 @@ import android.provider.MediaStore;
 import android.provider.Settings;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.view.ContextThemeWrapper;
 import androidx.core.content.FileProvider;
+import android.view.MenuItem;
 
 import android.telephony.TelephonyManager;
 import android.util.Log;
@@ -117,6 +119,11 @@ public class TagIn extends AppCompatActivity {
             );
         }
         setContentView(R.layout.activity_tagin);
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayHomeAsUpEnabled(true);
+            actionBar.setHomeButtonEnabled(true);
+        }
         resultFromPrev=getIntent().getStringExtra("vehicleWithDriver").split("@#");
         vehicle=resultFromPrev[0];
         towername=getIntent().getStringExtra("towerName");
@@ -896,6 +903,15 @@ public class TagIn extends AppCompatActivity {
                 alert.show();
             }
         });
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            onBackPressed();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     private boolean isNetworkAvailable() {

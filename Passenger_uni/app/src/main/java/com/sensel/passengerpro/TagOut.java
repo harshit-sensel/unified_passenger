@@ -24,9 +24,11 @@ import android.provider.MediaStore;
 import android.provider.Settings;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.view.ContextThemeWrapper;
 import androidx.core.content.FileProvider;
+import android.view.MenuItem;
 
 import android.telephony.TelephonyManager;
 import android.util.Log;
@@ -92,6 +94,12 @@ public class TagOut extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_tagout);
         PassengerActivityLogger.log(this, "TagOut");
+
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayHomeAsUpEnabled(true);
+            actionBar.setHomeButtonEnabled(true);
+        }
         txtVehicle=(TextView) findViewById(R.id.vehicleid);
         txtTagInTime=(TextView) findViewById(R.id.tagInTime);
         txtTagInOMR=(TextView) findViewById(R.id.tagInOMR);
@@ -756,6 +764,9 @@ public class TagOut extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
+            case android.R.id.home:
+                finish();
+                return true;
             case R.id.menu_logout:
                 runOnUiThread(new Runnable() {
                     public void run() {
