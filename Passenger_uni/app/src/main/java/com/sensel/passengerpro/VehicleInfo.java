@@ -149,19 +149,24 @@ public class VehicleInfo extends AppCompatActivity {
             btnLogout.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    // Extract mobileNo and accountId BEFORE clearing preferences
+                    final String mobileNo = appConstants.getShrdPrefValByKeyWithTag(getApplicationContext(), "passengerinfo", "MobileNo");
+                    final String accountIdStr = appConstants.getShrdPrefValByKeyWithTag(getApplicationContext(), "passengerinfo", "AccountId");
+                    int accId = 0;
+                    try { if (accountIdStr != null) accId = Integer.parseInt(accountIdStr); } catch (Exception ignored) {}
+                    final int accountId = accId;
+
                     // Log LOGOUT activity audit event
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            try {
-                                String mobileNo = appConstants.getShrdPrefValByKeyWithTag(getApplicationContext(), "passengerinfo", "MobileNo");
-                                String accountIdStr = appConstants.getShrdPrefValByKeyWithTag(getApplicationContext(), "passengerinfo", "AccountId");
-                                int accountId = 0;
-                                try { if (accountIdStr != null) accountId = Integer.parseInt(accountIdStr); } catch (Exception ignored) {}
-                                webServices.logAuditActivity(mobileNo, accountId, "LOGOUT", "", "");
-                            } catch (Exception ignored) {}
-                        }
-                    }).start();
+                    if (mobileNo != null && !mobileNo.trim().isEmpty()) {
+                        new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    webServices.logAuditActivity(mobileNo, accountId, "LOGOUT", "", "");
+                                } catch (Exception ignored) {}
+                            }
+                        }).start();
+                    }
 
                     appConstants.putShrdPrefValWithKey(getApplicationContext(), "passengerinfo", "");
                     appConstants.putShrdPrefValWithKey(getApplicationContext(), "UserMenus", "");

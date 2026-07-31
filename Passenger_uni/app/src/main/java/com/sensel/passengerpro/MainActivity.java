@@ -297,24 +297,25 @@ public class MainActivity extends AppCompatActivity {
                             .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface d, int id) {
-                                    // Log LOGOUT activity audit event
-                                    new Thread(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            try {
-                                                String mobileNo = appConstants.getShrdPrefValByKeyWithTag(getApplicationContext(), "passengerinfo", "MobileNo");
-                                                String accountIdStr = appConstants.getShrdPrefValByKeyWithTag(getApplicationContext(), "passengerinfo", "AccountId");
-                                                int accountId = 0;
-                                                try { if (accountIdStr != null) accountId = Integer.parseInt(accountIdStr); } catch (Exception ignored) {}
-                                                webServices.logAuditActivity(mobileNo, accountId, "LOGOUT", "", "");
-                                            } catch (Exception ignored) {}
-                                        }
-                                    }).start();
+                                    // Extract mobileNo and accountId BEFORE clearing preferences
+                                    final String mobileNo = appConstants.getShrdPrefValByKeyWithTag(getApplicationContext(), "passengerinfo", "MobileNo");
+                                    final String accountIdStr = appConstants.getShrdPrefValByKeyWithTag(getApplicationContext(), "passengerinfo", "AccountId");
+                                    int accId = 0;
+                                    try { if (accountIdStr != null) accId = Integer.parseInt(accountIdStr); } catch (Exception ignored) {}
+                                    final int accountId = accId;
 
-                                    PassengerActivityLogger.logLogout(getApplicationContext(),
-                                            appConstants.getShrdPrefValByKeyWithTag(getApplicationContext(), "passengerinfo", "PsngrId"),
-                                            appConstants.getShrdPrefValByKey(getApplicationContext(), AppConstants.KEY_CURRENT_TAGGED_VEHICLE_ID),
-                                            appConstants.getShrdPrefValByKey(getApplicationContext(), "passengerinfo"));
+                                    // Log LOGOUT activity audit event
+                                    if (mobileNo != null && !mobileNo.trim().isEmpty()) {
+                                        new Thread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                try {
+                                                    webServices.logAuditActivity(mobileNo, accountId, "LOGOUT", "", "");
+                                                } catch (Exception ignored) {}
+                                            }
+                                        }).start();
+                                    }
+
                                     appConstants.putShrdPrefValWithKey(getApplicationContext(), "passengerinfo", null);
                                     appConstants.putShrdPrefValWithKey(getApplicationContext(), "UserMenus", null);
                                     appConstants.setJwtToken(getApplicationContext(), "");

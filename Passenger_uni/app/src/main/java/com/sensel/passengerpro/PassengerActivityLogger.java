@@ -42,28 +42,16 @@ public final class PassengerActivityLogger {
         new Thread(() -> {
             try {
                 AppConstants ac = new AppConstants();
-                String pid = pidOverride;
-                if (pid == null) {
-                    pid = ac.getShrdPrefValByKeyWithTag(app, "passengerinfo", "PsngrId");
-                }
-                if (pid == null || pid.isEmpty()) pid = "0";
+                String mobileNo = ac.getShrdPrefValByKeyWithTag(app, "passengerinfo", "MobileNo");
+                String accountIdStr = ac.getShrdPrefValByKeyWithTag(app, "passengerinfo", "AccountId");
+                int accountId = 0;
+                try { if (accountIdStr != null) accountId = Integer.parseInt(accountIdStr); } catch (Exception ignored) {}
 
-                String vid = vidOverride;
-                if (vid == null) {
-                    vid = resolveAssignedVehicleIdForLog(app, ac);
-                } else if (vid.isEmpty()) {
-                    vid = resolveAssignedVehicleIdForLog(app, ac);
-                }
-                if (vid == null) vid = "";
+                if (mobileNo == null || mobileNo.trim().isEmpty()) return;
 
                 String[] ll = resolveLatLngForLog(app, ac);
-                String lat = ll[0];
-                String lng = ll[1];
-
-                // versionCode first so dashboards that show only a leading integer see the build (e.g. 8 not 2 from "1.8").
-                String appVersion = BuildConfig.VERSION_CODE + "(" + BuildConfig.VERSION_NAME + ")";
                 WebServices ws = new WebServices();
-                ws.KeepPassengerProuseractivitylog(pid, vid, pageSafe, lat, lng, appVersion);
+                ws.logAuditActivity(mobileNo, accountId, pageSafe, ll[0], ll[1]);
             } catch (Exception ignored) {
             }
         }, "PassengerActivityLog").start();
@@ -75,39 +63,19 @@ public final class PassengerActivityLogger {
     public static void logLogout(Context context, String passengerIdSnapshot, String taggedVehicleIdSnapshot, String passengerInfoJsonSnapshot) {
         if (context == null) return;
         final Context app = context.getApplicationContext();
-        final String pidSnap = passengerIdSnapshot != null ? passengerIdSnapshot : "";
-        final String taggedSnap = taggedVehicleIdSnapshot != null ? taggedVehicleIdSnapshot.trim() : "";
-        final String infoSnap = passengerInfoJsonSnapshot;
         new Thread(() -> {
             try {
-                String pid = pidSnap.isEmpty() ? "0" : pidSnap;
-                String vid = taggedSnap;
-                if (vid.isEmpty()) {
-                    vid = parseAssignedVehicleFromJsonArray(infoSnap);
-                }
-                if (vid.isEmpty() && infoSnap != null && infoSnap.contains("MobileNo")) {
-                    try {
-                        JSONArray jArr = new JSONArray(infoSnap);
-                        if (jArr.length() > 0) {
-                            String mobile = jArr.getJSONObject(0).optString("MobileNo", "").trim();
-                            if (!mobile.isEmpty()) {
-                                WebServices ws = new WebServices();
-                                String validate = ws.GetPsngrInfoWithValidation(mobile, "Validate");
-                                vid = parseAssignedVehicleFromJsonArray(validate);
-                                if (vid.isEmpty()) {
-                                    String tag = ws.GetPsngrInfoWithValidation(mobile, "Tag");
-                                    vid = parseAssignedVehicleFromJsonArray(tag);
-                                }
-                            }
-                        }
-                    } catch (Exception ignored) {
-                    }
-                }
                 AppConstants ac = new AppConstants();
+                String mobileNo = ac.getShrdPrefValByKeyWithTag(app, "passengerinfo", "MobileNo");
+                String accountIdStr = ac.getShrdPrefValByKeyWithTag(app, "passengerinfo", "AccountId");
+                int accountId = 0;
+                try { if (accountIdStr != null) accountId = Integer.parseInt(accountIdStr); } catch (Exception ignored) {}
+
+                if (mobileNo == null || mobileNo.trim().isEmpty()) return;
+
                 String[] ll = resolveLatLngForLog(app, ac);
-                String appVersion = BuildConfig.VERSION_CODE + "(" + BuildConfig.VERSION_NAME + ")";
                 WebServices ws = new WebServices();
-                ws.KeepPassengerProuseractivitylog(pid, vid != null ? vid : "", "Logout", ll[0], ll[1], appVersion);
+                ws.logAuditActivity(mobileNo, accountId, "LOGOUT", ll[0], ll[1]);
             } catch (Exception ignored) {
             }
         }, "PassengerActivityLog").start();
