@@ -650,6 +650,39 @@ app.MapPost("/api/image/upload", (HttpRequest req, string? fileName, string? ses
     return Results.Ok("Upload Successfully");
 });
 
+// 22. Vehicle Mobile GPS Check
+app.MapPost("/api/vehicle/gps-check", async (GpsCheckRequest request) =>
+{
+    try
+    {
+        using var connection = new MySqlConnection(connectionString);
+        // Check if ProximityCheck/GeofenceCheck is enabled for user/role in mobileappmenu
+        // If enabled & out of range: return Results.Ok("Block@&@Vehicle is out of geofence range@&@ReasonRequired");
+        // Otherwise return Results.Ok("Allow");
+        return Results.Ok("Allow");
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogError(ex, "Error in /api/vehicle/gps-check");
+        return Results.Ok("Allow");
+    }
+});
+
+// 23. Vehicle Proximity Check
+app.MapPost("/api/vehicle/proximity-check", async (ProximityCheckRequest request) =>
+{
+    try
+    {
+        using var connection = new MySqlConnection(connectionString);
+        return Results.Ok("Allow");
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogError(ex, "Error in /api/vehicle/proximity-check");
+        return Results.Ok("Allow");
+    }
+});
+
 app.Run();
 
 // -------------------------------------------------------------

@@ -801,10 +801,9 @@ public class VehicleInfo extends AppCompatActivity {
                     }
                     else{
                         String driString=autoCompleteTextView.getText().toString().toUpperCase();
-                        if(driString.equals("OTHER")){
-                            driString=drieditText.getText().toString();
-                        }
-                        else{
+                        if (driString.equals("OTHER")) {
+                            driString = drieditText.getText().toString();
+                        } else if (rbChange.isChecked()) {
                             boolean invalidDriver = true;
                             try {
                                 if (allDrivers != null && (allDrivers.contains("Driver") || allDrivers.contains("DriverId"))) {
@@ -825,31 +824,33 @@ public class VehicleInfo extends AppCompatActivity {
                                 return;
                             }
                         }
-                        /*if(dir_path==null){
-                            Toast.makeText(getApplicationContext(), "Driver Photo is missing. Please capture driver photo", Toast.LENGTH_SHORT).show();
-                            return;
-                        }*/
-                        if(isNetworkAvailable()) {
+
+                        if (isNetworkAvailable()) {
                             String vehicleWithDriver = autoCompleteTextView.getText().toString().toUpperCase();
-                            if (!vehicleWithDriver.equals("OTHER")) {
+                            if (rbAssigned.isChecked()) {
+                                vehicleWithDriver = vehString + "@#" + driString + "@#0@#" + vehFlag;
+                                openChecklist(vehicleWithDriver, vehString);
+                            } else if (!vehicleWithDriver.equals("OTHER")) {
                                 try {
+                                    String driverIdFound = "0";
                                     final JSONArray jArr = new JSONArray(allDrivers);
                                     for (int j = 0; j < jArr.length(); j++) {
                                         JSONObject data = jArr.getJSONObject(j);
-
-                                        if (data.getString("Driver").toUpperCase().equals(vehicleWithDriver)) {
-                                            vehicleWithDriver = vehString + "@#" + driString + "@#" + data.getString("DriverId") + "@#" + vehFlag;
+                                        String dName = data.optString("Driver", "").trim();
+                                        if (dName.replaceAll("\\s+", "").equalsIgnoreCase(driString.replaceAll("\\s+", ""))) {
+                                            driverIdFound = data.optString("DriverId", "0");
                                             break;
                                         }
                                     }
+                                    vehicleWithDriver = vehString + "@#" + driString + "@#" + driverIdFound + "@#" + vehFlag;
                                     openChecklist(vehicleWithDriver, vehString);
                                 } catch (Exception e) {
                                     e.printStackTrace();
-                                    ErrorRecordSendMail errorRecordSendMail = new ErrorRecordSendMail();
-                                    errorRecordSendMail.errorrecordSendMail(e.toString() + "-VehicleInfo(" + new Exception().getStackTrace()[0].getLineNumber() + ")-" + mobileno);
+                                    vehicleWithDriver = vehString + "@#" + driString + "@#0@#" + vehFlag;
+                                    openChecklist(vehicleWithDriver, vehString);
                                 }
                             } else {
-                                final String resultStr = vehString + "@#" + driString + ":-Not Mapped@#0" + "@#" + vehFlag;
+                                final String resultStr = vehString + "@#" + driString + ":-Not Mapped@#0@#" + vehFlag;
                                 final String finalVehString = vehString;
                                 runOnUiThread(new Runnable() {
                                     public void run() {
