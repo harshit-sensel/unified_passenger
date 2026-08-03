@@ -161,9 +161,9 @@ public class TagIn extends AppCompatActivity {
                             adapter.setDropDownViewResource(android.R.layout.select_dialog_singlechoice);
                             wfmTask.setAdapter(adapter);
                             String result=resultFromPrev[1];
-                            String[] driveNameLic=result.split(":-");
+                            String[] driveNameLic = (result != null && result.contains(":-")) ? result.split(":-") : new String[]{result != null ? result : "Assigned Driver", ""};
                             Name = driveNameLic[0];
-                            LicenceNo = driveNameLic[1];
+                            LicenceNo = driveNameLic.length > 1 ? driveNameLic[1] : "";
                             license.setText(LicenceNo);
                             drivername.setText(Name);
                             mobileno = appConstants.getShrdPrefValByKeyWithTag(getApplicationContext(),"passengerinfo","MobileNo");

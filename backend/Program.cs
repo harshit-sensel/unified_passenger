@@ -148,6 +148,13 @@ app.MapPost("/api/auth/validate-phone", async (ValidatePhoneRequest request, ICo
             return Results.Ok(dris);
         }
 
+        if (flag == "CheckList")
+        {
+            string chkSql = "SELECT ChkId AS PsngrChkId, ChkName, Type FROM psngr_chklist ORDER BY ChkId ASC;";
+            var chks = await connection.QueryAsync(chkSql);
+            return Results.Ok(chks);
+        }
+
         if (flag == "Zones" || flag == "Towers")
         {
             string twrSql = "SELECT DISTINCT ZoneName, TowerName FROM psngr_tower_locations LIMIT 50;";
