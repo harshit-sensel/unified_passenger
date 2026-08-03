@@ -778,23 +778,22 @@ public class VehicleInfo extends AppCompatActivity {
                         vehString=editText.getText().toString().trim().replace(" ", "");
                     }
                     else {
-                        String[] str = result.toUpperCase().split(autoCompleteVehTextView.getText().toString().toUpperCase());
-                        if(str.length>1) {
-                            boolean invalidVehicle=true;
-                            for(int s=0;s<str.length-1;s++){
-                                String last = str[s].substring(str[s].length() - 1);
-                                String first = str[s+1].substring(0, 1);
-                                if (last.indexOf('"') != -1 && first.indexOf('"') != -1) {
-                                    invalidVehicle=false;
-                                    break;
+                        boolean invalidVehicle = true;
+                        try {
+                            if (result != null && (result.contains("VehicleId") || result.contains("VehicleID") || result.contains("vehicleId"))) {
+                                final JSONArray jArr = new JSONArray(result);
+                                String cleanSelected = vehString.replaceAll("\\s+", "");
+                                for (int j = 0; j < jArr.length(); j++) {
+                                    JSONObject data = jArr.getJSONObject(j);
+                                    String vId = data.optString("VehicleId", data.optString("VehicleID", data.optString("vehicleId", ""))).trim();
+                                    if (vId.length() > 0 && cleanSelected.equals(vId.replaceAll("\\s+", "").toUpperCase())) {
+                                        invalidVehicle = false;
+                                        break;
+                                    }
                                 }
                             }
-                            if(invalidVehicle) {
-                                Toast.makeText(getApplicationContext(), "Invalid vehicleid, please select proper vehicle", Toast.LENGTH_SHORT).show();
-                                return;
-                            }
-                        }
-                        else{
+                        } catch (Exception ignored) {}
+                        if (invalidVehicle) {
                             Toast.makeText(getApplicationContext(), "Invalid vehicleid, please select proper vehicle", Toast.LENGTH_SHORT).show();
                             return;
                         }
@@ -817,23 +816,22 @@ public class VehicleInfo extends AppCompatActivity {
                             driString=drieditText.getText().toString();
                         }
                         else{
-                            String[] str=allDrivers.toUpperCase().split(driString);
-                            if(str.length>1) {
-                                boolean invalidDriver=true;
-                                for(int s=0;s<str.length-1;s++){
-                                    String last = str[s].substring(str[s].length() - 1);
-                                    String first = str[s+1].substring(0, 1);
-                                    if (last.indexOf('"') != -1 && first.indexOf('"') != -1) {
-                                        invalidDriver=false;
-                                        break;
+                            boolean invalidDriver = true;
+                            try {
+                                if (allDrivers != null && (allDrivers.contains("Driver") || allDrivers.contains("DriverId"))) {
+                                    final JSONArray jArr = new JSONArray(allDrivers);
+                                    String cleanSelectedDri = driString.replaceAll("\\s+", "");
+                                    for (int j = 0; j < jArr.length(); j++) {
+                                        JSONObject data = jArr.getJSONObject(j);
+                                        String dName = data.optString("Driver", "").trim();
+                                        if (dName.length() > 0 && cleanSelectedDri.equals(dName.replaceAll("\\s+", "").toUpperCase())) {
+                                            invalidDriver = false;
+                                            break;
+                                        }
                                     }
                                 }
-                                if(invalidDriver) {
-                                    Toast.makeText(getApplicationContext(), "Invalid driver, please select proper driver", Toast.LENGTH_SHORT).show();
-                                    return;
-                                }
-                            }
-                            else{
+                            } catch (Exception ignored) {}
+                            if (invalidDriver) {
                                 Toast.makeText(getApplicationContext(), "Invalid driver, please select proper driver", Toast.LENGTH_SHORT).show();
                                 return;
                             }
