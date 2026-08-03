@@ -330,13 +330,64 @@ app.MapPost("/api/checklist/insert", async (ChecklistInsertRequest request) =>
     try
     {
         using var connection = new MySqlConnection(connectionString);
-        string sql = @"
-            INSERT INTO psngr_tag (PsngrId, VehicleId, TagInTime, TagInOMR, IsActive)
-            VALUES (@PsngrId, @VehicleId, NOW(), @Omr, 1);
-            UPDATE psngr_info SET IsLogged = 1, AssignedVehicleId = @VehicleId WHERE PsngrId = @PsngrId;";
-        
-        await connection.ExecuteAsync(sql, new { PsngrId = request.PsngrId, VehicleId = request.VehicleId, Omr = request.Omr });
-        return Results.Ok("Checklist Saved Successfully");
+
+        int pId = int.TryParse(request.PsngrId, out int p) ? p : 0;
+        int dId = int.TryParse(request.DriverId, out int d) ? d : 0;
+        int omr = int.TryParse(request.Omr, out int o) ? o : 0;
+
+        string wfmId = request.Wfmid ?? "";
+        string wfmTask = "";
+        if (!string.IsNullOrEmpty(request.Wfmid) && request.Wfmid.Contains("@&"))
+        {
+            var parts = request.Wfmid.Split("@&");
+            wfmId = parts[0];
+            wfmTask = parts.Length > 1 ? parts[1] : "";
+        }
+
+        string sqlTag = @"
+            INSERT INTO psngr_tag 
+                (PsngrId, VehicleId, DriverId, TagInTime, TagInIMEI, TagInLat, TagInLng, TagInOMR, WFM_ID, WFM_Task, PTW_Number, DriverDetails, TowerName, TagIn_VehiclePhoto, TagIn_OdometerPhoto)
+            VALUES 
+                (@PsngrId, @VehicleId, @DriverId, NOW(), @Imei, @Lat, @Lng, @Omr, @Wfmid, @WfmTask, @Ptw, @DriverDetails, @TowerName, @Vehiclephoto, @TaginOdometerPhoto);
+            SELECT LAST_INSERT_ID();";
+
+        int tagId = await connection.ExecuteScalarAsync<int>(sqlTag, new {
+            PsngrId = pId,
+            VehicleId = request.VehicleId ?? "",
+            DriverId = dId,
+            Imei = request.Imei ?? "",
+            Lat = decimal.TryParse(request.Lat, out decimal lt) ? lt : (decimal?)null,
+            Lng = decimal.TryParse(request.Lng, out decimal lg) ? lg : (decimal?)null,
+            Omr = omr,
+            Wfmid = wfmId,
+            WfmTask = wfmTask,
+            Ptw = request.Ptw ?? "",
+            DriverDetails = request.DriverDetails ?? "",
+            TowerName = request.TowerName ?? "",
+            Vehiclephoto = request.Vehiclephoto ?? "",
+            TaginOdometerPhoto = request.TaginOdometerPhoto ?? ""
+        });
+
+        if (!string.IsNullOrWhiteSpace(request.Rules))
+        {
+            string[] ruleItems = request.Rules.Split(new string[] { "@#" }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (var item in ruleItems)
+            {
+                var parts = item.Split('|');
+                if (parts.Length >= 2)
+                {
+                    int chkId = int.TryParse(parts[0], out int c) ? c : 0;
+                    string status = parts[1];
+                    string sqlRule = "INSERT INTO psngr_chklist_status (TagId, ChkId, Status) VALUES (@TagId, @ChkId, @Status);";
+                    await connection.ExecuteAsync(sqlRule, new { TagId = tagId, ChkId = chkId, Status = status });
+                }
+            }
+        }
+
+        string updatePsngr = "UPDATE psngr_info SET IsLogged = 1, AssignedVehicleId = @VehicleId WHERE PsngrId = @PsngrId;";
+        await connection.ExecuteAsync(updatePsngr, new { VehicleId = request.VehicleId, PsngrId = pId });
+
+        return Results.Ok("Inserted Successfully");
     }
     catch (Exception ex)
     {
@@ -351,12 +402,33 @@ app.MapPost("/api/checklist/tagout", async (ChecklistInsertRequest request) =>
     try
     {
         using var connection = new MySqlConnection(connectionString);
-        string sql = @"
-            UPDATE psngr_tag SET TagOutTime = NOW(), TagOutOMR = @Omr, IsActive = 0 WHERE PsngrId = @PsngrId AND IsActive = 1;
-            UPDATE psngr_info SET IsLogged = 0 WHERE PsngrId = @PsngrId;";
-        
-        await connection.ExecuteAsync(sql, new { PsngrId = request.PsngrId, Omr = request.Omr });
-        return Results.Ok("Tag Out Successfully");
+        int pId = int.TryParse(request.PsngrId, out int p) ? p : 0;
+        int omr = int.TryParse(request.Omr, out int o) ? o : 0;
+
+        string sqlTagout = @"
+            UPDATE psngr_tag 
+            SET TagOutTime = NOW(), 
+                TagOutIMEI = @Imei, 
+                TagOutLat = @Lat, 
+                TagOutLng = @Lng, 
+                TagOutOMR = @Omr, 
+                TagOut_OdometerPhoto = @TagoutOdometerPhoto 
+            WHERE PsngrId = @PsngrId AND TagOutTime IS NULL 
+            ORDER BY Id DESC LIMIT 1;";
+
+        await connection.ExecuteAsync(sqlTagout, new {
+            PsngrId = pId,
+            Imei = request.Imei ?? "",
+            Lat = decimal.TryParse(request.Lat, out decimal lt) ? lt : (decimal?)null,
+            Lng = decimal.TryParse(request.Lng, out decimal lg) ? lg : (decimal?)null,
+            Omr = omr,
+            TagoutOdometerPhoto = request.TagoutOdometerPhoto ?? ""
+        });
+
+        string updatePsngr = "UPDATE psngr_info SET IsLogged = 0, AssignedVehicleId = NULL WHERE PsngrId = @PsngrId;";
+        await connection.ExecuteAsync(updatePsngr, new { PsngrId = pId });
+
+        return Results.Ok("Inserted Successfully");
     }
     catch (Exception ex)
     {
