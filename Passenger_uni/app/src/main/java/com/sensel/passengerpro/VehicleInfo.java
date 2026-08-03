@@ -758,26 +758,20 @@ public class VehicleInfo extends AppCompatActivity {
         showBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(autoCompleteVehTextView.getText().toString().length()==0){
-                    Toast.makeText(getApplicationContext(),"Please Select vehicleid",Toast.LENGTH_SHORT).show();
+                android.util.Log.d("VehicleInfoDebug", "showBtn onClick selectedVeh='" + autoCompleteVehTextView.getText().toString() + "' selectedDri='" + autoCompleteTextView.getText().toString() + "'");
+                if (autoCompleteVehTextView.getText().toString().trim().length() == 0) {
+                    Toast.makeText(getApplicationContext(), "Please Select vehicleid", Toast.LENGTH_SHORT).show();
                     return;
-                }
-                else if(!autoCompleteVehTextView.getText().toString().toUpperCase().equals("OTHER")&&!result.toUpperCase().contains(autoCompleteVehTextView.getText().toString().toUpperCase())){
-                    Toast.makeText(getApplicationContext(),"Invalid vehicleid, please select proper vehicleid",Toast.LENGTH_SHORT).show();
+                } else if (autoCompleteVehTextView.getText().toString().toUpperCase().equals("OTHER") && editText.getText().toString().trim().length() == 0) {
+                    Toast.makeText(getApplicationContext(), "Please enter vehicleid", Toast.LENGTH_SHORT).show();
                     return;
-                }
-                else if(autoCompleteVehTextView.getText().toString().toUpperCase().equals("OTHER")&&editText.getText().toString().trim().length()==0){
-                    Toast.makeText(getApplicationContext(),"Please enter vehicleid",Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                else {
-                    String vehString=autoCompleteVehTextView.getText().toString().toUpperCase();
-                    int vehFlag=0;
-                    if(vehString.equals("OTHER")){
-                        vehFlag=1;
-                        vehString=editText.getText().toString().trim().replace(" ", "");
-                    }
-                    else {
+                } else {
+                    String vehString = autoCompleteVehTextView.getText().toString().toUpperCase();
+                    int vehFlag = 0;
+                    if (vehString.equals("OTHER")) {
+                        vehFlag = 1;
+                        vehString = editText.getText().toString().trim().replace(" ", "");
+                    } else {
                         boolean invalidVehicle = true;
                         try {
                             if (result != null && (result.contains("VehicleId") || result.contains("VehicleID") || result.contains("vehicleId"))) {
@@ -798,16 +792,11 @@ public class VehicleInfo extends AppCompatActivity {
                             return;
                         }
                     }
-                    if(autoCompleteTextView.getText().toString().length()==0){
-                        Toast.makeText(getApplicationContext(),"Please Select driver",Toast.LENGTH_SHORT).show();
+                    if (autoCompleteTextView.getText().toString().trim().length() == 0) {
+                        Toast.makeText(getApplicationContext(), "Please Select driver", Toast.LENGTH_SHORT).show();
                         return;
-                    }
-                    else if(!autoCompleteTextView.getText().toString().toUpperCase().equals("OTHER")&&!allDrivers.toUpperCase().contains(autoCompleteTextView.getText().toString().toUpperCase())){
-                        Toast.makeText(getApplicationContext(),"Invalid driver, please select proper driver",Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-                    else if(autoCompleteTextView.getText().toString().toUpperCase().equals("OTHER")&&drieditText.getText().toString().trim().length()==0){
-                        Toast.makeText(getApplicationContext(),"Please enter driver details",Toast.LENGTH_SHORT).show();
+                    } else if (autoCompleteTextView.getText().toString().toUpperCase().equals("OTHER") && drieditText.getText().toString().trim().length() == 0) {
+                        Toast.makeText(getApplicationContext(), "Please enter driver details", Toast.LENGTH_SHORT).show();
                         return;
                     }
                     else{
