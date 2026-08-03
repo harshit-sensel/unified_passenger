@@ -367,13 +367,13 @@ public class VehicleInfo extends AppCompatActivity {
                             String zonelist="";
                             String towerlist="";
                             try {
-                                if (result.contains("VehicleId")) {
+                                if (result.contains("VehicleId") || result.contains("VehicleID") || result.contains("vehicleId")) {
                                     final JSONArray jArr = new JSONArray(result);
                                     for (int j = 0; j < jArr.length(); j++) {
                                         JSONObject data = jArr.getJSONObject(j);
-
-                                        if (data.getString("VehicleId").trim().length() > 0) {
-                                            vehiclelist = vehiclelist + data.getString("VehicleId") + "#";
+                                        String vId = data.optString("VehicleId", data.optString("VehicleID", data.optString("vehicleId", ""))).trim();
+                                        if (vId.length() > 0) {
+                                            vehiclelist = vehiclelist + vId + "#";
                                         }
                                     }
                                     vehiclelist = vehiclelist + "OTHER";

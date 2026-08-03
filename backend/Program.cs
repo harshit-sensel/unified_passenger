@@ -155,6 +155,28 @@ app.MapPost("/api/auth/validate-phone", async (ValidatePhoneRequest request, ICo
             return Results.Ok(twrs);
         }
 
+        if (flag == "Vehicles")
+        {
+            string vehSql = @"
+                SELECT TRIM(v.VehicleId) AS VehicleId, IFNULL(v.TruckType, 'Assigned Driver') AS Driver 
+                FROM vehicleinfo v 
+                WHERE v.VehicleId IS NOT NULL AND TRIM(v.VehicleId) != '' 
+                LIMIT 50;";
+            var vehs = await connection.QueryAsync(vehSql);
+            return Results.Ok(vehs.Any() ? vehs : "No Data");
+        }
+
+        if (flag == "Drivers")
+        {
+            string drvSql = @"
+                SELECT DISTINCT v.TruckType AS Driver, 1 AS DriverId 
+                FROM vehicleinfo v 
+                WHERE v.TruckType IS NOT NULL AND TRIM(v.TruckType) != '' 
+                LIMIT 50;";
+            var drvs = await connection.QueryAsync(drvSql);
+            return Results.Ok(drvs.Any() ? drvs : "No Data");
+        }
+
         // Query passenger info and retrieve AppKeyWord dynamically by MobileNo
         string query = @"
             SELECT p.* 
