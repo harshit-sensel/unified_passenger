@@ -419,14 +419,20 @@ public class VehicleInfo extends AppCompatActivity {
                                                 R.id.lbl_name,
                                                 list
                                         );
-                                        autoCompleteVehTextView.setAdapter(adapter);
-                                        autoCompleteVehTextView.setText("");
-                                        autoCompleteVehTextView.setOnClickListener(new View.OnClickListener() {
-                                            public void onClick(View v) {
-                                                autoCompleteVehTextView.showDropDown();//Show full list of vehicle
-                                            }
-                                        });
-                                        autoCompleteVehTextView.addTextChangedListener(new TextWatcher() {
+                                         autoCompleteVehTextView.setAdapter(adapter);
+                                         autoCompleteVehTextView.setText("");
+                                         autoCompleteVehTextView.setOnClickListener(new View.OnClickListener() {
+                                             public void onClick(View v) {
+                                                 autoCompleteVehTextView.showDropDown();//Show full list of vehicle
+                                             }
+                                         });
+                                         autoCompleteVehTextView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                                             @Override
+                                             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                                                 textvehiclecount = -1;
+                                             }
+                                         });
+                                         autoCompleteVehTextView.addTextChangedListener(new TextWatcher() {
                                             @Override
                                             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
 
