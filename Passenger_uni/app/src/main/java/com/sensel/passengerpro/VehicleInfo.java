@@ -480,7 +480,13 @@ public class VehicleInfo extends AppCompatActivity {
                                                                             android.util.Log.d("VehicleInfoDebug", "Match found! Driver='" + drv + "'");
                                                                             if (!drv.isEmpty() && !"null".equalsIgnoreCase(drv)) {
                                                                                 rbAssigned.setEnabled(true);
-                                                                                rbAssigned.setChecked(true);
+                                                                                rbAssigned.post(new Runnable() {
+                                                                                    @Override
+                                                                                    public void run() {
+                                                                                        rbAssigned.setEnabled(true);
+                                                                                        rbAssigned.setChecked(true);
+                                                                                    }
+                                                                                });
                                                                                 autoCompleteTextView.setText(drv);
                                                                             } else {
                                                                                 autoCompleteTextView.setText("");
