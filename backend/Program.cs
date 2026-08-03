@@ -194,7 +194,7 @@ app.MapPost("/api/auth/validate-phone", async (ValidatePhoneRequest request, ICo
             string drvSql = @"
                 SELECT d.DriverId, CONCAT(d.Name, ':-', d.LicenceNo) AS Driver 
                 FROM driverinfo d 
-                WHERE d.AccountId = @AccountId OR @AccountId = 0 
+                WHERE d.AccountId = @AccountId 
                 GROUP BY d.DriverId, d.Name, d.LicenceNo 
                 LIMIT 50;";
             var drvs = await connection.QueryAsync(drvSql, new { AccountId = accId });
