@@ -197,6 +197,7 @@ public class VehicleInfo extends AppCompatActivity {
                         drieditText.setVisibility(View.GONE);
                         try {
                             final JSONArray jArr = new JSONArray(result);
+                            boolean foundDriver = false;
                             for (int j = 0; j < jArr.length(); j++) {
                                 JSONObject data = jArr.getJSONObject(j);
                                 String vId = data.optString("VehicleId", data.optString("VehicleID", data.optString("vehicleId", ""))).trim();
@@ -205,14 +206,16 @@ public class VehicleInfo extends AppCompatActivity {
                                     String cleanSelected = autoCompleteVehTextView.getText().toString().replaceAll("\\s+", "").toUpperCase();
                                     String cleanDbVeh = vId.replaceAll("\\s+", "").toUpperCase();
                                     if (cleanSelected.length() > 0 && cleanSelected.equals(cleanDbVeh)) {
+                                        foundDriver = true;
                                         String drv = data.optString("Driver", "");
                                         if (!drv.isEmpty() && !"null".equalsIgnoreCase(drv))
                                             autoCompleteTextView.setText(drv);
                                         break;
                                     }
-                                    else
-                                        autoCompleteTextView.setText("");
                                 }
+                            }
+                            if (!foundDriver) {
+                                autoCompleteTextView.setText("");
                             }
                             txtType.setText("Assigned Driver");
                             runOnUiThread(new Runnable() {
