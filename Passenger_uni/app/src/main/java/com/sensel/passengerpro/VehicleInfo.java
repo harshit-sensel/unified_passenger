@@ -1308,8 +1308,12 @@ public class VehicleInfo extends AppCompatActivity {
                                 dialog.dismiss();
                                 if (result.contains("Allow")) {
                                     uploadfiles();
-                                    Intent i = new Intent(getApplicationContext(), QRScannerActivity.class);
-                                    i.putExtra("vehicleWithDriver", vehicleWithDriver+"@#"+result.split("@&@")[2]+"@#"+"Allowed");
+                                     String userMenus = appConstants.getShrdPrefValByKey(getApplicationContext(), "UserMenus");
+                                     Class<?> targetClass = (userMenus != null && userMenus.contains("qr_scanner")) ? QRScannerActivity.class : TagIn.class;
+                                     Intent i = new Intent(getApplicationContext(), targetClass);
+                                    String[] parts = result.split("@&@");
+                                    String gpsCheckId = parts.length > 2 ? parts[2] : "0";
+                                    i.putExtra("vehicleWithDriver", vehicleWithDriver + "@#" + gpsCheckId + "@#" + "Allowed");
                                     i.putExtra("towerName",twrautoTxt.getText().toString());
                                     i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                                     startActivity(i);
@@ -1346,8 +1350,12 @@ public class VehicleInfo extends AppCompatActivity {
                                                             public void run() {
                                                                 try {
                                                                     uploadfiles();
-                                                                    Intent i = new Intent(getApplicationContext(), QRScannerActivity.class);
-                                                                    i.putExtra("vehicleWithDriver", vehicleWithDriver+"@#"+result.split("@&@")[2]+"@#"+reason);
+                                                                    String userMenus = appConstants.getShrdPrefValByKey(getApplicationContext(), "UserMenus");
+                                                                    Class<?> targetClass = (userMenus != null && userMenus.contains("qr_scanner")) ? QRScannerActivity.class : TagIn.class;
+                                                                    String[] parts = result.split("@&@");
+                                                                    String gpsCheckId = parts.length > 2 ? parts[2] : "0";
+                                                                    Intent i = new Intent(getApplicationContext(), targetClass);
+                                                                    i.putExtra("vehicleWithDriver", vehicleWithDriver+"@#"+gpsCheckId+"@#"+reason);
                                                                     i.putExtra("towerName",twrautoTxt.getText().toString());
                                                                     i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                                                                     startActivity(i);

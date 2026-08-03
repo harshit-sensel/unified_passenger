@@ -47,6 +47,10 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <activity android:name=".TagIn"
+                  android:configChanges="orientation|screenSize"
+                  android:theme="@style/Theme.AppCompat.NoActionBar">
+        </activity>
         <activity android:name=".TagOut"
                   android:configChanges="orientation|screenSize"
                   android:theme="@style/Theme.AppCompat.NoActionBar">

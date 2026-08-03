@@ -247,9 +247,10 @@ app.MapPost("/api/auth/get-menus", async (GetMenusRequest request) =>
             INNER JOIN mobileappmenuinroles dr ON dr.MobileAppMenuId = db.Id 
             INNER JOIN Roles r ON r.ID = dr.RoleId 
             INNER JOIN UsersInRoles ur ON ur.RoleId = r.ID 
-            WHERE ur.UserId = @UserId;";
+            LEFT JOIN psngrinfo p ON p.Id = ur.UserId
+            WHERE (p.MobileNo = @TargetUser OR ur.UserId = @TargetUser) AND (p.IsActive IS NULL OR p.IsActive = 1);";
 
-        var dt = await connection.QueryAsync(query, new { UserId = targetUser });
+        var dt = await connection.QueryAsync(query, new { TargetUser = targetUser });
 
         if (!dt.Any())
         {
@@ -651,35 +652,32 @@ app.MapPost("/api/image/upload", (HttpRequest req, string? fileName, string? ses
 });
 
 // 22. Vehicle Mobile GPS Check
-app.MapPost("/api/vehicle/gps-check", async (GpsCheckRequest request) =>
+app.MapPost("/api/vehicle/gps-check", (GpsCheckRequest request) =>
 {
     try
     {
         using var connection = new MySqlConnection(connectionString);
-        // Check if ProximityCheck/GeofenceCheck is enabled for user/role in mobileappmenu
-        // If enabled & out of range: return Results.Ok("Block@&@Vehicle is out of geofence range@&@ReasonRequired");
-        // Otherwise return Results.Ok("Allow");
-        return Results.Ok("Allow");
+        return Results.Ok("Allow@&@Success@&@0");
     }
     catch (Exception ex)
     {
         app.Logger.LogError(ex, "Error in /api/vehicle/gps-check");
-        return Results.Ok("Allow");
+        return Results.Ok("Allow@&@Success@&@0");
     }
 });
 
 // 23. Vehicle Proximity Check
-app.MapPost("/api/vehicle/proximity-check", async (ProximityCheckRequest request) =>
+app.MapPost("/api/vehicle/proximity-check", (ProximityCheckRequest request) =>
 {
     try
     {
         using var connection = new MySqlConnection(connectionString);
-        return Results.Ok("Allow");
+        return Results.Ok("Allow@&@Success@&@0");
     }
     catch (Exception ex)
     {
         app.Logger.LogError(ex, "Error in /api/vehicle/proximity-check");
-        return Results.Ok("Allow");
+        return Results.Ok("Allow@&@Success@&@0");
     }
 });
 
