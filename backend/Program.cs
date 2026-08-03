@@ -443,7 +443,7 @@ app.MapPost("/api/alerts/panic", async (PanicAlertRequest request) =>
     try
     {
         using var connection = new MySqlConnection(connectionString);
-        string sql = "INSERT INTO panic_alerts (PsngrId, VehicleId, AlertTime, Type) VALUES (@Id, @VehicleId, NOW(), @Type);";
+        string sql = "INSERT INTO panic_alerts (VehicleId, `Timestamp`, From_Type, From_Id) VALUES (@VehicleId, NOW(), @Type, @Id);";
         await connection.ExecuteAsync(sql, new { Id = request.Id, VehicleId = request.VehicleId, Type = request.Type });
         return Results.Ok("Alert Sent Successfully");
     }
@@ -477,7 +477,7 @@ app.MapPost("/api/notifications/mark-read", async (NotificationsReadRequest requ
     try
     {
         using var connection = new MySqlConnection(connectionString);
-        string sql = "UPDATE notifications SET IsRead = 1 WHERE PsngrId = @PsngrId;";
+        string sql = "UPDATE psngr_notifications SET IsNotified = 1, NotifiedTime = NOW() WHERE PsngrId = @PsngrId AND IsNotified = 0;";
         await connection.ExecuteAsync(sql, new { PsngrId = request.PsngrId });
         return Results.Ok("Success");
     }
