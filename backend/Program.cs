@@ -157,27 +157,47 @@ app.MapPost("/api/auth/validate-phone", async (ValidatePhoneRequest request, ICo
 
         if (flag == "Vehicles")
         {
-            string accSql = "SELECT p.AccountId FROM psngr_info p WHERE p.MobileNo = @MobileNo LIMIT 1;";
-            int accId = await connection.QueryFirstOrDefaultAsync<int>(accSql, new { MobileNo = request.MobileNo });
+            string psngrSql = "SELECT p.AccountId, p.RegionId FROM psngr_info p WHERE p.MobileNo = @MobileNo AND p.Active = 1 LIMIT 1;";
+            var pInfo = await connection.QueryFirstOrDefaultAsync<dynamic>(psngrSql, new { MobileNo = request.MobileNo });
+
+            int accId = pInfo?.AccountId ?? 0;
+            int regId = pInfo?.RegionId ?? 0;
 
             string vehSql = @"
-                SELECT TRIM(v.VehicleId) AS VehicleId, IFNULL(v.TruckType, 'Assigned Driver') AS Driver 
+                SELECT REPLACE(v.VehicleId, ' ', '') AS VehicleId, 
+                       IFNULL(CONCAT(d.Name, ':-', d.LicenceNo), IFNULL(v.TruckType, 'Assigned Driver')) AS Driver 
                 FROM vehicleinfo v 
-                WHERE (v.AccountID = @AccountId OR @AccountId = 0 OR (SELECT COUNT(*) FROM vehicleinfo WHERE AccountID = @AccountId) = 0)
-                  AND v.VehicleId IS NOT NULL AND TRIM(v.VehicleId) != '' 
+                LEFT JOIN vehiclesgroupsmap vg ON v.VehicleId = vg.VehicleId 
+                LEFT JOIN (
+                    SELECT di1.AssignedVehicleId, di1.Name, di1.LicenceNo 
+                    FROM driverinfo di1 
+                    INNER JOIN (
+                        SELECT AssignedVehicleId, MAX(ApprovedDateTime) AS MaxApprovedDateTime 
+                        FROM driverinfo 
+                        GROUP BY AssignedVehicleId
+                    ) latest ON di1.AssignedVehicleId = latest.AssignedVehicleId AND di1.ApprovedDateTime = latest.MaxApprovedDateTime
+                ) d ON d.AssignedVehicleId = vg.VehicleId 
+                WHERE (v.RegionId = @RegionId OR @RegionId = 0 OR vg.GroupId IN (SELECT u.GroupId FROM accountgroups u WHERE u.AccountID = @AccountId))
+                   OR (v.AccountID = @AccountId OR @AccountId = 0 OR (SELECT COUNT(*) FROM vehicleinfo WHERE AccountID = @AccountId) = 0)
+                GROUP BY v.VehicleId, d.Name, d.LicenceNo 
+                ORDER BY v.VehicleId 
                 LIMIT 50;";
-            var vehs = await connection.QueryAsync(vehSql, new { AccountId = accId });
+            var vehs = await connection.QueryAsync(vehSql, new { RegionId = regId, AccountId = accId });
             return Results.Ok(vehs.Any() ? vehs : "No Data");
         }
 
         if (flag == "Drivers")
         {
+            string accSql = "SELECT p.AccountId FROM psngr_info p WHERE p.MobileNo = @MobileNo AND p.Active = 1 LIMIT 1;";
+            int accId = await connection.QueryFirstOrDefaultAsync<int>(accSql, new { MobileNo = request.MobileNo });
+
             string drvSql = @"
-                SELECT DISTINCT v.TruckType AS Driver, 1 AS DriverId 
-                FROM vehicleinfo v 
-                WHERE v.TruckType IS NOT NULL AND TRIM(v.TruckType) != '' 
+                SELECT d.DriverId, CONCAT(d.Name, ':-', d.LicenceNo) AS Driver 
+                FROM driverinfo d 
+                WHERE d.AccountId = @AccountId OR @AccountId = 0 
+                GROUP BY d.DriverId, d.Name, d.LicenceNo 
                 LIMIT 50;";
-            var drvs = await connection.QueryAsync(drvSql);
+            var drvs = await connection.QueryAsync(drvSql, new { AccountId = accId });
             return Results.Ok(drvs.Any() ? drvs : "No Data");
         }
 
