@@ -18,7 +18,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="QR Vehicle Scan"
+            android:text="Vehicle Inspection"
             android:textColor="#93C5FD"
             android:textSize="13sp"
             android:textStyle="bold" />
@@ -27,7 +27,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="Tag In with QR Code"
+            android:text="Pre-Trip Safety Checklist"
             android:textColor="#FFFFFF"
             android:textSize="22sp"
             android:textStyle="bold" />
