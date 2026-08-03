@@ -459,7 +459,8 @@ public class VehicleInfo extends AppCompatActivity {
                                                             editText.setVisibility(View.GONE);
                                                             dritxt.setVisibility(View.GONE);
                                                             drieditText.setVisibility(View.GONE);
-                                                            if (result.contains("VehicleId") || result.contains("VehicleID") || result.contains("vehicleId")) {
+                                                            android.util.Log.d("VehicleInfoDebug", "afterTextChanged selected=" + autoCompleteVehTextView.getText().toString() + " | result=" + result);
+                                                            if (result != null && (result.contains("VehicleId") || result.contains("VehicleID") || result.contains("vehicleId"))) {
                                                                 final JSONArray jArr = new JSONArray(result);
                                                                 boolean foundMatch = false;
                                                                 for (int j = 0; j < jArr.length(); j++) {
@@ -469,9 +470,11 @@ public class VehicleInfo extends AppCompatActivity {
                                                                     if (vId.length() > 0) {
                                                                         String cleanSelected = autoCompleteVehTextView.getText().toString().replaceAll("\\s+", "").toUpperCase();
                                                                         String cleanDbVeh = vId.replaceAll("\\s+", "").toUpperCase();
+                                                                        android.util.Log.d("VehicleInfoDebug", "Comparing cleanSelected='" + cleanSelected + "' vs cleanDbVeh='" + cleanDbVeh + "'");
                                                                         if (cleanSelected.length() > 0 && cleanSelected.equals(cleanDbVeh)) {
                                                                             foundMatch = true;
                                                                             String drv = data.optString("Driver", "");
+                                                                            android.util.Log.d("VehicleInfoDebug", "Match found! Driver='" + drv + "'");
                                                                             if (!drv.isEmpty() && !"null".equalsIgnoreCase(drv)) {
                                                                                 rbAssigned.setEnabled(true);
                                                                                 rbAssigned.setChecked(true);
@@ -486,6 +489,7 @@ public class VehicleInfo extends AppCompatActivity {
                                                                     }
                                                                 }
                                                                 if (!foundMatch) {
+                                                                    android.util.Log.d("VehicleInfoDebug", "No match found for cleanSelected='" + autoCompleteVehTextView.getText().toString() + "'");
                                                                     autoCompleteTextView.setText("");
                                                                     rbAssigned.setEnabled(false);
                                                                     rbChange.setChecked(true);
