@@ -63,32 +63,40 @@ public class CustomAutoCompleteTextView extends ArrayAdapter<Names> {
 
         @Override
         protected FilterResults performFiltering(CharSequence constraint) {
-            if (constraint != null) {
+            FilterResults filterResults = new FilterResults();
+            if (constraint == null || constraint.toString().trim().isEmpty()) {
+                synchronized (this) {
+                    filterResults.values = new ArrayList<Names>(tempItems);
+                    filterResults.count = tempItems.size();
+                }
+            } else {
                 suggestions.clear();
+                String filterPattern = constraint.toString().toLowerCase().trim();
                 for (Names names : tempItems) {
-                    if (names.name.toLowerCase().contains(constraint.toString().toLowerCase())) {
+                    if (names.name.toLowerCase().contains(filterPattern)) {
                         suggestions.add(names);
                     }
                 }
-                FilterResults filterResults = new FilterResults();
-                filterResults.values = suggestions;
+                filterResults.values = new ArrayList<Names>(suggestions);
                 filterResults.count = suggestions.size();
-                return filterResults;
-            } else {
-                return new FilterResults();
             }
+            return filterResults;
         }
 
         @Override
         protected void publishResults(CharSequence constraint, FilterResults results) {
-            List<Names> filterList = (ArrayList<Names>) results.values;
-            if (results != null && results.count > 0) {
-                clear();
+            clear();
+            if (results != null && results.values != null) {
+                List<Names> filterList = (List<Names>) results.values;
                 for (Names names : filterList) {
                     add(names);
-                    notifyDataSetChanged();
+                }
+            } else {
+                for (Names names : tempItems) {
+                    add(names);
                 }
             }
+            notifyDataSetChanged();
         }
     };
 }
