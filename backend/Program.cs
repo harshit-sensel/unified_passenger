@@ -157,12 +157,16 @@ app.MapPost("/api/auth/validate-phone", async (ValidatePhoneRequest request, ICo
 
         if (flag == "Vehicles")
         {
+            string accSql = "SELECT p.AccountId FROM psngr_info p WHERE p.MobileNo = @MobileNo LIMIT 1;";
+            int accId = await connection.QueryFirstOrDefaultAsync<int>(accSql, new { MobileNo = request.MobileNo });
+
             string vehSql = @"
                 SELECT TRIM(v.VehicleId) AS VehicleId, IFNULL(v.TruckType, 'Assigned Driver') AS Driver 
                 FROM vehicleinfo v 
-                WHERE v.VehicleId IS NOT NULL AND TRIM(v.VehicleId) != '' 
+                WHERE (v.AccountID = @AccountId OR @AccountId = 0 OR (SELECT COUNT(*) FROM vehicleinfo WHERE AccountID = @AccountId) = 0)
+                  AND v.VehicleId IS NOT NULL AND TRIM(v.VehicleId) != '' 
                 LIMIT 50;";
-            var vehs = await connection.QueryAsync(vehSql);
+            var vehs = await connection.QueryAsync(vehSql, new { AccountId = accId });
             return Results.Ok(vehs.Any() ? vehs : "No Data");
         }
 
