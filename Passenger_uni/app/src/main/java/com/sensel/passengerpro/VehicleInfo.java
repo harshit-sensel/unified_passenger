@@ -199,11 +199,15 @@ public class VehicleInfo extends AppCompatActivity {
                             final JSONArray jArr = new JSONArray(result);
                             for (int j = 0; j < jArr.length(); j++) {
                                 JSONObject data = jArr.getJSONObject(j);
+                                String vId = data.optString("VehicleId", data.optString("VehicleID", data.optString("vehicleId", ""))).trim();
 
-                                if (data.getString("VehicleId").trim().length() > 0) {
-                                    if(autoCompleteVehTextView.getText().toString().trim().length()>0 && data.getString("VehicleId").equals(autoCompleteVehTextView.getText().toString())) {
-                                        if(!data.getString("Driver").equals("null"))
-                                            autoCompleteTextView.setText(data.getString("Driver"));
+                                if (vId.length() > 0) {
+                                    String cleanSelected = autoCompleteVehTextView.getText().toString().replaceAll("\\s+", "").toUpperCase();
+                                    String cleanDbVeh = vId.replaceAll("\\s+", "").toUpperCase();
+                                    if (cleanSelected.length() > 0 && cleanSelected.equals(cleanDbVeh)) {
+                                        String drv = data.optString("Driver", "");
+                                        if (!drv.isEmpty() && !"null".equalsIgnoreCase(drv))
+                                            autoCompleteTextView.setText(drv);
                                         break;
                                     }
                                     else
@@ -449,17 +453,23 @@ public class VehicleInfo extends AppCompatActivity {
                                                             editText.setVisibility(View.GONE);
                                                             dritxt.setVisibility(View.GONE);
                                                             drieditText.setVisibility(View.GONE);
-                                                            if (result.contains("VehicleId")) {
+                                                            if (result.contains("VehicleId") || result.contains("VehicleID") || result.contains("vehicleId")) {
                                                                 final JSONArray jArr = new JSONArray(result);
+                                                                boolean foundMatch = false;
                                                                 for (int j = 0; j < jArr.length(); j++) {
                                                                     JSONObject data = jArr.getJSONObject(j);
+                                                                    String vId = data.optString("VehicleId", data.optString("VehicleID", data.optString("vehicleId", ""))).trim();
 
-                                                                    if (data.getString("VehicleId").trim().length() > 0) {
-                                                                        if (autoCompleteVehTextView.getText().toString().trim().length() > 0 && data.getString("VehicleId").equals(autoCompleteVehTextView.getText().toString().toUpperCase())) {
-                                                                            if (!data.getString("Driver").equals("null")) {
+                                                                    if (vId.length() > 0) {
+                                                                        String cleanSelected = autoCompleteVehTextView.getText().toString().replaceAll("\\s+", "").toUpperCase();
+                                                                        String cleanDbVeh = vId.replaceAll("\\s+", "").toUpperCase();
+                                                                        if (cleanSelected.length() > 0 && cleanSelected.equals(cleanDbVeh)) {
+                                                                            foundMatch = true;
+                                                                            String drv = data.optString("Driver", "");
+                                                                            if (!drv.isEmpty() && !"null".equalsIgnoreCase(drv)) {
                                                                                 rbAssigned.setEnabled(true);
                                                                                 rbAssigned.setChecked(true);
-                                                                                autoCompleteTextView.setText(data.getString("Driver"));
+                                                                                autoCompleteTextView.setText(drv);
                                                                             } else {
                                                                                 autoCompleteTextView.setText("");
                                                                                 rbAssigned.setEnabled(false);
@@ -468,6 +478,11 @@ public class VehicleInfo extends AppCompatActivity {
                                                                             break;
                                                                         }
                                                                     }
+                                                                }
+                                                                if (!foundMatch) {
+                                                                    autoCompleteTextView.setText("");
+                                                                    rbAssigned.setEnabled(false);
+                                                                    rbChange.setChecked(true);
                                                                 }
                                                             } else {
                                                                 autoCompleteTextView.setText("");
