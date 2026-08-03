@@ -245,10 +245,10 @@ app.MapPost("/api/auth/get-menus", async (GetMenusRequest request) =>
             SELECT db.Id, db.menukey, db.menuvalue 
             FROM mobileappmenu db 
             INNER JOIN mobileappmenuinroles dr ON dr.MobileAppMenuId = db.Id 
-            INNER JOIN Roles r ON r.ID = dr.RoleId 
-            INNER JOIN UsersInRoles ur ON ur.RoleId = r.ID 
-            LEFT JOIN psngrinfo p ON p.Id = ur.UserId
-            WHERE (p.MobileNo = @TargetUser OR ur.UserId = @TargetUser) AND (p.IsActive IS NULL OR p.IsActive = 1);";
+            INNER JOIN roles r ON r.ID = dr.RoleId 
+            INNER JOIN usersinroles ur ON ur.RoleId = r.ID 
+            LEFT JOIN psngr_info p ON p.PsngrId = ur.UserId
+            WHERE (p.MobileNo = @TargetUser OR ur.UserId = @TargetUser) AND (p.Active IS NULL OR p.Active = 1);";
 
         var dt = await connection.QueryAsync(query, new { TargetUser = targetUser });
 
