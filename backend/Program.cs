@@ -398,7 +398,7 @@ app.MapPost("/api/checklist/insert", async (ChecklistInsertRequest request) =>
         string wfmTask = "";
         if (!string.IsNullOrEmpty(request.Wfmid) && request.Wfmid.Contains("@&"))
         {
-            var parts = request.Wfmid.Split("@&");
+            var parts = request.Wfmid.Split(new[] { "@&" }, StringSplitOptions.None);
             wfmId = parts[0];
             wfmTask = parts.Length > 1 ? parts[1] : "";
         }
