@@ -245,7 +245,7 @@ public class CheckListDesign extends ArrayAdapter<String> {
             }
             if (photoFile != null) {
                 Uri photoURI = FileProvider.getUriForFile(getContext(),
-                        "com.sensel.passengerpro.provider",
+                        getContext().getPackageName() + ".provider",
                         photoFile);
                 takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
                 //Added for Android 14 - 13012025
