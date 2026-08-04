@@ -107,13 +107,17 @@ public class LoginActivity extends AppCompatActivity {
                             } catch (Exception ex) {
                                 android.util.Log.e("LoginActivity", "Error fetching UserMenus", ex);
                             }
-                            Intent i;
-                            if (userMenus != null && userMenus.contains("checklist") && !userMenus.contains("dashboard")) {
-                                i = new Intent(getApplicationContext(), VehicleInfo.class);
-                            } else {
-                                i = new Intent(getApplicationContext(), MainActivity.class);
-                            }
-                            i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                             String tagResult = webServices.GetPsngrInfoWithValidation(mobNo, "Tag");
+                             Intent i;
+                             if (tagResult != null && tagResult.contains("TagOut")) {
+                                 i = new Intent(getApplicationContext(), TagOut.class);
+                                 i.putExtra("details", tagResult);
+                             } else if (userMenus != null && userMenus.contains("checklist") && !userMenus.contains("dashboard")) {
+                                 i = new Intent(getApplicationContext(), VehicleInfo.class);
+                             } else {
+                                 i = new Intent(getApplicationContext(), MainActivity.class);
+                             }
+                             i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                             startActivity(i);
                             runOnUiThread(new Runnable() {
                                 @Override
@@ -407,8 +411,12 @@ public class LoginActivity extends AppCompatActivity {
                                 android.util.Log.e("LoginActivity", "Error fetching AccountConfig / Privacy status", ex);
                             }
 
+                            String tagResultOtp = webServices.GetPsngrInfoWithValidation(tempMobileNo, "Tag");
                             final Intent targetIntent;
-                            if (userMenus != null && userMenus.contains("checklist") && !userMenus.contains("dashboard")) {
+                            if (tagResultOtp != null && tagResultOtp.contains("TagOut")) {
+                                targetIntent = new Intent(getApplicationContext(), TagOut.class);
+                                targetIntent.putExtra("details", tagResultOtp);
+                            } else if (userMenus != null && userMenus.contains("checklist") && !userMenus.contains("dashboard")) {
                                 targetIntent = new Intent(getApplicationContext(), VehicleInfo.class);
                             } else {
                                 targetIntent = new Intent(getApplicationContext(), MainActivity.class);

@@ -210,8 +210,9 @@ app.MapPost("/api/auth/validate-phone", async (ValidatePhoneRequest request, ICo
 
         // Query passenger info and retrieve AppKeyWord dynamically by MobileNo
         string cleanMobileNo = request.MobileNo?.Trim() ?? "";
-        string query = @"
-            SELECT p.* 
+        string selectCols = flag == "Tag" ? "p.*, 'TagOut' AS Status" : "p.*";
+        string query = $@"
+            SELECT {selectCols} 
             FROM psngr_info p 
             WHERE RIGHT(TRIM(p.MobileNo), 10) = RIGHT(@MobileNo, 10) AND p.Active = 1";
 
