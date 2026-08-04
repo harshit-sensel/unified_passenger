@@ -372,10 +372,6 @@ public class TagOut extends AppCompatActivity {
                         FileUpload file_upload=new FileUpload();
                         String path = file_upload.compressImage(fileUri.getPath());
                         imageView.setTag(path);
-                        File file = new File(fileUri.getPath());
-                        if (file.exists())
-                            file.delete();
-
                     }
                 }
                 catch(Exception ex)
