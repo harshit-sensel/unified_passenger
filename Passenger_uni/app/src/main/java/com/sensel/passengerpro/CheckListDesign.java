@@ -99,6 +99,7 @@ public class CheckListDesign extends ArrayAdapter<String> {
         Date now = new Date();
         String strDate = sdfDate.format(now);
 
+        AppConstants appConstants = new AppConstants();
         String pId = appConstants.getShrdPrefValByKeyWithTag(context, "passengerinfo", "PsngrId");
         imagecapturepath = "TagIn_" + (pId != null ? pId : "0") + "_" + strDate + "_" + position;
         imagecapturepath = imagecapturepath.replaceAll(" ", "");
