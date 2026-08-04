@@ -856,10 +856,21 @@ app.MapGet("/api/version/check", (string packageName) =>
 });
 
 // 27. GetDropDownForApp — matches WebServices.java L302
-app.MapGet("/api/checklist/dropdown", (string appName, string key) =>
+app.MapGet("/api/checklist/dropdown", async (string? appName, string? key) =>
 {
-    // Return empty dropdown (WFM tasks are account-specific, NA is default)
-    return Results.Ok("NA");
+    try
+    {
+        using var connection = new MySqlConnection(connectionString);
+        string query = "SELECT DropDown FROM mobiledropdowns WHERE AppId = 'com.sensel.passenger';";
+        var rows = await connection.QueryAsync<string>(query);
+        var resultList = rows.Select(d => new { DropDown = d }).ToList();
+        return Results.Ok(resultList);
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogError(ex, "Error in /api/checklist/dropdown");
+        return Results.Ok(new List<object>());
+    }
 });
 
 app.Run();

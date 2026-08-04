@@ -88,9 +88,11 @@
             android:layout_width="match_parent"
             android:layout_height="40dp"
             android:digits="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+            android:hint="Enter WFM ID"
             android:inputType="text"
             android:maxLength="30"
             android:maxLines="1"
+            android:paddingHorizontal="8dp"
             android:textColor="#0F172A"
             android:textColorHint="#94A3B8"
             android:textSize="14sp" />
@@ -111,9 +113,9 @@
 
         <Spinner
             android:id="@+id/wfmTask"
-            style="@android:style/Widget.Material.Spinner.Underlined"
             android:layout_width="match_parent"
-            android:layout_height="40dp" />
+            android:layout_height="40dp"
+            android:spinnerMode="dropdown" />
     </LinearLayout>
 
     <LinearLayout
@@ -134,9 +136,11 @@
             android:layout_width="match_parent"
             android:layout_height="40dp"
             android:digits="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+            android:hint="Enter PTW Number"
             android:inputType="text"
             android:maxLength="30"
             android:maxLines="1"
+            android:paddingHorizontal="8dp"
             android:textColor="#0F172A"
             android:textColorHint="#94A3B8"
             android:textSize="14sp" />

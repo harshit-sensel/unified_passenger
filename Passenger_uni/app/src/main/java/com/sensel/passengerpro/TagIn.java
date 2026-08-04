@@ -154,9 +154,21 @@ public class TagIn extends AppCompatActivity {
                     }
                     else{
                         if(isNetworkAvailable()){
-                            // WFM task list from server not used (QR Tag In is primary); local default only.
+                            String dropDwn = webServices.GetDropDownForApp("com.sensel.passenger");
                             ArrayList options = new ArrayList();
-                            options.add("NA");
+                            options.add("Select");
+                            if (dropDwn != null && dropDwn.startsWith("[")) {
+                                JSONArray jArr = new JSONArray(dropDwn);
+                                for (int j = 0; j < jArr.length(); j++) {
+                                    JSONObject data = jArr.getJSONObject(j);
+                                    if (data.has("DropDown") && data.getString("DropDown").trim().length() > 0) {
+                                        options.add(data.getString("DropDown"));
+                                    }
+                                }
+                            }
+                            if (options.size() == 1) {
+                                options.add("NA");
+                            }
                             ArrayAdapter adapter = new ArrayAdapter(getApplicationContext(), R.layout.spinner, options);
                             adapter.setDropDownViewResource(android.R.layout.select_dialog_singlechoice);
                             wfmTask.setAdapter(adapter);
