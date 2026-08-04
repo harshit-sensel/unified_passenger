@@ -209,10 +209,11 @@ app.MapPost("/api/auth/validate-phone", async (ValidatePhoneRequest request, ICo
         }
 
         // Query passenger info and retrieve AppKeyWord dynamically by MobileNo
+        string cleanMobileNo = request.MobileNo?.Trim() ?? "";
         string query = @"
             SELECT p.* 
             FROM psngr_info p 
-            WHERE p.MobileNo = @MobileNo AND p.Active = 1";
+            WHERE RIGHT(TRIM(p.MobileNo), 10) = RIGHT(@MobileNo, 10) AND p.Active = 1";
 
         if (flag == "Tag")
         {
@@ -220,7 +221,7 @@ app.MapPost("/api/auth/validate-phone", async (ValidatePhoneRequest request, ICo
         }
         query += " ORDER BY p.PsngrId DESC LIMIT 1;";
 
-        var dt = await connection.QueryAsync(query, new { MobileNo = request.MobileNo });
+        var dt = await connection.QueryAsync(query, new { MobileNo = cleanMobileNo });
 
         if (!dt.Any())
         {
@@ -696,8 +697,9 @@ app.MapPost("/api/auth/send-otp", async (OtpAuthenticateRequest request) =>
     try
     {
         using var connection = new MySqlConnection(connectionString);
-        string query = "SELECT p.*, p.AccountId AS globalaccountid FROM psngr_info p WHERE p.MobileNo = @MobileNo AND p.Active = 1;";
-        var dt = await connection.QueryAsync(query, new { MobileNo = request.MobileNo });
+        string cleanMobile = request.MobileNo?.Trim() ?? "";
+        string query = "SELECT p.*, p.AccountId AS globalaccountid FROM psngr_info p WHERE RIGHT(TRIM(p.MobileNo), 10) = RIGHT(@MobileNo, 10) AND p.Active = 1 LIMIT 1;";
+        var dt = await connection.QueryAsync(query, new { MobileNo = cleanMobile });
 
         if (!dt.Any())
         {
