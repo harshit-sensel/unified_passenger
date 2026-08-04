@@ -30,7 +30,7 @@ public class WebAccessor {
 
             final CountDownLatch cd = new CountDownLatch(1);
 
-            StringBuffer methodUrl = new StringBuffer(UrlConfig.FILE_UPLOAD_URL_VOLLEY + methodParam[0].trim()+"?sessionid=" + sessionid +"&fileName=" + imageName);
+            StringBuffer methodUrl = new StringBuffer(UrlConfig.FILE_UPLOAD_URL_VOLLEY + "?sessionid=" + sessionid +"&fileName=" + imageName);
 
             ImageUploadWithVolley imageUploadReq = new ImageUploadWithVolley(methodUrl.toString(), new Response.ErrorListener() {
                 @Override

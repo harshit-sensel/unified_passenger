@@ -514,9 +514,26 @@ public class TagIn extends AppCompatActivity {
                         String driverDetail="";
                         if(resultFromPrev[2].equals("0"))
                             driverDetail=resultFromPrev[1].split(":-")[0];
+
+                        String vehiclePhoto = "";
+                        String taginOdometerPhoto = "";
+                        if (CheckListDesign.imagePaths != null) {
+                            for (Map.Entry<Integer, String> entry : CheckListDesign.imagePaths.entrySet()) {
+                                String fullPath = entry.getValue();
+                                if (fullPath != null && !fullPath.isEmpty()) {
+                                    String fname = fullPath.substring(fullPath.lastIndexOf('/') + 1);
+                                    if (vehiclePhoto.isEmpty()) {
+                                        vehiclePhoto = fname;
+                                    } else if (taginOdometerPhoto.isEmpty()) {
+                                        taginOdometerPhoto = fname;
+                                    }
+                                }
+                            }
+                        }
+
                         final String result = webServices.InsertPsngrChecklist(psngrId, vehicle, "TagIn", strRules,
                                 wfm.getText().toString()+"@&"+wfmTask.getSelectedItem().toString(), ptw.getText().toString(),
-                                resultFromPrev[2],Imei,str[0],str[1],resultFromPrev[3],driverDetail,OMR,resultFromPrev[4],resultFromPrev[5],"",towername,"","","");
+                                resultFromPrev[2],Imei,str[0],str[1],resultFromPrev[3],driverDetail,OMR,resultFromPrev[4],resultFromPrev[5],"",towername,vehiclePhoto,taginOdometerPhoto,"");
                         if (result.contains("Inserted Successfully")) {
                             runOnUiThread(new Runnable() {
                                 public void run() {
