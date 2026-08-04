@@ -8,6 +8,10 @@ backend/appsettings.json
 backend/appsettings.Development.json
 backend/appsettings.Production.json
 
+# Backend uploaded media directory
+backend/Uploads/
+Uploads/
+
 # .NET Core Build & Temporary files
 bin/
 obj/
