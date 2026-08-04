@@ -324,7 +324,7 @@ app.MapPost("/api/passenger/assign-vehicle", async (AssignVehicleRequest request
     }
 });
 
-// 5. InsertPsngrChecklist (SOAP)
+// 5. InsertPsngrChecklist — handles BOTH TagIn and TagOut (matching XmlDB.cs legacy logic)
 app.MapPost("/api/checklist/insert", async (ChecklistInsertRequest request) =>
 {
     try
@@ -334,6 +334,43 @@ app.MapPost("/api/checklist/insert", async (ChecklistInsertRequest request) =>
         int pId = int.TryParse(request.PsngrId, out int p) ? p : 0;
         int dId = int.TryParse(request.DriverId, out int d) ? d : 0;
         int omr = int.TryParse(request.Omr, out int o) ? o : 0;
+
+        // ---- TagOut branch (matches XmlDB.cs L41126-41158) ----
+        if (string.Equals(request.Type, "TagOut", StringComparison.OrdinalIgnoreCase))
+        {
+            // Find the latest open tag for this passenger
+            string findSql = "SELECT MAX(Id) FROM psngr_tag WHERE PsngrId = @PsngrId AND (TagOutTime IS NULL OR TRIM(TagOutTime) = '');";
+            var maxId = await connection.ExecuteScalarAsync<int?>(findSql, new { PsngrId = pId });
+
+            if (maxId == null || maxId == 0)
+            {
+                return Results.Ok("0");
+            }
+
+            string sqlTagout = "UPDATE psngr_tag SET TagOutTime = NOW(), TagOutIMEI = @Imei, TagOutLat = @Lat, TagOutLng = @Lng, TagOutOMR = @Omr, TagOut_OdometerPhoto = @TagoutOdometerPhoto WHERE Id = @TagId;";
+            await connection.ExecuteAsync(sqlTagout, new {
+                TagId = maxId,
+                Imei = request.Imei ?? "",
+                Lat = decimal.TryParse(request.Lat, out decimal tlt) ? tlt : (decimal?)null,
+                Lng = decimal.TryParse(request.Lng, out decimal tlg) ? tlg : (decimal?)null,
+                Omr = omr,
+                TagoutOdometerPhoto = request.TagoutOdometerPhoto ?? ""
+            });
+
+            string updateOut = "UPDATE psngr_info SET IsLogged = 0, AssignedVehicleId = NULL WHERE PsngrId = @PsngrId;";
+            await connection.ExecuteAsync(updateOut, new { PsngrId = pId });
+
+            return Results.Ok("Inserted Successfully");
+        }
+
+        // ---- TagIn branch (matches XmlDB.cs L40977-41125) ----
+        // Check if passenger already has an open tag
+        string checkSql = "SELECT COUNT(*) FROM psngr_tag WHERE PsngrId = @PsngrId AND (TagOutTime IS NULL OR TRIM(TagOutTime) = '');";
+        int openTags = await connection.ExecuteScalarAsync<int>(checkSql, new { PsngrId = pId });
+        if (openTags > 0)
+        {
+            return Results.Ok("0");
+        }
 
         string wfmId = request.Wfmid ?? "";
         string wfmTask = "";
@@ -346,9 +383,9 @@ app.MapPost("/api/checklist/insert", async (ChecklistInsertRequest request) =>
 
         string sqlTag = @"
             INSERT INTO psngr_tag 
-                (PsngrId, VehicleId, DriverId, TagInTime, TagInIMEI, TagInLat, TagInLng, TagInOMR, WFM_ID, WFM_Task, PTW_Number, DriverDetails, TowerName, TagIn_VehiclePhoto, TagIn_OdometerPhoto)
+                (PsngrId, VehicleId, DriverId, TagInTime, TagInIMEI, TagInLat, TagInLng, TagInOMR, WFM_ID, WFM_Task, PTW_Number, Manual, DriverDetails, TowerName, TagIn_VehiclePhoto, TagIn_OdometerPhoto, TagOut_OdometerPhoto)
             VALUES 
-                (@PsngrId, @VehicleId, @DriverId, NOW(), @Imei, @Lat, @Lng, @Omr, @Wfmid, @WfmTask, @Ptw, @DriverDetails, @TowerName, @Vehiclephoto, @TaginOdometerPhoto);
+                (@PsngrId, @VehicleId, @DriverId, NOW(), @Imei, @Lat, @Lng, @Omr, @Wfmid, @WfmTask, @Ptw, @Manual, @DriverDetails, @TowerName, @Vehiclephoto, @TaginOdometerPhoto, @TagoutOdometerPhoto);
             SELECT LAST_INSERT_ID();";
 
         int tagId = await connection.ExecuteScalarAsync<int>(sqlTag, new {
@@ -362,10 +399,12 @@ app.MapPost("/api/checklist/insert", async (ChecklistInsertRequest request) =>
             Wfmid = wfmId,
             WfmTask = wfmTask,
             Ptw = request.Ptw ?? "",
+            Manual = request.Manual ?? "",
             DriverDetails = request.DriverDetails ?? "",
             TowerName = request.TowerName ?? "",
             Vehiclephoto = request.Vehiclephoto ?? "",
-            TaginOdometerPhoto = request.TaginOdometerPhoto ?? ""
+            TaginOdometerPhoto = request.TaginOdometerPhoto ?? "",
+            TagoutOdometerPhoto = request.TagoutOdometerPhoto ?? ""
         });
 
         if (!string.IsNullOrWhiteSpace(request.Rules))
@@ -392,47 +431,6 @@ app.MapPost("/api/checklist/insert", async (ChecklistInsertRequest request) =>
     catch (Exception ex)
     {
         app.Logger.LogError(ex, "Error inserting passenger checklist.");
-        return Results.Ok("Failed");
-    }
-});
-
-// 6. InsertPsngrChecklistTagout (SOAP)
-app.MapPost("/api/checklist/tagout", async (ChecklistInsertRequest request) =>
-{
-    try
-    {
-        using var connection = new MySqlConnection(connectionString);
-        int pId = int.TryParse(request.PsngrId, out int p) ? p : 0;
-        int omr = int.TryParse(request.Omr, out int o) ? o : 0;
-
-        string sqlTagout = @"
-            UPDATE psngr_tag 
-            SET TagOutTime = NOW(), 
-                TagOutIMEI = @Imei, 
-                TagOutLat = @Lat, 
-                TagOutLng = @Lng, 
-                TagOutOMR = @Omr, 
-                TagOut_OdometerPhoto = @TagoutOdometerPhoto 
-            WHERE PsngrId = @PsngrId AND TagOutTime IS NULL 
-            ORDER BY Id DESC LIMIT 1;";
-
-        await connection.ExecuteAsync(sqlTagout, new {
-            PsngrId = pId,
-            Imei = request.Imei ?? "",
-            Lat = decimal.TryParse(request.Lat, out decimal lt) ? lt : (decimal?)null,
-            Lng = decimal.TryParse(request.Lng, out decimal lg) ? lg : (decimal?)null,
-            Omr = omr,
-            TagoutOdometerPhoto = request.TagoutOdometerPhoto ?? ""
-        });
-
-        string updatePsngr = "UPDATE psngr_info SET IsLogged = 0, AssignedVehicleId = NULL WHERE PsngrId = @PsngrId;";
-        await connection.ExecuteAsync(updatePsngr, new { PsngrId = pId });
-
-        return Results.Ok("Inserted Successfully");
-    }
-    catch (Exception ex)
-    {
-        app.Logger.LogError(ex, "Error executing tag out.");
         return Results.Ok("Failed");
     }
 });
@@ -471,8 +469,8 @@ app.MapPost("/api/location/home/update", async (HomeLocationRequest request) =>
     }
 });
 
-// 9. UpdateNotificationsRead (SOAP)
-app.MapPost("/api/notifications/mark-read", async (NotificationsReadRequest request) =>
+// 9. UpdateNotificationsRead (SOAP) — URL matches WebServices.java L207
+app.MapPost("/api/notifications/read", async (NotificationsReadRequest request) =>
 {
     try
     {
@@ -607,8 +605,8 @@ app.MapPost("/api/logs/error", (ErrorLogRequest request) =>
     return Results.Ok("Logged");
 });
 
-// 15. ResolveQRCode (SOAP)
-app.MapPost("/api/qr/resolve", async (ResolveQrRequest request) =>
+// 15. ResolveQRCode (SOAP) — URL matches WebServices.java L218
+app.MapPost("/api/vehicle/resolve-qr", async (ResolveQrRequest request) =>
 {
     try
     {
@@ -658,14 +656,14 @@ app.MapGet("/api/drivers/by-account", async (string accountid) =>
     }
 });
 
-// 18. GetNotifications (WCF REST)
-app.MapGet("/api/notifications/by-passenger", async (string psngrid) =>
+// 18. GetNotifications — URL matches WebServices.java L199
+app.MapGet("/api/notifications", async (string psngrId) =>
 {
     try
     {
         using var connection = new MySqlConnection(connectionString);
-        string sql = "SELECT * FROM notifications WHERE PsngrId = @PsngrId ORDER BY CreatedAt DESC LIMIT 20;";
-        var dt = await connection.QueryAsync(sql, new { PsngrId = psngrid });
+        string sql = "SELECT * FROM psngr_notifications WHERE PsngrId = @PsngrId ORDER BY Id DESC LIMIT 100;";
+        var dt = await connection.QueryAsync(sql, new { PsngrId = psngrId });
         return Results.Ok(dt);
     }
     catch (Exception ex)
@@ -758,6 +756,54 @@ app.MapPost("/api/vehicle/proximity-check", (ProximityCheckRequest request) =>
         app.Logger.LogError(ex, "Error in /api/vehicle/proximity-check");
         return Results.Ok("Allow@&@Success@&@0");
     }
+});
+
+// 24. UpdatePsngrHomeLocation — matches WebServices.java L191
+app.MapPut("/api/passenger/home-location", async (HomeLocationRequest request) =>
+{
+    try
+    {
+        using var connection = new MySqlConnection(connectionString);
+        string sql = "UPDATE psngr_info SET HomeLatitude = @Lat, HomeLongitude = @Lng WHERE PsngrId = @PsngrId;";
+        await connection.ExecuteAsync(sql, new { Lat = request.Lat, Lng = request.Lng, PsngrId = request.PsngrId });
+        return Results.Ok("Location Updated Successfully");
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogError(ex, "Error updating home location.");
+        return Results.Ok("Failed");
+    }
+});
+
+// 25. GetVehiclePositionForPsngrApp — matches WebServices.java L120
+app.MapGet("/api/vehicle/position", async (string psngrID, string vehicleId) =>
+{
+    try
+    {
+        using var connection = new MySqlConnection(connectionString);
+        string sql = "SELECT VehicleID, Latitude, Longitude, Speed, UpdatedTime FROM vehiclepositiontxt WHERE VehicleID = @VehicleId LIMIT 1;";
+        var dt = await connection.QueryFirstOrDefaultAsync(sql, new { VehicleId = vehicleId });
+        return Results.Ok(dt != null ? dt : "No Data");
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogError(ex, "Error getting vehicle position.");
+        return Results.Ok("No Data");
+    }
+});
+
+// 26. GetAppVersion — matches WebServices.java L323
+app.MapGet("/api/version/check", (string packageName) =>
+{
+    // Return current version info (no forced update by default)
+    return Results.Ok("NO");
+});
+
+// 27. GetDropDownForApp — matches WebServices.java L302
+app.MapGet("/api/checklist/dropdown", (string appName, string key) =>
+{
+    // Return empty dropdown (WFM tasks are account-specific, NA is default)
+    return Results.Ok("NA");
 });
 
 app.Run();
