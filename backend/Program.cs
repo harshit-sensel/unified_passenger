@@ -711,7 +711,7 @@ app.MapPost("/api/auth/send-otp", async (OtpAuthenticateRequest request) =>
         app.Logger.LogInformation("🔑 GENERATED OTP FOR {MobileNo}: {OTP}", request.MobileNo, otpPin);
         app.Logger.LogInformation("==================================================");
 
-        string jwtToken = GenerateJwtToken(request.MobileNo, request.MobileNo);
+        string jwtToken = GenerateJwtToken(cleanMobile, cleanMobile);
 
         return Results.Ok(new { result = "OTP Sent Successfully", otp = otpPin, token = jwtToken });
     }
