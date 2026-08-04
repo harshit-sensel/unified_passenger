@@ -194,6 +194,10 @@ public class FileUpload {
     }
 
     //Upload file
+    public String uploadFile(String filePath) {
+        return sendFile(filePath);
+    }
+
     @TargetApi(Build.VERSION_CODES.FROYO)
     public static String sendFile(String filePath) {       // send large file in multiparts
         String response = "";
