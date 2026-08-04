@@ -298,6 +298,10 @@ public class WebServices {
     }
 
     // 16. Get DropDown For App
+    public String GetDropDownForApp(String appName) {
+        return GetDropDownForApp(appName, "");
+    }
+
     public String GetDropDownForApp(String appName, String key) {
         return makeHttpRequest("checklist/dropdown?appName=" + appName + "&key=" + key, "GET", null);
     }
