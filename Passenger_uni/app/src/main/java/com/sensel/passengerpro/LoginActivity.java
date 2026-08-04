@@ -109,7 +109,11 @@ public class LoginActivity extends AppCompatActivity {
                             }
                              String tagResult = webServices.GetPsngrInfoWithValidation(mobNo, "Tag");
                              Intent i;
-                             if (tagResult != null && tagResult.contains("TagOut")) {
+                             if (userMenus != null && userMenus.contains("assigned_veh_tracking") && !userMenus.contains("checklist")) {
+                                 // SmartTrack flow: go directly to TagTrack (Status + Map tabs)
+                                 i = new Intent(getApplicationContext(), TagTrack.class);
+                                 i.putExtra("tagDetails", tagResult);
+                             } else if (tagResult != null && tagResult.contains("TagOut")) {
                                  i = new Intent(getApplicationContext(), TagOut.class);
                                  i.putExtra("details", tagResult);
                              } else if (userMenus != null && userMenus.contains("checklist") && !userMenus.contains("dashboard")) {
@@ -413,7 +417,11 @@ public class LoginActivity extends AppCompatActivity {
 
                             String tagResultOtp = webServices.GetPsngrInfoWithValidation(tempMobileNo, "Tag");
                             final Intent targetIntent;
-                            if (tagResultOtp != null && tagResultOtp.contains("TagOut")) {
+                            if (userMenus != null && userMenus.contains("assigned_veh_tracking") && !userMenus.contains("checklist")) {
+                                // SmartTrack flow: go directly to TagTrack (Status + Map tabs)
+                                targetIntent = new Intent(getApplicationContext(), TagTrack.class);
+                                targetIntent.putExtra("tagDetails", tagResultOtp);
+                            } else if (tagResultOtp != null && tagResultOtp.contains("TagOut")) {
                                 targetIntent = new Intent(getApplicationContext(), TagOut.class);
                                 targetIntent.putExtra("details", tagResultOtp);
                             } else if (userMenus != null && userMenus.contains("checklist") && !userMenus.contains("dashboard")) {
