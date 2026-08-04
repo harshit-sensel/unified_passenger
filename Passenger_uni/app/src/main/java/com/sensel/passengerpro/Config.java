@@ -9,9 +9,9 @@ import java.security.GeneralSecurityException;
  */
 
 public class Config {
-    // File upload url (replace the ip with your server address)
-    public static final String FILE_UPLOAD_URL = "http://fleetsmart3.ui.sensel.in/uploadify.ashx";
-    public static final String FILE_UPLOAD_URL_UP = "https://fleetsmart3.ui.sensel.in/uploadify_up.ashx";
+    // File upload url (points to local .NET Core REST API backend /api/image/upload)
+    public static final String FILE_UPLOAD_URL = UrlConfig.FILE_UPLOAD_URL;
+    public static final String FILE_UPLOAD_URL_UP = UrlConfig.FILE_UPLOAD_URL;
     // Directory name to store captured images and videos
     public static final String IMAGE_DIRECTORY_NAME = "Passenger";
     public static String DOMAINURL1 = "https://fleetsmart3.ui.sensel.in";

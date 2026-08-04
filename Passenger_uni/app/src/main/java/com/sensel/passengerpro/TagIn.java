@@ -529,15 +529,31 @@ public class TagIn extends AppCompatActivity {
 
                         String vehiclePhoto = "";
                         String taginOdometerPhoto = "";
+                        String driverPhoto = "";
+
                         if (CheckListDesign.imagePaths != null) {
                             for (Map.Entry<Integer, String> entry : CheckListDesign.imagePaths.entrySet()) {
+                                int pos = entry.getKey();
                                 String fullPath = entry.getValue();
                                 if (fullPath != null && !fullPath.isEmpty()) {
                                     String fname = fullPath.substring(fullPath.lastIndexOf('/') + 1);
-                                    if (vehiclePhoto.isEmpty()) {
+                                    String chkId = (ruleIds != null && pos < ruleIds.length) ? ruleIds[pos] : "";
+                                    String chkName = (rules != null && pos < rules.length) ? rules[pos].toLowerCase() : "";
+
+                                    if ("16".equals(chkId) || chkName.contains("vehicle")) {
                                         vehiclePhoto = fname;
-                                    } else if (taginOdometerPhoto.isEmpty()) {
+                                    } else if ("17".equals(chkId) || chkName.contains("driver")) {
+                                        driverPhoto = fname;
+                                    } else if ("18".equals(chkId) || chkName.contains("odometer")) {
                                         taginOdometerPhoto = fname;
+                                    } else {
+                                        if (vehiclePhoto.isEmpty()) {
+                                            vehiclePhoto = fname;
+                                        } else if (taginOdometerPhoto.isEmpty()) {
+                                            taginOdometerPhoto = fname;
+                                        } else if (driverPhoto.isEmpty()) {
+                                            driverPhoto = fname;
+                                        }
                                     }
                                 }
                             }
@@ -545,8 +561,37 @@ public class TagIn extends AppCompatActivity {
 
                         final String result = webServices.InsertPsngrChecklist(psngrId, vehicle, "TagIn", strRules,
                                 wfm.getText().toString()+"@&"+wfmTask.getSelectedItem().toString(), ptw.getText().toString(),
-                                resultFromPrev[2],Imei,str[0],str[1],resultFromPrev[3],driverDetail,OMR,resultFromPrev[4],resultFromPrev[5],"",towername,vehiclePhoto,taginOdometerPhoto,"");
+                                resultFromPrev[2],Imei,str[0],str[1],resultFromPrev[3],driverDetail,OMR,resultFromPrev[4],resultFromPrev[5],driverPhoto,towername,vehiclePhoto,taginOdometerPhoto,"");
                         if (result.contains("Inserted Successfully")) {
+                            // Upload captured images to backend server & delete local temporary files from Android storage
+                            if (CheckListDesign.imagePaths != null) {
+                                for (Map.Entry<Integer, String> entry : CheckListDesign.imagePaths.entrySet()) {
+                                    String fullPath = entry.getValue();
+                                    if (fullPath != null && !fullPath.isEmpty()) {
+                                        try {
+                                            FileUpload fileUpload = new FileUpload();
+                                            String compressedPath = fileUpload.compressImage(fullPath);
+                                            String targetPath = (compressedPath != null && !compressedPath.isEmpty()) ? compressedPath : fullPath;
+                                            fileUpload.uploadFile(targetPath);
+                                            
+                                            // Cleanup local temporary image files
+                                            File originalFile = new File(fullPath);
+                                            if (originalFile.exists()) {
+                                                originalFile.delete();
+                                            }
+                                            if (compressedPath != null) {
+                                                File compFile = new File(compressedPath);
+                                                if (compFile.exists()) {
+                                                    compFile.delete();
+                                                }
+                                            }
+                                        } catch (Exception ex) {
+                                            Log.e("TagIn", "Error uploading/deleting captured photo: " + fullPath, ex);
+                                        }
+                                    }
+                                }
+                            }
+
                             runOnUiThread(new Runnable() {
                                 public void run() {
                                     final AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(

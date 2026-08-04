@@ -217,12 +217,12 @@ public class FileUpload {
 
         try {
             File sourceFile = new File(filePath);
-            fileName=sourceFile.getName();
+            fileName = sourceFile.getName();
             FileInputStream fileInputStream = new FileInputStream(sourceFile);
-           /* Bitmap original = BitmapFactory.decodeStream(fileInputStream);
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            original.compress(Bitmap.CompressFormat.JPEG, 100, out);
-            Bitmap decoded = BitmapFactory.decodeStream(new ByteArrayInputStream(out.toByteArray()));*/
+
+            if (!urlServer.contains("fileName=")) {
+                urlServer = urlServer + (urlServer.contains("?") ? "&" : "?") + "fileName=" + fileName;
+            }
 
             URL url = new URL(urlServer);
 
@@ -237,6 +237,7 @@ public class FileUpload {
             connection.setRequestMethod("POST");
 
             connection.setRequestProperty("Connection", "Keep-Alive");
+            connection.setRequestProperty("X-App-Key", UrlConfig.API_SECURITY_KEY);
             connection.setRequestProperty("Content-Type", "multipart/form-data;boundary=" + boundary);
 
             outputStream = new DataOutputStream(connection.getOutputStream());

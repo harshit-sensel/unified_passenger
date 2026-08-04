@@ -99,11 +99,6 @@ public class CheckListDesign extends ArrayAdapter<String> {
         Date now = new Date();
         String strDate = sdfDate.format(now);
 
-        AppConstants appConstants = new AppConstants();
-        String pId = appConstants.getShrdPrefValByKeyWithTag(context, "passengerinfo", "PsngrId");
-        imagecapturepath = "TagIn_" + (pId != null ? pId : "0") + "_" + strDate + "_" + position;
-        imagecapturepath = imagecapturepath.replaceAll(" ", "");
-        imagecapturepath = imagecapturepath.replaceAll("[:\\\\/*\"?|<>]", "_");
         txtTitle.setText(rules[position]);
         if(ruleTypes[position].equals("Radio")){
             rgp.setVisibility(View.VISIBLE);
@@ -237,6 +232,13 @@ public class CheckListDesign extends ArrayAdapter<String> {
         }
     }
     private void dispatchTakePictureIntent(int position) {
+        AppConstants appConstants = new AppConstants();
+        String pId = appConstants.getShrdPrefValByKeyWithTag(context, "passengerinfo", "PsngrId");
+        String chkIdStr = (ruleIds != null && position < ruleIds.length) ? ruleIds[position] : String.valueOf(position);
+        String strDate = new SimpleDateFormat("HHmmss").format(new Date());
+        imagecapturepath = "TagIn_" + (pId != null ? pId : "0") + "_" + strDate + "_" + chkIdStr;
+        imagecapturepath = imagecapturepath.replaceAll(" ", "").replaceAll("[:\\\\/*\"?|<>]", "_");
+
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         if (takePictureIntent.resolveActivity(context.getPackageManager()) != null) {
             File photoFile = null;

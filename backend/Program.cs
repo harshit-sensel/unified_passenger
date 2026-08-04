@@ -745,25 +745,41 @@ app.MapPost("/api/auth/send-otp", async (OtpAuthenticateRequest request) =>
     }
 });
 
-// 21. uploadImageService (WCF REST)
+// 21. uploadImageService (WCF REST / Multipart Upload)
 app.MapPost("/api/image/upload", async (HttpRequest req, string? fileName, string? sessionid) =>
 {
     try
     {
-        string name = string.IsNullOrWhiteSpace(fileName) ? $"{Guid.NewGuid()}.jpg" : fileName;
         string uploadDir = Path.Combine(Directory.GetCurrentDirectory(), "Uploads");
         if (!Directory.Exists(uploadDir))
         {
             Directory.CreateDirectory(uploadDir);
         }
 
-        string filePath = Path.Combine(uploadDir, name);
-        using (var fileStream = new FileStream(filePath, FileMode.Create))
+        if (req.HasFormContentType && req.Form.Files.Count > 0)
         {
-            await req.Body.CopyToAsync(fileStream);
+            foreach (var file in req.Form.Files)
+            {
+                string targetName = string.IsNullOrWhiteSpace(fileName) ? file.FileName : fileName;
+                string savePath = Path.Combine(uploadDir, targetName);
+                using (var stream = new FileStream(savePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+                app.Logger.LogInformation("📸 Saved uploaded multipart file: {FilePath}", savePath);
+            }
+        }
+        else
+        {
+            string name = string.IsNullOrWhiteSpace(fileName) ? $"{Guid.NewGuid()}.jpg" : fileName;
+            string filePath = Path.Combine(uploadDir, name);
+            using (var fileStream = new FileStream(filePath, FileMode.Create))
+            {
+                await req.Body.CopyToAsync(fileStream);
+            }
+            app.Logger.LogInformation("📸 Saved uploaded stream image: {FilePath}", filePath);
         }
 
-        app.Logger.LogInformation("📸 Saved uploaded image: {FilePath}", filePath);
         return Results.Ok("Upload Successfully");
     }
     catch (Exception ex)
