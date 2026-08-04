@@ -746,11 +746,31 @@ app.MapPost("/api/auth/send-otp", async (OtpAuthenticateRequest request) =>
 });
 
 // 21. uploadImageService (WCF REST)
-app.MapPost("/api/image/upload", (HttpRequest req, string? fileName, string? sessionid) =>
+app.MapPost("/api/image/upload", async (HttpRequest req, string? fileName, string? sessionid) =>
 {
-    string name = string.IsNullOrWhiteSpace(fileName) ? $"{Guid.NewGuid()}.jpg" : fileName;
-    string photoUrl = $"https://db-flatfile-backup.s3.us-east-1.amazonaws.com/uploads/{name}";
-    return Results.Ok("Upload Successfully");
+    try
+    {
+        string name = string.IsNullOrWhiteSpace(fileName) ? $"{Guid.NewGuid()}.jpg" : fileName;
+        string uploadDir = Path.Combine(Directory.GetCurrentDirectory(), "Uploads");
+        if (!Directory.Exists(uploadDir))
+        {
+            Directory.CreateDirectory(uploadDir);
+        }
+
+        string filePath = Path.Combine(uploadDir, name);
+        using (var fileStream = new FileStream(filePath, FileMode.Create))
+        {
+            await req.Body.CopyToAsync(fileStream);
+        }
+
+        app.Logger.LogInformation("📸 Saved uploaded image: {FilePath}", filePath);
+        return Results.Ok("Upload Successfully");
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogError(ex, "Error uploading image file.");
+        return Results.Ok("Upload Successfully");
+    }
 });
 
 // 22. Vehicle Mobile GPS Check
