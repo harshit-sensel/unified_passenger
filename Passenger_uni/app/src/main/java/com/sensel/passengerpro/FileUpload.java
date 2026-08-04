@@ -198,8 +198,17 @@ public class FileUpload {
         return sendFile(filePath);
     }
 
+    public String uploadFileWithName(String filePath, String customFileName) {
+        return sendFileWithName(filePath, customFileName);
+    }
+
     @TargetApi(Build.VERSION_CODES.FROYO)
-    public static String sendFile(String filePath) {       // send large file in multiparts
+    public static String sendFile(String filePath) {
+        return sendFileWithName(filePath, null);
+    }
+
+    @TargetApi(Build.VERSION_CODES.FROYO)
+    public static String sendFileWithName(String filePath, String customFileName) {       // send large file in multiparts
         String response = "";
 
         HttpURLConnection connection = null;
@@ -221,7 +230,7 @@ public class FileUpload {
 
         try {
             File sourceFile = new File(filePath);
-            fileName = sourceFile.getName();
+            fileName = (customFileName != null && !customFileName.isEmpty()) ? customFileName : sourceFile.getName();
             FileInputStream fileInputStream = new FileInputStream(sourceFile);
 
             if (!urlServer.contains("fileName=")) {

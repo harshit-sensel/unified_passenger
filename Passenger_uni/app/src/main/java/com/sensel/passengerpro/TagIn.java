@@ -569,10 +569,11 @@ public class TagIn extends AppCompatActivity {
                                     String fullPath = entry.getValue();
                                     if (fullPath != null && !fullPath.isEmpty()) {
                                         try {
+                                            String fname = fullPath.substring(fullPath.lastIndexOf('/') + 1);
                                             FileUpload fileUpload = new FileUpload();
                                             String compressedPath = fileUpload.compressImage(fullPath);
                                             String targetPath = (compressedPath != null && !compressedPath.isEmpty()) ? compressedPath : fullPath;
-                                            fileUpload.uploadFile(targetPath);
+                                            fileUpload.uploadFileWithName(targetPath, fname);
                                             
                                             // Cleanup local temporary image files
                                             File originalFile = new File(fullPath);

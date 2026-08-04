@@ -521,27 +521,29 @@ public class TagOut extends AppCompatActivity {
                                 progressDialog = ProgressDialog.show(TagOut.this, "", "Loading...", true);
                             }
                         });
-                        String fileName ="";
+                        String fileName = "";
                         try {
-                            String res="success";
-                            if(BitmapFactory.decodeFile(imagecapturepath) != null) {
-                                RequestQueue mVolleyRequestQueue = Volley.newRequestQueue(getApplicationContext());
+                            if (imagecapturepath != null && !imagecapturepath.isEmpty() && new File(imagecapturepath).exists()) {
                                 fileName = "TagOut_" + psngrId + "_" + System.currentTimeMillis() + ".jpg";
-                                res = WebAccessor.getNewInstance().uploadImageService(mVolleyRequestQueue,
-                                        "UploadFile", imagecapturepath, fileName, "bde95d647e64be448fae0dec110a6351b71e1fde");
-                                if (!res.contains("success")) {
-                                    res = WebAccessor.getNewInstance().uploadImageService(mVolleyRequestQueue,
-                                            "UploadFile", imagecapturepath, fileName, "bde95d647e64be448fae0dec110a6351b71e1fde");
-                                }
+                                FileUpload fileUpload = new FileUpload();
+                                String compressedPath = fileUpload.compressImage(imagecapturepath);
+                                String targetPath = (compressedPath != null && !compressedPath.isEmpty()) ? compressedPath : imagecapturepath;
+                                fileUpload.uploadFileWithName(targetPath, fileName);
+
+                                // Post-upload local file cleanup from Android storage
+                                try {
+                                    new File(imagecapturepath).delete();
+                                    if (compressedPath != null) {
+                                        new File(compressedPath).delete();
+                                    }
+                                } catch (Exception ignored) {}
                             }
                         }
                         catch (Exception ex) {
                             ex.printStackTrace(); // For logging
-                            Toast.makeText(getApplicationContext(), "Upload failed: " + ex.getMessage(), Toast.LENGTH_LONG).show();
                         }
                         String Imei = getIMEI();
                         String[] str=latlng.split(",");
-                        String imagepath=imagecapturepath.substring(imagecapturepath.lastIndexOf("/") + 1);
                         String result = webServices.InsertPsngrChecklist(psngrId, "", "TagOut", "", "", "","",Imei,str[0],str[1],"","",OMR,"","","","","","",fileName);
                         if (result.contains("Inserted Successfully")) {
                             // Log TAG_OUT activity audit event

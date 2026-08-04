@@ -405,9 +405,9 @@ app.MapPost("/api/checklist/insert", async (ChecklistInsertRequest request) =>
 
         string sqlTag = @"
             INSERT INTO psngr_tag 
-                (PsngrId, VehicleId, DriverId, TagInTime, TagInIMEI, TagInLat, TagInLng, TagInOMR, WFM_ID, WFM_Task, PTW_Number, Manual, DriverDetails, TowerName, TagIn_VehiclePhoto, TagIn_OdometerPhoto, TagOut_OdometerPhoto, AccountId, GroupId)
+                (PsngrId, VehicleId, DriverId, TagInTime, TagInIMEI, TagInLat, TagInLng, TagInOMR, WFM_ID, WFM_Task, PTW_Number, Manual, DriverDetails, DriverImage, TowerName, TagIn_VehiclePhoto, TagIn_OdometerPhoto, TagOut_OdometerPhoto, AccountId, GroupId)
             VALUES 
-                (@PsngrId, @VehicleId, @DriverId, NOW(), @Imei, @Lat, @Lng, @Omr, @Wfmid, @WfmTask, @Ptw, @Manual, @DriverDetails, @TowerName, @Vehiclephoto, @TaginOdometerPhoto, @TagoutOdometerPhoto,
+                (@PsngrId, @VehicleId, @DriverId, NOW(), @Imei, @Lat, @Lng, @Omr, @Wfmid, @WfmTask, @Ptw, @Manual, @DriverDetails, @DriverImage, @TowerName, @Vehiclephoto, @TaginOdometerPhoto, @TagoutOdometerPhoto,
                  IFNULL((SELECT AccountId FROM psngr_info WHERE PsngrId = @PsngrId LIMIT 1), 0),
                  IFNULL((SELECT MIN(GroupId) FROM vehiclesgroupsmap WHERE REPLACE(VehicleId, ' ', '') = REPLACE(@VehicleId, ' ', '')), 0));
             SELECT LAST_INSERT_ID();";
@@ -425,6 +425,7 @@ app.MapPost("/api/checklist/insert", async (ChecklistInsertRequest request) =>
             Ptw = request.Ptw ?? "",
             Manual = int.TryParse(request.Manual, out int m) ? m : 0,
             DriverDetails = request.DriverDetails ?? "",
+            DriverImage = request.DriverImage ?? "",
             TowerName = request.TowerName ?? "",
             Vehiclephoto = request.Vehiclephoto ?? "",
             TaginOdometerPhoto = request.TaginOdometerPhoto ?? "",
