@@ -210,17 +210,37 @@ app.MapPost("/api/auth/validate-phone", async (ValidatePhoneRequest request, ICo
 
         // Query passenger info and retrieve AppKeyWord dynamically by MobileNo
         string cleanMobileNo = request.MobileNo?.Trim() ?? "";
-        string selectCols = flag == "Tag" ? "p.*, 'TagOut' AS Status" : "p.*";
-        string query = $@"
-            SELECT {selectCols} 
-            FROM psngr_info p 
-            WHERE RIGHT(TRIM(p.MobileNo), 10) = RIGHT(@MobileNo, 10) AND p.Active = 1";
 
         if (flag == "Tag")
         {
-            query += " AND IsLogged = 1";
+            string tagSql = @"
+                SELECT 
+                    p.VehicleId, 
+                    CONCAT('/Date(', UNIX_TIMESTAMP(p.TagInTime) * 1000, ')/') AS TagInTime, 
+                    IFNULL(p.TagInOMR, 0) AS TagInOMR, 
+                    'TagOut' AS Status 
+                FROM psngr_tag p 
+                WHERE p.Id = (
+                    SELECT MAX(t.Id) 
+                    FROM psngr_tag t 
+                    JOIN psngr_info pi ON pi.PsngrId = t.PsngrId 
+                    WHERE RIGHT(TRIM(pi.MobileNo), 10) = RIGHT(@MobileNo, 10) 
+                      AND pi.Active = 1 
+                      AND (t.TagOutTime IS NULL OR TRIM(t.TagOutTime) = '')
+                );";
+            var tagDt = await connection.QueryAsync(tagSql, new { MobileNo = cleanMobileNo });
+            if (tagDt.Any())
+            {
+                return Results.Ok(tagDt);
+            }
+            return Results.Ok("No Data");
         }
-        query += " ORDER BY p.PsngrId DESC LIMIT 1;";
+
+        string query = @"
+            SELECT p.* 
+            FROM psngr_info p 
+            WHERE RIGHT(TRIM(p.MobileNo), 10) = RIGHT(@MobileNo, 10) AND p.Active = 1 
+            ORDER BY p.PsngrId DESC LIMIT 1;";
 
         var dt = await connection.QueryAsync(query, new { MobileNo = cleanMobileNo });
 
