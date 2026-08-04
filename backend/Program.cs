@@ -775,26 +775,15 @@ app.MapPut("/api/passenger/home-location", async (HomeLocationRequest request) =
     }
 });
 
-// 25. GetVehiclePositionForPsngrApp — matches WebServices.java L120 & TrackRegionVehiclesOnMap.java keys
+// 25. GetVehiclePositionForPsngrApp — matches WebServices.java L120
 app.MapGet("/api/vehicle/position", async (string psngrID, string vehicleId) =>
 {
     try
     {
         using var connection = new MySqlConnection(connectionString);
-        string sql = @"
-            SELECT 
-                v.VehicleID, 
-                IFNULL(v.Latitude, '0.0') AS LAt, 
-                IFNULL(v.Longitude, '0.0') AS longi, 
-                IFNULL(v.Speed, '0') AS Speed, 
-                DATE_FORMAT(IFNULL(v.LastUpdatedDateTime, NOW()), '%d %b %y, %h:%i:%s %p') AS DateTime, 
-                IFNULL(v.LocationStr, 'Location Not Available') AS Location, 
-                'VI' AS remarks 
-            FROM vehicles v 
-            WHERE REPLACE(v.VehicleID, ' ', '') = REPLACE(@VehicleId, ' ', '') 
-            LIMIT 1;";
-        var dt = await connection.QueryAsync(sql, new { VehicleId = vehicleId });
-        return Results.Ok(dt.Any() ? dt : "No Data");
+        string sql = "SELECT VehicleID, Latitude, Longitude, Speed, UpdatedTime FROM vehiclepositiontxt WHERE VehicleID = @VehicleId LIMIT 1;";
+        var dt = await connection.QueryFirstOrDefaultAsync(sql, new { VehicleId = vehicleId });
+        return Results.Ok(dt != null ? dt : "No Data");
     }
     catch (Exception ex)
     {
