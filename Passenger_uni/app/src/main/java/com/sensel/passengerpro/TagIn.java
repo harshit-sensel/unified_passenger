@@ -169,9 +169,14 @@ public class TagIn extends AppCompatActivity {
                             if (options.size() == 1) {
                                 options.add("NA");
                             }
-                            ArrayAdapter adapter = new ArrayAdapter(getApplicationContext(), R.layout.spinner, options);
+                            final ArrayAdapter adapter = new ArrayAdapter(getApplicationContext(), R.layout.spinner, options);
                             adapter.setDropDownViewResource(android.R.layout.select_dialog_singlechoice);
-                            wfmTask.setAdapter(adapter);
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    wfmTask.setAdapter(adapter);
+                                }
+                            });
                             String result=resultFromPrev[1];
                             String[] driveNameLic = (result != null && result.contains(":-")) ? result.split(":-") : new String[]{result != null ? result : "Assigned Driver", ""};
                             Name = driveNameLic[0];
