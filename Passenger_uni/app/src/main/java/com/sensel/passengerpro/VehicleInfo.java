@@ -1305,7 +1305,16 @@ public class VehicleInfo extends AppCompatActivity {
                                     }
                                 });
                                 final String result = webServices.VehicleMobileGPSCheck(vehicle, psngrId, latlng.split(",")[0], latlng.split(",")[1]);
-                                dialog.dismiss();
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        if (dialog != null && dialog.isShowing()) {
+                                            try {
+                                                dialog.dismiss();
+                                            } catch (Exception ignored) {}
+                                        }
+                                    }
+                                });
                                 if (result.contains("Allow")) {
                                     uploadfiles();
                                      String userMenus = appConstants.getShrdPrefValByKey(getApplicationContext(), "UserMenus");
@@ -1461,6 +1470,16 @@ public class VehicleInfo extends AppCompatActivity {
             return activeNetworkInfo != null && activeNetworkInfo.isConnected();
         } catch (Exception e) {
             return true;
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (dialog != null && dialog.isShowing()) {
+            try {
+                dialog.dismiss();
+            } catch (Exception ignored) {}
         }
     }
 
