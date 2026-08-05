@@ -222,12 +222,17 @@ public class TagIn extends AppCompatActivity {
                                             @Override
                                             public void onClick(View arg0) {
                                                 try {
+                                                    final String selectedTaskItem = (wfmTask != null && wfmTask.getSelectedItem() != null) ? wfmTask.getSelectedItem().toString().trim() : "Select";
+                                                    final String capturedWfmTask = ("Select".equalsIgnoreCase(selectedTaskItem)) ? "" : selectedTaskItem;
+                                                    final String capturedWfmId = (wfm != null && wfm.getText() != null) ? wfm.getText().toString().trim() : "";
+                                                    final String capturedPtw = (ptw != null && ptw.getText() != null) ? ptw.getText().toString().trim() : "";
+
                                                     new Thread(new Runnable() {
                                                         @Override
                                                         public void run() {
                                                             validateRules = CheckListDesign.strRules;
                                                             boolean validation = true;
-                                                            if(wfmTask.getSelectedItem().toString()=="Select") {
+                                                            if ("Select".equalsIgnoreCase(selectedTaskItem)) {
                                                                 validation = false;
                                                             }
                                                             else {
@@ -300,7 +305,7 @@ public class TagIn extends AppCompatActivity {
                                                                                                                 MY_PERMISSIONS_REQUEST_STORAGE);
                                                                                                     }
                                                                                                     else
-                                                                                                        InsertTaging();
+                                                                                                        InsertTaging(capturedWfmTask, capturedWfmId, capturedPtw);
                                                                                                 } else {
                                                                                                     runOnUiThread(new Runnable() {
                                                                                                         public void run() {
@@ -502,6 +507,14 @@ public class TagIn extends AppCompatActivity {
         }
     }
     public void InsertTaging() {
+        String taskStr = (wfmTask != null && wfmTask.getSelectedItem() != null) ? wfmTask.getSelectedItem().toString().trim() : "";
+        if ("Select".equalsIgnoreCase(taskStr)) taskStr = "";
+        String wfmIdStr = (wfm != null && wfm.getText() != null) ? wfm.getText().toString().trim() : "";
+        String ptwStr = (ptw != null && ptw.getText() != null) ? ptw.getText().toString().trim() : "";
+        InsertTaging(taskStr, wfmIdStr, ptwStr);
+    }
+
+    public void InsertTaging(final String taskStr, final String wfmIdStr, final String ptwStr) {
         try {
             LocationManager locationManager = (LocationManager) getApplicationContext().getSystemService(Context.LOCATION_SERVICE);
             if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)){
@@ -560,7 +573,7 @@ public class TagIn extends AppCompatActivity {
                         }
 
                         final String result = webServices.InsertPsngrChecklist(psngrId, vehicle, "TagIn", strRules,
-                                wfm.getText().toString()+"@&"+wfmTask.getSelectedItem().toString(), ptw.getText().toString(),
+                                wfmIdStr+"@&"+taskStr, ptwStr,
                                 resultFromPrev[2],Imei,str[0],str[1],resultFromPrev[3],driverDetail,OMR,resultFromPrev[4],resultFromPrev[5],driverPhoto,towername,vehiclePhoto,taginOdometerPhoto,"");
                         if (result.contains("Inserted Successfully")) {
                             // Upload captured images to backend server & delete local temporary files from Android storage
