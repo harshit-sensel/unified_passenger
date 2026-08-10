@@ -39,7 +39,7 @@ public class NotificationAdapter extends ArrayAdapter<RowItem> {
         // TextView txtinfo;
         WebView webView;
         TextView txtdate;
-        RelativeLayout relativeLayout;
+        View relativeLayout;
     }
 
     public View getView(int position, View convertView, ViewGroup parent) {
@@ -59,7 +59,7 @@ public class NotificationAdapter extends ArrayAdapter<RowItem> {
             ImageView imageView=(ImageView) convertView.findViewById(R.id.icon);
             holder.webView=(WebView) convertView.findViewById(R.id.webview);
             holder.imageView=imageView;
-            holder.relativeLayout=(RelativeLayout) convertView.findViewById(R.id.relative);
+            holder.relativeLayout=convertView.findViewById(R.id.relative);
             convertView.setTag(holder);
         } else
             holder = (ViewHolder) convertView.getTag();
