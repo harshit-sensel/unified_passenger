@@ -136,17 +136,21 @@ public class Notifications extends AppCompatActivity {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    for (int j = 0; j <= jArr.length(); j++) {
+                    for (int j = 0; j < jArr.length(); j++) {
                         try {
                             JSONObject data = jArr.getJSONObject(j);
-                            String date=data.getString("DateTime");
-                            date=date.substring(date.indexOf("(")+1,date.indexOf(")"));
-                            date = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(new Date(Long.parseLong(date)));
-                            RowItem item = new RowItem(R.drawable.ic_launcher,data.getString("Subject"), data.getString("Info"), date,data.getString("IsNotified"));
+                            String date = data.optString("DateTime", "");
+                            if (date.contains("(") && date.contains(")")) {
+                                try {
+                                    date = date.substring(date.indexOf("(") + 1, date.indexOf(")"));
+                                    date = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(new Date(Long.parseLong(date)));
+                                } catch (Exception ignored) {}
+                            }
+                            RowItem item = new RowItem(R.drawable.ic_launcher, data.optString("Subject", "Notification"), data.optString("Info", ""), date, data.optString("IsNotified", "0"));
                             rowItems.add(item);
                             count++;
 
-                        } catch (JSONException js) {
+                        } catch (Exception js) {
                             // Toast.makeText(cont,"Oops something went wrong, Try again",Toast.LENGTH_SHORT).show();
                         }
                     }
