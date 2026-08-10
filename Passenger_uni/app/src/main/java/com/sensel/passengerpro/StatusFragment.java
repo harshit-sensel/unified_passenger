@@ -81,7 +81,7 @@ public class StatusFragment extends Fragment {
         } else {
             txttagInTime.setText("");
         }
-        if(TagTrack.vehicleid=="No Vehicle Assigned"){
+        if ("No Vehicle Assigned".equalsIgnoreCase(TagTrack.vehicleid)) {
             btnTag.setText("Tag");
             btnTag.setVisibility(View.GONE);
             tagrow.setVisibility(View.GONE);
@@ -89,7 +89,7 @@ public class StatusFragment extends Fragment {
             comment.setText("***Please contact your admin***");
             comment.setTextColor(Color.GRAY);
         }
-        else if(TagTrack.tagtype.equals("TagIn")){
+        else if ("TagIn".equalsIgnoreCase(TagTrack.tagtype)) {
             btnTag.setText("TagIn");
             btnTag.setVisibility(View.VISIBLE);
             tagrow.setVisibility(View.GONE);

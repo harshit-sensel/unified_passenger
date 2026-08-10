@@ -32,10 +32,10 @@ import org.json.JSONObject;
  */
 public class TagTrack extends AppCompatActivity {
     AppConstants appConstants=new AppConstants();
-    public static String vehicleid;
-    public static String sessionid;
-    public static String tagintime;
-    public static String tagtype;
+    public static String vehicleid = "No Vehicle Assigned";
+    public static String sessionid = "";
+    public static String tagintime = "0";
+    public static String tagtype = "TagIn";
     private static final int MY_PERMISSIONS_REQUEST_READ_CONTACTS = 100;
     private static final int MY_PERMISSIONS_REQUEST_READ_LOCATION = 101;
     WebServices webServices=new WebServices();
@@ -109,8 +109,12 @@ public class TagTrack extends AppCompatActivity {
                     tagtype= "TagIn";
                 }
             }
-        } catch (JSONException e) {
+        } catch (Exception e) {
             e.printStackTrace();
+            vehicleid = "No Vehicle Assigned";
+            sessionid = "";
+            tagintime = "0";
+            tagtype = "TagIn";
         }
     }
 
