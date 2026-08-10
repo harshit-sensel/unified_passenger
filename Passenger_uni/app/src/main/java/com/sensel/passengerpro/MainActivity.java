@@ -33,6 +33,7 @@ import androidx.core.view.WindowInsetsCompat;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
@@ -42,6 +43,8 @@ import com.android.volley.toolbox.Volley;
 
 import org.json.JSONObject;
 import androidx.appcompat.view.ContextThemeWrapper;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Post-login menu: 3-column grid with bordered cards, icon + label.
@@ -707,7 +710,14 @@ public class MainActivity extends AppCompatActivity {
                             if (msg == null) msg = "Could not send OTP. Try again.";
                             Toast.makeText(MainActivity.this, msg, Toast.LENGTH_LONG).show();
                         }
-                    });
+                    }) {
+                @Override
+                public Map<String, String> getHeaders() throws AuthFailureError {
+                    Map<String, String> headers = new HashMap<>();
+                    headers.put("X-App-Key", UrlConfig.API_SECURITY_KEY);
+                    return headers;
+                }
+            };
             queue.add(req);
         } catch (Exception e) {
             if (dialog != null && dialog.isShowing()) dialog.dismiss();
