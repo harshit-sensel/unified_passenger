@@ -86,6 +86,7 @@ public class TagIn extends AppCompatActivity {
     EditText wfm;
     EditText ptw;
     Spinner wfmTask;
+    String chosenWfmTask = "";
     String passengerinfo;
     ProgressDialog progressDialog;
     String[] validateRules;
@@ -175,6 +176,20 @@ public class TagIn extends AppCompatActivity {
                                 @Override
                                 public void run() {
                                     wfmTask.setAdapter(adapter);
+                                    wfmTask.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                                        @Override
+                                        public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                                            if (parent != null && parent.getItemAtPosition(position) != null) {
+                                                String item = parent.getItemAtPosition(position).toString().trim();
+                                                chosenWfmTask = "Select".equalsIgnoreCase(item) ? "" : item;
+                                            }
+                                        }
+
+                                        @Override
+                                        public void onNothingSelected(AdapterView<?> parent) {
+                                            chosenWfmTask = "";
+                                        }
+                                    });
                                 }
                             });
                             String result=resultFromPrev[1];
@@ -227,20 +242,22 @@ public class TagIn extends AppCompatActivity {
                                             @Override
                                             public void onClick(View arg0) {
                                                 try {
-                                                    final String selectedTaskItem = (wfmTask != null && wfmTask.getSelectedItem() != null) ? wfmTask.getSelectedItem().toString().trim() : "Select";
-                                                    final String capturedWfmTask = ("Select".equalsIgnoreCase(selectedTaskItem)) ? "" : selectedTaskItem;
-                                                    final String capturedWfmId = (wfm != null && wfm.getText() != null) ? wfm.getText().toString().trim() : "";
-                                                    final String capturedPtw = (ptw != null && ptw.getText() != null) ? ptw.getText().toString().trim() : "";
+                                                     String taskFromSpinner = (wfmTask != null && wfmTask.getSelectedItem() != null) ? wfmTask.getSelectedItem().toString().trim() : "";
+                                                     if ("Select".equalsIgnoreCase(taskFromSpinner)) taskFromSpinner = "";
 
-                                                    new Thread(new Runnable() {
-                                                        @Override
-                                                        public void run() {
-                                                            validateRules = CheckListDesign.strRules;
-                                                            boolean validation = true;
-                                                            if ("Select".equalsIgnoreCase(selectedTaskItem)) {
-                                                                validation = false;
-                                                            }
-                                                            else {
+                                                     final String capturedWfmTask = (chosenWfmTask != null && !chosenWfmTask.isEmpty()) ? chosenWfmTask : taskFromSpinner;
+                                                     final String capturedWfmId = (wfm != null && wfm.getText() != null) ? wfm.getText().toString().trim() : "";
+                                                     final String capturedPtw = (ptw != null && ptw.getText() != null) ? ptw.getText().toString().trim() : "";
+
+                                                     new Thread(new Runnable() {
+                                                         @Override
+                                                         public void run() {
+                                                             validateRules = CheckListDesign.strRules;
+                                                             boolean validation = true;
+                                                             if (capturedWfmTask.isEmpty()) {
+                                                                 validation = false;
+                                                             }
+                                                             else {
                                                                 for (int i = 0; i < validateRules.length; i++) {
                                                                     if (validateRules[i] == null && ruleTypes[i].equals("Radio")) {
                                                                         validation = false;
