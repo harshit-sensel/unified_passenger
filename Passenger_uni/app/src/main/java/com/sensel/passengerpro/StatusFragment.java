@@ -71,7 +71,16 @@ public class StatusFragment extends Fragment {
         final TextView taginCondition=(TextView) rootView.findViewById(R.id.taginCondition);
         TextView vehChangeLink=(TextView) rootView.findViewById(R.id.vehChangeLink);
         txtvehicleid.setText(TagTrack.vehicleid);
-        txttagInTime.setText(new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(new Date(Long.parseLong(TagTrack.tagintime))));
+        if (TagTrack.tagintime != null && !TagTrack.tagintime.trim().isEmpty()) {
+            try {
+                long timeMs = Long.parseLong(TagTrack.tagintime.trim());
+                txttagInTime.setText(new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(new Date(timeMs)));
+            } catch (Exception e) {
+                txttagInTime.setText(TagTrack.tagintime);
+            }
+        } else {
+            txttagInTime.setText("");
+        }
         if(TagTrack.vehicleid=="No Vehicle Assigned"){
             btnTag.setText("Tag");
             btnTag.setVisibility(View.GONE);
