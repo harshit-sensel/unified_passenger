@@ -36,111 +36,121 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Tag In with OTP"
+                android:text="Tag-In OTP Code"
                 android:textColor="#0F172A"
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/dialog_otp_subtitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:text="Enter the 4-digit OTP sent to your phone"
-                android:textColor="#64748B"
-                android:textSize="12sp" />
+                android:text="Please share this OTP with your driver to Tag-In"
+                android:textColor="#2563EB"
+                android:textSize="13sp"
+                android:textStyle="bold" />
         </LinearLayout>
     </LinearLayout>
 
-    <!-- 4-Box OTP Grid Row -->
+    <!-- 4-Box OTP Display Grid Row (Read-Only Styled TextViews) -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
-        android:layout_marginBottom="24dp"
+        android:layout_marginBottom="18dp"
         android:gravity="center"
         android:orientation="horizontal">
 
-        <EditText
+        <TextView
             android:id="@+id/dialog_otp_1"
-            android:layout_width="50dp"
-            android:layout_height="54dp"
+            android:layout_width="54dp"
+            android:layout_height="58dp"
             android:layout_marginEnd="8dp"
             android:background="@drawable/bg_otp_digit_box"
             android:gravity="center"
-            android:inputType="number"
-            android:maxLength="1"
+            android:text="-"
             android:textColor="#0F172A"
-            android:textSize="20sp"
+            android:textSize="22sp"
             android:textStyle="bold" />
 
-        <EditText
+        <TextView
             android:id="@+id/dialog_otp_2"
-            android:layout_width="50dp"
-            android:layout_height="54dp"
+            android:layout_width="54dp"
+            android:layout_height="58dp"
             android:layout_marginEnd="8dp"
             android:background="@drawable/bg_otp_digit_box"
             android:gravity="center"
-            android:inputType="number"
-            android:maxLength="1"
+            android:text="-"
             android:textColor="#0F172A"
-            android:textSize="20sp"
+            android:textSize="22sp"
             android:textStyle="bold" />
 
-        <EditText
+        <TextView
             android:id="@+id/dialog_otp_3"
-            android:layout_width="50dp"
-            android:layout_height="54dp"
+            android:layout_width="54dp"
+            android:layout_height="58dp"
             android:layout_marginEnd="8dp"
             android:background="@drawable/bg_otp_digit_box"
             android:gravity="center"
-            android:inputType="number"
-            android:maxLength="1"
+            android:text="-"
             android:textColor="#0F172A"
-            android:textSize="20sp"
+            android:textSize="22sp"
             android:textStyle="bold" />
 
-        <EditText
+        <TextView
             android:id="@+id/dialog_otp_4"
-            android:layout_width="50dp"
-            android:layout_height="54dp"
+            android:layout_width="54dp"
+            android:layout_height="58dp"
             android:background="@drawable/bg_otp_digit_box"
             android:gravity="center"
-            android:inputType="number"
-            android:maxLength="1"
+            android:text="-"
             android:textColor="#0F172A"
-            android:textSize="20sp"
+            android:textSize="22sp"
             android:textStyle="bold" />
     </LinearLayout>
 
-    <!-- Buttons Row -->
+    <!-- Option 1: Subtle Rounded Pill Button -->
     <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:id="@+id/dialog_btn_resend"
+        android:layout_width="wrap_content"
+        android:layout_height="38dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="20dp"
+        android:background="@drawable/bg_resend_pill"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:paddingStart="18dp"
+        android:paddingEnd="18dp">
 
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/dialog_btn_cancel"
-            android:layout_width="0dp"
-            android:layout_height="46dp"
+        <ImageView
+            android:layout_width="16dp"
+            android:layout_height="16dp"
             android:layout_marginEnd="8dp"
-            android:layout_weight="1"
-            android:background="@drawable/bg_phone_input"
-            android:text="CANCEL"
-            android:textColor="#64748B"
-            android:textSize="14sp"
-            android:textStyle="bold" />
+            android:contentDescription="@null"
+            android:src="@drawable/refresh"
+            android:tint="#334155" />
 
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/dialog_btn_tagin"
-            android:layout_width="0dp"
-            android:layout_height="46dp"
-            android:layout_marginStart="8dp"
-            android:layout_weight="1"
-            android:background="@drawable/bg_login_button"
-            android:elevation="2dp"
-            android:text="TAG IN  ➔"
-            android:textColor="#FFFFFF"
-            android:textSize="14sp"
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Resend OTP Code"
+            android:textColor="#334155"
+            android:textSize="13sp"
             android:textStyle="bold" />
     </LinearLayout>
+
+    <!-- Back to Home Button -->
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/dialog_btn_back"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:background="@drawable/bg_login_button"
+        android:elevation="2dp"
+        android:text="BACK TO HOME"
+        android:textColor="#FFFFFF"
+        android:textSize="14sp"
+        android:textStyle="bold" />
 </LinearLayout>

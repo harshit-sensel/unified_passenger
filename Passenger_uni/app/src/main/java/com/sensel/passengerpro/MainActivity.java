@@ -737,61 +737,27 @@ public class MainActivity extends AppCompatActivity {
                 customDialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
             }
 
-            final EditText b1 = dialogView.findViewById(R.id.dialog_otp_1);
-            final EditText b2 = dialogView.findViewById(R.id.dialog_otp_2);
-            final EditText b3 = dialogView.findViewById(R.id.dialog_otp_3);
-            final EditText b4 = dialogView.findViewById(R.id.dialog_otp_4);
-            android.widget.Button btnCancel = dialogView.findViewById(R.id.dialog_btn_cancel);
-            android.widget.Button btnTagIn = dialogView.findViewById(R.id.dialog_btn_tagin);
+            final android.widget.TextView b1 = dialogView.findViewById(R.id.dialog_otp_1);
+            final android.widget.TextView b2 = dialogView.findViewById(R.id.dialog_otp_2);
+            final android.widget.TextView b3 = dialogView.findViewById(R.id.dialog_otp_3);
+            final android.widget.TextView b4 = dialogView.findViewById(R.id.dialog_otp_4);
+            View btnResend = dialogView.findViewById(R.id.dialog_btn_resend);
+            View btnBack = dialogView.findViewById(R.id.dialog_btn_back);
 
-            b1.addTextChangedListener(new TextWatcher() {
-                public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-                public void onTextChanged(CharSequence s, int start, int before, int count) {
-                    if (s.length() == 1) b2.requestFocus();
+            String otpStr = (serverOtp != null && serverOtp.length() >= 4) ? serverOtp : "1234";
+            b1.setText(String.valueOf(otpStr.charAt(0)));
+            b2.setText(String.valueOf(otpStr.charAt(1)));
+            b3.setText(String.valueOf(otpStr.charAt(2)));
+            b4.setText(String.valueOf(otpStr.charAt(3)));
+
+            btnResend.setOnClickListener(v -> {
+                customDialog.dismiss();
+                if (pendingOtpMobileNo != null && !pendingOtpMobileNo.isEmpty()) {
+                    sendOtpRequestAndTagIn(pendingOtpMobileNo);
                 }
-                public void afterTextChanged(Editable s) {}
-            });
-            b2.addTextChangedListener(new TextWatcher() {
-                public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-                public void onTextChanged(CharSequence s, int start, int before, int count) {
-                    if (s.length() == 1) b3.requestFocus();
-                    else if (s.length() == 0) b1.requestFocus();
-                }
-                public void afterTextChanged(Editable s) {}
-            });
-            b3.addTextChangedListener(new TextWatcher() {
-                public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-                public void onTextChanged(CharSequence s, int start, int before, int count) {
-                    if (s.length() == 1) b4.requestFocus();
-                    else if (s.length() == 0) b2.requestFocus();
-                }
-                public void afterTextChanged(Editable s) {}
-            });
-            b4.addTextChangedListener(new TextWatcher() {
-                public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-                public void onTextChanged(CharSequence s, int start, int before, int count) {
-                    if (s.length() == 0) b3.requestFocus();
-                }
-                public void afterTextChanged(Editable s) {}
             });
 
-            btnCancel.setOnClickListener(v -> customDialog.dismiss());
-            btnTagIn.setOnClickListener(v -> {
-                String userOtp = b1.getText().toString().trim() +
-                        b2.getText().toString().trim() +
-                        b3.getText().toString().trim() +
-                        b4.getText().toString().trim();
-                if (userOtp.length() == 4) {
-                    if (serverOtp == null || serverOtp.isEmpty() || serverOtp.equals(userOtp) || "1234".equals(userOtp)) {
-                        customDialog.dismiss();
-                        performOtpTagIn();
-                    } else {
-                        Toast.makeText(MainActivity.this, "Invalid OTP entered.", Toast.LENGTH_LONG).show();
-                    }
-                } else {
-                    Toast.makeText(MainActivity.this, "Please enter complete 4-digit OTP.", Toast.LENGTH_SHORT).show();
-                }
-            });
+            btnBack.setOnClickListener(v -> customDialog.dismiss());
 
             customDialog.show();
         } catch (Exception e) {
