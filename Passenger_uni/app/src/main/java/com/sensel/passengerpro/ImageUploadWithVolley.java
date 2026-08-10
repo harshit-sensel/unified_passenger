@@ -56,6 +56,7 @@ class ImageUploadWithVolley<T>  extends Request<T>{
         }
 
         headers.put("Accept", "application/json");
+        headers.put("X-App-Key", UrlConfig.API_SECURITY_KEY);
 
         return headers;
     }
