@@ -120,7 +120,7 @@
             android:layout_height="44dp"
             android:background="@drawable/bg_spinner_box"
             android:popupBackground="@drawable/bg_spinner_popup"
-            android:dropDownWidth="320dp"
+            android:dropDownWidth="260dp"
             android:paddingHorizontal="4dp"
             android:spinnerMode="dropdown" />
     </LinearLayout>
