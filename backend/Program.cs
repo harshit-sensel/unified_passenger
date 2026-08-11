@@ -432,6 +432,50 @@ app.MapPost("/api/checklist/insert", async (ChecklistInsertRequest request) =>
             return Results.Ok("0");
         }
 
+        // ---- Nokia-specific vehicle & driver occupation check (AccountId = 2100) (matches XmlDB.cs L40983-41009) ----
+        string nokiaAccSql = "SELECT AccountId FROM psngr_info WHERE PsngrId = @PsngrId LIMIT 1;";
+        int nokiaAccId = await connection.ExecuteScalarAsync<int>(nokiaAccSql, new { PsngrId = pId });
+
+        if (nokiaAccId == 2100)
+        {
+            // 1. Check if vehicle is already occupied by another passenger
+            string checkVehSql = @"
+                SELECT i.PsngrName, i.MobileNo 
+                FROM psngr_tag p 
+                JOIN psngr_info i ON p.PsngrId = i.PsngrId 
+                WHERE REPLACE(p.VehicleID, ' ', '') = REPLACE(@VehicleId, ' ', '') 
+                  AND (p.TagOutTime IS NULL OR TRIM(p.TagOutTime) = '') 
+                  AND i.Active = 1 
+                LIMIT 1;";
+            var vehOccupied = await connection.QueryFirstOrDefaultAsync<dynamic>(checkVehSql, new { VehicleId = request.VehicleId });
+            if (vehOccupied != null)
+            {
+                string pName = vehOccupied.PsngrName ?? "";
+                string pMobile = vehOccupied.MobileNo ?? "";
+                return Results.Ok($"PsngrMessage-{pName}({pMobile}) already done TagIn for this vehicle. You are not allowed to TagIn until he closes the trip.");
+            }
+
+            // 2. Check if driver is already occupied by another passenger
+            if (dId > 0)
+            {
+                string checkDrvSql = @"
+                    SELECT i.PsngrName, i.MobileNo 
+                    FROM psngr_tag p 
+                    JOIN psngr_info i ON p.PsngrId = i.PsngrId 
+                    WHERE p.DriverId != 0 AND p.DriverId = @DriverId 
+                      AND (p.TagOutTime IS NULL OR TRIM(p.TagOutTime) = '') 
+                      AND i.Active = 1 
+                    LIMIT 1;";
+                var drvOccupied = await connection.QueryFirstOrDefaultAsync<dynamic>(checkDrvSql, new { DriverId = dId });
+                if (drvOccupied != null)
+                {
+                    string pName = drvOccupied.PsngrName ?? "";
+                    string pMobile = drvOccupied.MobileNo ?? "";
+                    return Results.Ok($"PsngrMessage-{pName}({pMobile}) already done TagIn for this driver. You are not allowed to TagIn until he closes the trip.");
+                }
+            }
+        }
+
         string wfmId = request.Wfmid ?? "";
         string wfmTask = "";
         if (!string.IsNullOrEmpty(request.Wfmid) && request.Wfmid.Contains("@&"))
