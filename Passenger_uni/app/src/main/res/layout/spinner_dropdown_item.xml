@@ -9,4 +9,4 @@
     android:paddingVertical="12dp"
     android:textColor="#0F172A"
     android:textSize="14sp"
-    android:background="#FFFFFF" />
+    android:background="@drawable/bg_spinner_item" />
