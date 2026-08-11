@@ -119,6 +119,7 @@
             android:layout_width="match_parent"
             android:layout_height="44dp"
             android:background="@drawable/bg_phone_input"
+            android:popupBackground="#FFFFFF"
             android:paddingHorizontal="4dp"
             android:spinnerMode="dropdown" />
     </LinearLayout>
