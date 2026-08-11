@@ -172,7 +172,7 @@ public class TagIn extends AppCompatActivity {
                                 options.add("NA");
                             }
                             final ArrayAdapter adapter = new ArrayAdapter(getApplicationContext(), R.layout.spinner, options);
-                            adapter.setDropDownViewResource(android.R.layout.select_dialog_singlechoice);
+                            adapter.setDropDownViewResource(R.layout.spinner_dropdown_item);
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
