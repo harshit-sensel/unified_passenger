@@ -134,20 +134,6 @@ app.MapPost("/api/auth/validate-phone", async (ValidatePhoneRequest request, ICo
             return Results.Ok("SMS Send Successfully");
         }
 
-        if (flag == "Vehicles")
-        {
-            string vehSql = "SELECT DISTINCT VehicleID, VehicleInfo AS Driver FROM vehicles LIMIT 50;";
-            var vehs = await connection.QueryAsync(vehSql);
-            return Results.Ok(vehs);
-        }
-
-        if (flag == "Drivers")
-        {
-            string driSql = "SELECT DriverId, Name AS Driver, LicenceNo, MobileNo FROM driverinfo LIMIT 50;";
-            var dris = await connection.QueryAsync(driSql);
-            return Results.Ok(dris);
-        }
-
         if (flag == "CheckList")
         {
             // Fetch passenger's AccountId first (matches XmlDB.cs L40709-40721)
@@ -174,11 +160,44 @@ app.MapPost("/api/auth/validate-phone", async (ValidatePhoneRequest request, ICo
             return Results.Ok(chks);
         }
 
-        if (flag == "Zones" || flag == "Towers")
+        // Zones — filtered by passenger's RegionId (matches XmlDB.cs L40683-40688)
+        if (flag == "Zones")
         {
-            string twrSql = "SELECT DISTINCT ZoneName, TowerName FROM psngr_tower_locations LIMIT 50;";
-            var twrs = await connection.QueryAsync(twrSql);
-            return Results.Ok(twrs);
+            string regSql = "SELECT p.RegionId FROM psngr_info p WHERE RIGHT(TRIM(p.MobileNo), 10) = RIGHT(@MobileNo, 10) AND p.Active = 1 LIMIT 1;";
+            int zoneRegId = await connection.ExecuteScalarAsync<int>(regSql, new { MobileNo = request.MobileNo?.Trim() ?? "" });
+
+            string zoneSql = "SELECT DISTINCT CONCAT(t.ZoneName, '-', t.City) AS zone, '' FROM psngr_tower_locations t WHERE t.RegionID = @RegionId;";
+            var zones = await connection.QueryAsync(zoneSql, new { RegionId = zoneRegId });
+            return Results.Ok(zones);
+        }
+
+        // Towers — smart 2-step: frequent towers first, then regional fallback (matches XmlDB.cs L40690-40706)
+        if (flag == "Towers")
+        {
+            string mobileTrimmed = request.MobileNo?.Trim() ?? "";
+
+            // Step 1: Frequently-used towers from past trips
+            string freqSql = @"SELECT DISTINCT l.TowerName 
+                               FROM psngr_info i 
+                               JOIN psngr_tag t ON t.PsngrId = i.PsngrId 
+                               JOIN psngr_tower_locations l ON l.TowerName = t.TowerName AND l.RegionID = i.RegionId 
+                               WHERE i.MobileNo = @MobileNo 
+                               ORDER BY t.Id DESC LIMIT 500;";
+            var freqTowers = await connection.QueryAsync(freqSql, new { MobileNo = mobileTrimmed });
+
+            if (freqTowers.Any())
+            {
+                return Results.Ok(freqTowers);
+            }
+
+            // Step 2: Fallback — all towers in passenger's region
+            string allSql = @"SELECT DISTINCT t.TowerName 
+                              FROM psngr_info i 
+                              JOIN psngr_tower_locations t ON t.RegionID = i.RegionId 
+                              WHERE i.MobileNo = @MobileNo 
+                              ORDER BY t.TowerName LIMIT 500;";
+            var allTowers = await connection.QueryAsync(allSql, new { MobileNo = mobileTrimmed });
+            return Results.Ok(allTowers);
         }
 
         if (flag == "Vehicles")
