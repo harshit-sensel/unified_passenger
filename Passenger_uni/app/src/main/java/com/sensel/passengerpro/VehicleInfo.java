@@ -149,33 +149,43 @@ public class VehicleInfo extends AppCompatActivity {
             btnLogout.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    // Extract mobileNo and accountId BEFORE clearing preferences
-                    final String mobileNo = appConstants.getShrdPrefValByKeyWithTag(getApplicationContext(), "passengerinfo", "MobileNo");
-                    final String accountIdStr = appConstants.getShrdPrefValByKeyWithTag(getApplicationContext(), "passengerinfo", "AccountId");
-                    int accId = 0;
-                    try { if (accountIdStr != null) accId = Integer.parseInt(accountIdStr); } catch (Exception ignored) {}
-                    final int accountId = accId;
+                    new AlertDialog.Builder(VehicleInfo.this)
+                            .setTitle("Logout")
+                            .setMessage("Are you sure you want to logout?")
+                            .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    // Extract mobileNo and accountId BEFORE clearing preferences
+                                    final String mobileNo = appConstants.getShrdPrefValByKeyWithTag(getApplicationContext(), "passengerinfo", "MobileNo");
+                                    final String accountIdStr = appConstants.getShrdPrefValByKeyWithTag(getApplicationContext(), "passengerinfo", "AccountId");
+                                    int accId = 0;
+                                    try { if (accountIdStr != null) accId = Integer.parseInt(accountIdStr); } catch (Exception ignored) {}
+                                    final int accountId = accId;
 
-                    // Log LOGOUT activity audit event
-                    if (mobileNo != null && !mobileNo.trim().isEmpty()) {
-                        new Thread(new Runnable() {
-                            @Override
-                            public void run() {
-                                try {
-                                    webServices.logAuditActivity(mobileNo, accountId, "LOGOUT", "", "");
-                                } catch (Exception ignored) {}
-                            }
-                        }).start();
-                    }
+                                    // Log LOGOUT activity audit event
+                                    if (mobileNo != null && !mobileNo.trim().isEmpty()) {
+                                        new Thread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                try {
+                                                    webServices.logAuditActivity(mobileNo, accountId, "LOGOUT", "", "");
+                                                } catch (Exception ignored) {}
+                                            }
+                                        }).start();
+                                    }
 
-                    appConstants.putShrdPrefValWithKey(getApplicationContext(), "passengerinfo", "");
-                    appConstants.putShrdPrefValWithKey(getApplicationContext(), "UserMenus", "");
-                    appConstants.setJwtToken(getApplicationContext(), "");
-                    WebServices.currentJwtToken = "";
-                    Intent intent = new Intent(VehicleInfo.this, LoginActivity.class);
-                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                    startActivity(intent);
-                    finish();
+                                    appConstants.putShrdPrefValWithKey(getApplicationContext(), "passengerinfo", "");
+                                    appConstants.putShrdPrefValWithKey(getApplicationContext(), "UserMenus", "");
+                                    appConstants.setJwtToken(getApplicationContext(), "");
+                                    WebServices.currentJwtToken = "";
+                                    Intent intent = new Intent(VehicleInfo.this, LoginActivity.class);
+                                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                    startActivity(intent);
+                                    finish();
+                                }
+                            })
+                            .setNegativeButton("No", null)
+                            .show();
                 }
             });
         }
