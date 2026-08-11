@@ -150,8 +150,27 @@ app.MapPost("/api/auth/validate-phone", async (ValidatePhoneRequest request, ICo
 
         if (flag == "CheckList")
         {
-            string chkSql = "SELECT ChkId AS PsngrChkId, ChkName, Type FROM psngr_chklist ORDER BY ChkId ASC;";
-            var chks = await connection.QueryAsync(chkSql);
+            // Fetch passenger's AccountId first (matches XmlDB.cs L40709-40721)
+            string accSql = "SELECT p.AccountId FROM psngr_info p WHERE RIGHT(TRIM(p.MobileNo), 10) = RIGHT(@MobileNo, 10) AND p.Active = 1 LIMIT 1;";
+            int chkAccId = await connection.ExecuteScalarAsync<int>(accSql, new { MobileNo = request.MobileNo?.Trim() ?? "" });
+
+            // Try account-specific checklist questions first
+            string chkSql = @"SELECT p.PsngrChkId, pc.ChkName, pc.`Type` 
+                              FROM psngr_chklist_map p 
+                              LEFT JOIN psngr_chklist pc ON pc.ChkId = p.PsngrChkId 
+                              WHERE p.CustAccountId = @AccountId;";
+            var chks = await connection.QueryAsync(chkSql, new { AccountId = chkAccId });
+
+            // Fallback to global default questions (CustAccountId = 0) if no account-specific ones found
+            if (!chks.Any())
+            {
+                string fallbackSql = @"SELECT p.PsngrChkId, pc.ChkName, pc.`Type` 
+                                       FROM psngr_chklist_map p 
+                                       LEFT JOIN psngr_chklist pc ON pc.ChkId = p.PsngrChkId 
+                                       WHERE p.CustAccountId = 0;";
+                chks = await connection.QueryAsync(fallbackSql);
+            }
+
             return Results.Ok(chks);
         }
 
