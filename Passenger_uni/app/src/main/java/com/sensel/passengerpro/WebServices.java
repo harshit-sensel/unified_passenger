@@ -132,6 +132,8 @@ public class WebServices {
             json.put("VehicleId", vehicleId);
             json.put("Type", type);
             json.put("Rules", rules);
+            json.put("Wfmid", wfmid);
+            json.put("Ptw", ptw);
             json.put("DriverId", driverId);
             json.put("Imei", imei);
             json.put("Lat", lat);
