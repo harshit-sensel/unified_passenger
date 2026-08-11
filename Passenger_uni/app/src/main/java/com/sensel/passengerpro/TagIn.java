@@ -88,6 +88,8 @@ public class TagIn extends AppCompatActivity {
     EditText ptw;
     Spinner wfmTask;
     String chosenWfmTask = "";
+    Button btn_tagin_ref;
+    TextView txt_checklist_status_ref;
     String passengerinfo;
     ProgressDialog progressDialog;
     String[] validateRules;
@@ -184,11 +186,13 @@ public class TagIn extends AppCompatActivity {
                                                 String item = parent.getItemAtPosition(position).toString().trim();
                                                 chosenWfmTask = "Select".equalsIgnoreCase(item) ? "" : item;
                                             }
+                                            checkTagInFormValidation();
                                         }
 
                                         @Override
                                         public void onNothingSelected(AdapterView<?> parent) {
                                             chosenWfmTask = "";
+                                            checkTagInFormValidation();
                                         }
                                     });
                                 }
@@ -238,17 +242,23 @@ public class TagIn extends AppCompatActivity {
                                         CheckListDesign adapter = new CheckListDesign(TagIn.this, rules, ruleIds,ruleTypes);
                                         View footerView = getLayoutInflater().inflate(R.layout.activity_button, null);
                                         ListView list = (ListView) findViewById(R.id.listRules);
-                                        Button btn_tagin = (Button) footerView.findViewById(R.id.btn_tagin);
-                                        btn_tagin.setOnClickListener(new View.OnClickListener() {
-                                            @Override
-                                            public void onClick(View arg0) {
-                                                try {
-                                                     String taskFromSpinner = (wfmTask != null && wfmTask.getSelectedItem() != null) ? wfmTask.getSelectedItem().toString().trim() : "";
-                                                     if ("Select".equalsIgnoreCase(taskFromSpinner)) taskFromSpinner = "";
+                                         btn_tagin_ref = (Button) footerView.findViewById(R.id.btn_tagin);
+                                         txt_checklist_status_ref = (TextView) footerView.findViewById(R.id.txt_checklist_status);
+                                         final Button btn_tagin = btn_tagin_ref;
+                                         final TextView txt_checklist_status = txt_checklist_status_ref;
 
-                                                     final String capturedWfmTask = (chosenWfmTask != null && !chosenWfmTask.isEmpty()) ? chosenWfmTask : taskFromSpinner;
-                                                     final String capturedWfmId = (wfm != null && wfm.getText() != null) ? wfm.getText().toString().trim() : "";
-                                                     final String capturedPtw = (ptw != null && ptw.getText() != null) ? ptw.getText().toString().trim() : "";
+                                         checkTagInFormValidation();
+
+                                         btn_tagin.setOnClickListener(new View.OnClickListener() {
+                                             @Override
+                                             public void onClick(View arg0) {
+                                                 try {
+                                                      String taskFromSpinner = (wfmTask != null && wfmTask.getSelectedItem() != null) ? wfmTask.getSelectedItem().toString().trim() : "";
+                                                      if ("Select".equalsIgnoreCase(taskFromSpinner)) taskFromSpinner = "";
+
+                                                      final String capturedWfmTask = (chosenWfmTask != null && !chosenWfmTask.isEmpty()) ? chosenWfmTask : taskFromSpinner;
+                                                      final String capturedWfmId = (wfm != null && wfm.getText() != null) ? wfm.getText().toString().trim() : "";
+                                                      final String capturedPtw = (ptw != null && ptw.getText() != null) ? ptw.getText().toString().trim() : "";
 
                                                      new Thread(new Runnable() {
                                                          @Override
@@ -1017,12 +1027,45 @@ public class TagIn extends AppCompatActivity {
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == android.R.id.home) {
-            onBackPressed();
-            return true;
-        }
         return super.onOptionsItemSelected(item);
+    }
+
+    public void checkTagInFormValidation() {
+        if (btn_tagin_ref == null) return;
+        String taskFromSpinner = (wfmTask != null && wfmTask.getSelectedItem() != null) ? wfmTask.getSelectedItem().toString().trim() : "";
+        if ("Select".equalsIgnoreCase(taskFromSpinner)) taskFromSpinner = "";
+        String capturedWfmTask = (chosenWfmTask != null && !chosenWfmTask.isEmpty()) ? chosenWfmTask : taskFromSpinner;
+
+        String[] currentRules = CheckListDesign.strRules;
+        boolean isFormValid = true;
+
+        if (capturedWfmTask.isEmpty()) {
+            isFormValid = false;
+        } else if (currentRules != null && ruleTypes != null) {
+            for (int i = 0; i < currentRules.length; i++) {
+                if (i < ruleTypes.length && currentRules[i] == null && "Radio".equals(ruleTypes[i])) {
+                    isFormValid = false;
+                    break;
+                }
+            }
+        }
+
+        final boolean valid = isFormValid;
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (btn_tagin_ref != null) btn_tagin_ref.setEnabled(valid);
+                if (txt_checklist_status_ref != null) {
+                    if (valid) {
+                        txt_checklist_status_ref.setText("✅ Checklist Complete — Ready for Tag-In");
+                        txt_checklist_status_ref.setTextColor(android.graphics.Color.parseColor("#16A34A"));
+                    } else {
+                        txt_checklist_status_ref.setText("⏳ Form Incomplete — Select WFM Task & Answer Checklist Items");
+                        txt_checklist_status_ref.setTextColor(android.graphics.Color.parseColor("#64748B"));
+                    }
+                }
+            }
+        });
     }
 
     private boolean isNetworkAvailable() {

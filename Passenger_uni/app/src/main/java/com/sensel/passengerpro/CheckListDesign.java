@@ -190,6 +190,9 @@ public class CheckListDesign extends ArrayAdapter<String> {
                         status.setText("Failed");
                         status.setTextColor(Color.RED);
                     }
+                    if (context instanceof TagIn) {
+                        ((TagIn) context).checkTagInFormValidation();
+                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
