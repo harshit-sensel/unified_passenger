@@ -636,9 +636,9 @@ app.MapPost("/api/vehicle/resolve-qr", async (ResolveQrRequest request) =>
     try
     {
         using var connection = new MySqlConnection(connectionString);
-        string sql = "SELECT VehicleID FROM vehicles WHERE QRCode = @QRCode LIMIT 1;";
+        string sql = "SELECT Vehicleid FROM vehicleqrmapping WHERE QRCode = @QRCode LIMIT 1;";
         var dt = await connection.QuerySingleOrDefaultAsync<string>(sql, new { QRCode = request.QRCode });
-        return Results.Ok(dt ?? "Invalid QR");
+        return Results.Ok(dt ?? "Invalid QRCode");
     }
     catch (Exception ex)
     {
