@@ -118,7 +118,7 @@
             android:id="@+id/wfmTask"
             android:layout_width="match_parent"
             android:layout_height="44dp"
-            android:background="@drawable/bg_phone_input"
+            android:background="@drawable/bg_spinner_box"
             android:popupBackground="@drawable/bg_spinner_popup"
             android:dropDownWidth="wrap_content"
             android:paddingHorizontal="4dp"
