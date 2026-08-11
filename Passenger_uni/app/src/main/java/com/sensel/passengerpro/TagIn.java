@@ -1063,7 +1063,7 @@ public class TagIn extends AppCompatActivity {
                 if (txt_checklist_status_ref != null) {
                     if (valid) {
                         txt_checklist_status_ref.setText("✅ Checklist Complete — Ready for Tag-In");
-                        txt_checklist_status_ref.setTextColor(android.graphics.Color.parseColor("#0284C7"));
+                        txt_checklist_status_ref.setTextColor(android.graphics.Color.parseColor("#2563EB"));
                     } else {
                         txt_checklist_status_ref.setText("⏳ Form Incomplete — Select WFM Task & Answer Checklist Items");
                         txt_checklist_status_ref.setTextColor(android.graphics.Color.parseColor("#64748B"));
