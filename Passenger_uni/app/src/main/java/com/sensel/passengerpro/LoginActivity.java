@@ -417,7 +417,11 @@ public class LoginActivity extends AppCompatActivity {
 
                             String tagResultOtp = webServices.GetPsngrInfoWithValidation(tempMobileNo, "Tag");
                             final Intent targetIntent;
-                            if (userMenus != null && userMenus.contains("assigned_veh_tracking") && !userMenus.contains("checklist")) {
+                            if (userMenus != null && userMenus.contains("school_bus_tracking") && !userMenus.contains("dashboard")) {
+                                // Legacy School Bus Tracking: Go directly to live map (TrackOnMap)
+                                targetIntent = new Intent(getApplicationContext(), TrackOnMap.class);
+                                targetIntent.putExtra("tagDetails", tagResultOtp);
+                            } else if (userMenus != null && userMenus.contains("assigned_veh_tracking") && !userMenus.contains("checklist")) {
                                 // SmartTrack flow: go directly to TagTrack (Status + Map tabs)
                                 targetIntent = new Intent(getApplicationContext(), TagTrack.class);
                                 targetIntent.putExtra("tagDetails", tagResultOtp);

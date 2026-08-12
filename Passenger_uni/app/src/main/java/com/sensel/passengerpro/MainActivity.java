@@ -459,7 +459,6 @@ public class MainActivity extends AppCompatActivity {
                             break;
                         case "assigned_veh_tracking":
                         case "school_bus_tracking":
-                        case "dashboard":
                             if (!labels.contains("Track Your Vehicle")) {
                                 labels.add("Track Your Vehicle");
                                 icons.add(R.drawable.ic_track_vehicle_map);
