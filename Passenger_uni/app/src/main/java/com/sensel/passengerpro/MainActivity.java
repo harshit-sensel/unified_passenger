@@ -220,79 +220,89 @@ public class MainActivity extends AppCompatActivity {
                         Toast.makeText(MainActivity.this, "No internet. Check your connection.", Toast.LENGTH_SHORT).show();
                         return;
                     }
-                    dialog = ProgressDialog.show(MainActivity.this, "", "Loading...", true);
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            try {
-                                String mobileno = appConstants.getShrdPrefValByKeyWithTag(getApplicationContext(), "passengerinfo", "MobileNo");
-                                String result = webServices.GetPsngrInfoWithValidation(mobileno, "Tag");
-                                if (result == null || !result.contains("TagOut")) {
-                                    runOnUiThread(new Runnable() {
+                    new AlertDialog.Builder(MainActivity.this)
+                            .setTitle("Tagout")
+                            .setMessage("Are you sure you want to Tag Out?")
+                            .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialogInterface, int which) {
+                                    dialog = ProgressDialog.show(MainActivity.this, "", "Loading...", true);
+                                    new Thread(new Runnable() {
                                         @Override
                                         public void run() {
-                                            dialog.dismiss();
-                                            Toast.makeText(MainActivity.this, "You are not tagged in. Please Tag In first.", Toast.LENGTH_LONG).show();
+                                            try {
+                                                String mobileno = appConstants.getShrdPrefValByKeyWithTag(getApplicationContext(), "passengerinfo", "MobileNo");
+                                                String result = webServices.GetPsngrInfoWithValidation(mobileno, "Tag");
+                                                if (result == null || !result.contains("TagOut")) {
+                                                    runOnUiThread(new Runnable() {
+                                                        @Override
+                                                        public void run() {
+                                                            dialog.dismiss();
+                                                            Toast.makeText(MainActivity.this, "You are not tagged in. Please Tag In first.", Toast.LENGTH_LONG).show();
+                                                        }
+                                                    });
+                                                    return;
+                                                }
+                                                String psngrId = appConstants.getShrdPrefValByKeyWithTag(getApplicationContext(), "passengerinfo", "PsngrId");
+                                                if (psngrId == null || psngrId.isEmpty()) {
+                                                    runOnUiThread(() -> { dialog.dismiss(); Toast.makeText(MainActivity.this, "Please login first.", Toast.LENGTH_LONG).show(); });
+                                                    return;
+                                                }
+                                                if (!isLocationAvailable()) {
+                                                    runOnUiThread(() -> { dialog.dismiss(); Toast.makeText(MainActivity.this, "Enable GPS for Tagout.", Toast.LENGTH_SHORT).show(); });
+                                                    return;
+                                                }
+                                                String latlngStr = "0.0,0.0";
+                                                try {
+                                                    GPSTracker gpsTracker = new GPSTracker(getApplicationContext());
+                                                    latlngStr = gpsTracker.getLocation();
+                                                    if (!isLocationFixed(latlngStr)) {
+                                                        latlngStr = gpsTracker.getLocationWithWait(1500);
+                                                    }
+                                                    if (latlngStr == null || latlngStr.isEmpty()) latlngStr = "0.0,0.0";
+                                                } catch (Exception ignored) { }
+                                                if (!isLocationFixed(latlngStr)) {
+                                                    latlngStr = getCachedLatLng();
+                                                }
+                                                if (!isLocationFixed(latlngStr)) {
+                                                    runOnUiThread(() -> { dialog.dismiss(); Toast.makeText(MainActivity.this, "GPS not fixed. Please try again.", Toast.LENGTH_SHORT).show(); });
+                                                    return;
+                                                }
+                                                saveLatLngIfValid(latlngStr);
+                                                String[] latlng = latlngStr.split(",");
+                                                String lat = latlng.length > 0 ? latlng[0].trim() : "0";
+                                                String lng = latlng.length > 1 ? latlng[1].trim() : "0";
+                                                String imei = getDeviceIdSafe();
+                                                if (imei == null) imei = "";
+                                                final String insertResult = webServices.InsertPsngrChecklist(psngrId, "", "TagOut", "", "", "", "", imei, lat, lng, "", "", "", "", "", "", "", "", "", "");
+                                                runOnUiThread(new Runnable() {
+                                                    @Override
+                                                    public void run() {
+                                                        dialog.dismiss();
+                                                        if (insertResult != null && insertResult.contains("Inserted Successfully")) {
+                                                            appConstants.putShrdPrefValWithKey(getApplicationContext(), AppConstants.KEY_CURRENT_TAGGED_VEHICLE_ID, "");
+                                                            Toast.makeText(MainActivity.this, "Tagout done successfully.", Toast.LENGTH_LONG).show();
+                                                        } else {
+                                                            String msg = insertResult != null && insertResult.contains("PsngrMessage-") ? insertResult.replace("PsngrMessage-", "").trim() : "Tagout failed. Try again.";
+                                                            Toast.makeText(MainActivity.this, msg, Toast.LENGTH_LONG).show();
+                                                        }
+                                                    }
+                                                });
+                                            } catch (Exception e) {
+                                                runOnUiThread(new Runnable() {
+                                                    @Override
+                                                    public void run() {
+                                                        if (dialog != null && dialog.isShowing()) dialog.dismiss();
+                                                        Toast.makeText(MainActivity.this, "Error. Please try again.", Toast.LENGTH_SHORT).show();
+                                                    }
+                                                });
+                                            }
                                         }
-                                    });
-                                    return;
+                                    }).start();
                                 }
-                                String psngrId = appConstants.getShrdPrefValByKeyWithTag(getApplicationContext(), "passengerinfo", "PsngrId");
-                                if (psngrId == null || psngrId.isEmpty()) {
-                                    runOnUiThread(() -> { dialog.dismiss(); Toast.makeText(MainActivity.this, "Please login first.", Toast.LENGTH_LONG).show(); });
-                                    return;
-                                }
-                                if (!isLocationAvailable()) {
-                                    runOnUiThread(() -> { dialog.dismiss(); Toast.makeText(MainActivity.this, "Enable GPS for Tagout.", Toast.LENGTH_SHORT).show(); });
-                                    return;
-                                }
-                                String latlngStr = "0.0,0.0";
-                                try {
-                                    GPSTracker gpsTracker = new GPSTracker(getApplicationContext());
-                                    latlngStr = gpsTracker.getLocation();
-                                    if (!isLocationFixed(latlngStr)) {
-                                        latlngStr = gpsTracker.getLocationWithWait(1500);
-                                    }
-                                    if (latlngStr == null || latlngStr.isEmpty()) latlngStr = "0.0,0.0";
-                                } catch (Exception ignored) { }
-                                if (!isLocationFixed(latlngStr)) {
-                                    latlngStr = getCachedLatLng();
-                                }
-                                if (!isLocationFixed(latlngStr)) {
-                                    runOnUiThread(() -> { dialog.dismiss(); Toast.makeText(MainActivity.this, "GPS not fixed. Please try again.", Toast.LENGTH_SHORT).show(); });
-                                    return;
-                                }
-                                saveLatLngIfValid(latlngStr);
-                                String[] latlng = latlngStr.split(",");
-                                String lat = latlng.length > 0 ? latlng[0].trim() : "0";
-                                String lng = latlng.length > 1 ? latlng[1].trim() : "0";
-                                String imei = getDeviceIdSafe();
-                                if (imei == null) imei = "";
-                                final String insertResult = webServices.InsertPsngrChecklist(psngrId, "", "TagOut", "", "", "", "", imei, lat, lng, "", "", "", "", "", "", "", "", "", "");
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        dialog.dismiss();
-                                        if (insertResult != null && insertResult.contains("Inserted Successfully")) {
-                                            appConstants.putShrdPrefValWithKey(getApplicationContext(), AppConstants.KEY_CURRENT_TAGGED_VEHICLE_ID, "");
-                                            Toast.makeText(MainActivity.this, "Tagout done successfully.", Toast.LENGTH_LONG).show();
-                                        } else {
-                                            String msg = insertResult != null && insertResult.contains("PsngrMessage-") ? insertResult.replace("PsngrMessage-", "").trim() : "Tagout failed. Try again.";
-                                            Toast.makeText(MainActivity.this, msg, Toast.LENGTH_LONG).show();
-                                        }
-                                    }
-                                });
-                            } catch (Exception e) {
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        if (dialog != null && dialog.isShowing()) dialog.dismiss();
-                                        Toast.makeText(MainActivity.this, "Error. Please try again.", Toast.LENGTH_SHORT).show();
-                                    }
-                                });
-                            }
-                        }
-                    }).start();
+                            })
+                            .setNegativeButton("Cancel", null)
+                            .show();
                 } else if ("Logout".equals(label)) {
                     new AlertDialog.Builder(MainActivity.this)
                             .setTitle("Logout")
