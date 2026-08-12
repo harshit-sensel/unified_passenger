@@ -80,7 +80,7 @@ public class HomeLocationOnMap extends AppCompatActivity {
             settings.setDomStorageEnabled(true);
             settings.setAllowFileAccess(true);
             //settings.setAppCacheEnabled(true);
-            settings.setCacheMode(WebSettings.LOAD_CACHE_ONLY);
+            settings.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
             JavaScriptInterface jsInterface = new JavaScriptInterface(this, myWebView, getApplicationContext());
             myWebView.addJavascriptInterface(jsInterface, "JSInterface");
             myWebView.loadUrl("file:///android_asset/DeviationReport.html");
@@ -196,15 +196,18 @@ public class HomeLocationOnMap extends AppCompatActivity {
                                                                 String psngrId=appConstants.getShrdPrefValByKeyWithTag(getApplicationContext(), "passengerinfo", "PsngrId");
                                                                 WebServices webServices=new WebServices();
                                                                 String result=webServices.UpdatePsngrHomeLocation(psngrId,latlng.split(",")[0],latlng.split(",")[1]);
-                                                                if(result.equals("Inserted Successfully")) {
-                                                                    PackageManager packageManager = getApplicationContext().getPackageManager();
-                                                                    Intent intent = packageManager.getLaunchIntentForPackage(getApplicationContext().getPackageName());
-                                                                    ComponentName componentName = intent.getComponent();
-                                                                    //Intent mainIntent = IntentCompat.makeMainSelectorActivity(componentName);
-                                                                    Intent mainIntent = new Intent(Intent.ACTION_MAIN);
-                                                                    mainIntent.addCategory(Intent.CATEGORY_LAUNCHER);
-                                                                    getApplicationContext().startActivity(mainIntent);
-                                                                    System.exit(0);
+                                                                if(result.contains("Successfully")) {
+                                                                    runOnUiThread(new Runnable() {
+                                                                        @Override
+                                                                        public void run() {
+                                                                            Toast.makeText(getApplicationContext(), "Home location updated successfully", Toast.LENGTH_LONG).show();
+                                                                        }
+                                                                    });
+                                                                    try { Thread.sleep(1200); } catch (Exception ignored) {}
+                                                                    Intent mainIntent = new Intent(HomeLocationOnMap.this, LoginActivity.class);
+                                                                    mainIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                                                    startActivity(mainIntent);
+                                                                    finish();
                                                                 }
                                                                 else{
                                                                     runOnUiThread(new Runnable() {

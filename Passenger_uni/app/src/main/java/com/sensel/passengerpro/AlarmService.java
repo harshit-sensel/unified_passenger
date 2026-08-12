@@ -82,8 +82,12 @@ public class AlarmService extends Service {
                                                 .setAutoCancel(true);
 
                                 Intent notificationIntent = new Intent(getApplicationContext(), Notifications.class);
+                                int pendingFlags = PendingIntent.FLAG_UPDATE_CURRENT;
+                                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                                    pendingFlags |= PendingIntent.FLAG_IMMUTABLE;
+                                }
                                 PendingIntent contentIntent = PendingIntent.getActivity(getApplicationContext(), 0, notificationIntent,
-                                        PendingIntent.FLAG_UPDATE_CURRENT);
+                                        pendingFlags);
                                 builder.setContentIntent(contentIntent);
 
                                 // Add as notification

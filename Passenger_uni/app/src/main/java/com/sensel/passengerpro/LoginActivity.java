@@ -109,14 +109,21 @@ public class LoginActivity extends AppCompatActivity {
                             }
                              String tagResult = webServices.GetPsngrInfoWithValidation(mobNo, "Tag");
                              Intent i;
-                             if (userMenus != null && userMenus.contains("assigned_veh_tracking") && !userMenus.contains("checklist")) {
+                             if (userMenus != null && userMenus.contains("dashboard")) {
+                                 // Dashboard present: Always route to MainActivity (Grid Dashboard)
+                                 i = new Intent(getApplicationContext(), MainActivity.class);
+                             } else if (userMenus != null && userMenus.contains("school_bus_tracking")) {
+                                 // Legacy School Bus Tracking: Go directly to live map (TrackOnMap)
+                                 i = new Intent(getApplicationContext(), TrackOnMap.class);
+                                 i.putExtra("tagDetails", tagResult);
+                             } else if (userMenus != null && userMenus.contains("assigned_veh_tracking")) {
                                  // SmartTrack flow: go directly to TagTrack (Status + Map tabs)
                                  i = new Intent(getApplicationContext(), TagTrack.class);
                                  i.putExtra("tagDetails", tagResult);
                              } else if (tagResult != null && tagResult.contains("TagOut")) {
                                  i = new Intent(getApplicationContext(), TagOut.class);
                                  i.putExtra("details", tagResult);
-                             } else if (userMenus != null && userMenus.contains("checklist") && !userMenus.contains("dashboard")) {
+                             } else if (userMenus != null && userMenus.contains("checklist")) {
                                  i = new Intent(getApplicationContext(), VehicleInfo.class);
                              } else {
                                  i = new Intent(getApplicationContext(), MainActivity.class);

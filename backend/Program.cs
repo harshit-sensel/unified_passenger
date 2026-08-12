@@ -908,9 +908,9 @@ app.MapPut("/api/passenger/home-location", async (HomeLocationRequest request) =
     try
     {
         using var connection = new MySqlConnection(connectionString);
-        string sql = "UPDATE psngr_info SET HomeLatitude = @Lat, HomeLongitude = @Lng WHERE PsngrId = @PsngrId;";
+        string sql = "UPDATE psngr_info SET HomeLatitude = @Lat, HomeLongitude = @Lng, HomeLocationStr = CONCAT('Lat: ', @Lat, ', Lng: ', @Lng) WHERE PsngrId = @PsngrId;";
         await connection.ExecuteAsync(sql, new { Lat = request.Lat, Lng = request.Lng, PsngrId = request.PsngrId });
-        return Results.Ok("Location Updated Successfully");
+        return Results.Ok("Inserted Successfully");
     }
     catch (Exception ex)
     {
