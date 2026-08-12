@@ -371,9 +371,7 @@ public class TrackOnMap extends AppCompatActivity {
     public boolean onPrepareOptionsMenu(final Menu menu) {
         menu.clear();
         getMenuInflater().inflate(R.menu.menu_options, menu);
-        menu.removeItem(R.id.menu_logout);
-        menu.removeItem(R.id.menu_home_location_marker);
-        return super.onPrepareOptionsMenu(menu);
+        return super.onCreateOptionsMenu(menu);
     }
 
     @Override
@@ -388,6 +386,53 @@ public class TrackOnMap extends AppCompatActivity {
                         startActivity(i);
                     }
                 });
+                break;
+            case R.id.menu_home_location_marker:
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Intent i = new Intent(getApplicationContext(), HomeLocation.class);
+                        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(i);
+                    }
+                });
+                break;
+            case R.id.menu_logout:
+                new AlertDialog.Builder(TrackOnMap.this)
+                        .setTitle("Logout")
+                        .setMessage("Are you sure you want to logout?")
+                        .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface d, int id) {
+                                final String mobileNo = appConstants.getShrdPrefValByKeyWithTag(getApplicationContext(), "passengerinfo", "MobileNo");
+                                final String accountIdStr = appConstants.getShrdPrefValByKeyWithTag(getApplicationContext(), "passengerinfo", "AccountId");
+                                int accId = 0;
+                                try { if (accountIdStr != null) accId = Integer.parseInt(accountIdStr); } catch (Exception ignored) {}
+                                final int accountId = accId;
+
+                                if (mobileNo != null && !mobileNo.trim().isEmpty()) {
+                                    new Thread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            try {
+                                                webServices.logAuditActivity(mobileNo, accountId, "LOGOUT", "", "");
+                                            } catch (Exception ignored) {}
+                                        }
+                                    }).start();
+                                }
+
+                                appConstants.putShrdPrefValWithKey(getApplicationContext(), "passengerinfo", null);
+                                appConstants.putShrdPrefValWithKey(getApplicationContext(), "UserMenus", null);
+                                appConstants.setJwtToken(getApplicationContext(), "");
+                                WebServices.currentJwtToken = "";
+                                Intent i = new Intent(TrackOnMap.this, LoginActivity.class);
+                                i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                startActivity(i);
+                                finish();
+                            }
+                        })
+                        .setNegativeButton("Cancel", null)
+                        .show();
                 break;
         }
         return super.onOptionsItemSelected(item);
