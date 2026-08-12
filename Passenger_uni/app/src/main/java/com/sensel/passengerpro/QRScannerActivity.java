@@ -86,6 +86,10 @@ public class QRScannerActivity extends AppCompatActivity {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, MY_PERMISSIONS_REQUEST_CAMERA);
             return;
         }
+        qrScan.setCaptureActivity(PortraitCaptureActivity.class);
+        qrScan.setOrientationLocked(true);
+        qrScan.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE);
+        qrScan.setPrompt("Align QR Code inside frame to scan");
         qrScan.initiateScan();
     }
 

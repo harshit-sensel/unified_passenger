@@ -97,6 +97,12 @@
             android:configChanges="orientation|screenSize"
             android:screenOrientation="portrait">
         </activity>
+        <activity
+            android:name=".PortraitCaptureActivity"
+            android:screenOrientation="portrait"
+            android:stateNotNeeded="true"
+            android:theme="@style/zxing_CaptureTheme">
+        </activity>
         <service
             android:name=".AlarmService"
             android:enabled="true" >
