@@ -314,20 +314,6 @@ app.MapPost("/api/auth/get-menus", async (GetMenusRequest request) =>
                 username = foundUser;
             }
         }
-        else if (!string.IsNullOrWhiteSpace(request.MobileNo))
-        {
-            string resolveSql = @"
-                SELECT mac.Username 
-                FROM psngr_info p 
-                INNER JOIN mobile_app_configurable mac ON mac.AccountId = p.AccountId 
-                WHERE (p.MobileNo = @Input OR CAST(p.PsngrId AS CHAR) = @Input) AND (p.Active IS NULL OR p.Active = 1)
-                LIMIT 1;";
-            string? foundUser = await connection.QueryFirstOrDefaultAsync<string>(resolveSql, new { Input = request.MobileNo });
-            if (!string.IsNullOrWhiteSpace(foundUser))
-            {
-                username = foundUser;
-            }
-        }
 
         if (string.IsNullOrWhiteSpace(username))
         {
@@ -1018,4 +1004,4 @@ public record ErrorLogRequest(string Error, string DateTime);
 public record ResolveQrRequest(string QRCode);
 public record OtpAuthenticateRequest(string MobileNo);
 public record ImageUploadRequest(string Base64Image, string FileName);
-public record GetMenusRequest(string Username = "", string MobileNo = "", int? AccountId = null);
+public record GetMenusRequest(string Username = "", int? AccountId = null);
