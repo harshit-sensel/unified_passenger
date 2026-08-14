@@ -84,11 +84,16 @@ public class WebServices {
     }
 
     // Dynamic Menu Fetching API
-    public String GetMenusByUser(String mobileno) {
+    public String GetMenusByUser(String accountId) {
         try {
             JSONObject json = new JSONObject();
-            json.put("MobileNo", mobileno != null ? mobileno : "");
-            json.put("Username", mobileno != null ? mobileno : "");
+            if (accountId != null && !accountId.trim().isEmpty()) {
+                try {
+                    json.put("AccountId", Integer.parseInt(accountId.trim()));
+                } catch (Exception ignored) {
+                    json.put("Username", accountId);
+                }
+            }
             return makeHttpRequest("auth/get-menus", "POST", json.toString());
         } catch (Exception e) {
             Log.e(TAG, "Error in GetMenusByUser", e);

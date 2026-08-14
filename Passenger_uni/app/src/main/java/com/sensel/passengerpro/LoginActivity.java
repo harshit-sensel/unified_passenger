@@ -100,7 +100,8 @@ public class LoginActivity extends AppCompatActivity {
                             }
                             String userMenus = null;
                             try {
-                                userMenus = webServices.GetMenusByUser(mobNo);
+                                String accId = appConstants.getShrdPrefValByKeyWithTag(getApplicationContext(), "passengerinfo", "AccountId");
+                                userMenus = webServices.GetMenusByUser(accId);
                                 if (userMenus != null && !userMenus.isEmpty() && !userMenus.contains("No Data")) {
                                     appConstants.putShrdPrefValWithKey(getApplicationContext(), "UserMenus", userMenus);
                                 }
@@ -387,7 +388,8 @@ public class LoginActivity extends AppCompatActivity {
                             }
                             String userMenus = null;
                             try {
-                                userMenus = webServices.GetMenusByUser(tempMobileNo);
+                                String accId = appConstants.getShrdPrefValByKeyWithTag(getApplicationContext(), "passengerinfo", "AccountId");
+                                userMenus = webServices.GetMenusByUser(accId);
                                 if (userMenus != null && !userMenus.isEmpty() && !userMenus.contains("No Data")) {
                                     appConstants.putShrdPrefValWithKey(getApplicationContext(), "UserMenus", userMenus);
                                 }
