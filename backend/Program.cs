@@ -296,55 +296,59 @@ app.MapPost("/api/auth/validate-phone", async (ValidatePhoneRequest request, ICo
     }
 });
 
-// 2. GetMenusByUser (Dedicated Endpoint with 2-Step Account Username Resolution)
+// 2. GetMenusByUser (Dedicated Endpoint via AccountId -> Username -> Role)
 app.MapPost("/api/auth/get-menus", async (GetMenusRequest request) =>
 {
-    string input = !string.IsNullOrWhiteSpace(request.MobileNo) ? request.MobileNo : request.Username;
-    if (string.IsNullOrWhiteSpace(input))
-    {
-        return Results.Ok(new List<object>());
-    }
-
     try
     {
         using var connection = new MySqlConnection(connectionString);
+        string username = request.Username ?? "";
 
-        // Step 1: Resolve Account Username from Mobile Number / PsngrId if applicable
-        string targetUsername = input;
-        string resolveUsernameSql = @"
-            SELECT mac.Username 
-            FROM psngr_info p 
-            INNER JOIN mobile_app_configurable mac ON mac.AccountId = p.AccountId 
-            WHERE (p.MobileNo = @Input OR CAST(p.PsngrId AS CHAR) = @Input) AND (p.Active IS NULL OR p.Active = 1)
-            LIMIT 1;";
-
-        string? resolvedUsername = await connection.QueryFirstOrDefaultAsync<string>(resolveUsernameSql, new { Input = input });
-        if (!string.IsNullOrWhiteSpace(resolvedUsername))
+        // Query 1: Get Username from mobile_app_configurable using AccountId
+        if (request.AccountId.HasValue && request.AccountId.Value > 0)
         {
-            targetUsername = resolvedUsername;
+            string accSql = "SELECT Username FROM mobile_app_configurable WHERE AccountId = @AccountId LIMIT 1;";
+            string? foundUser = await connection.QueryFirstOrDefaultAsync<string>(accSql, new { AccountId = request.AccountId.Value });
+            if (!string.IsNullOrWhiteSpace(foundUser))
+            {
+                username = foundUser;
+            }
+        }
+        else if (!string.IsNullOrWhiteSpace(request.MobileNo))
+        {
+            string resolveSql = @"
+                SELECT mac.Username 
+                FROM psngr_info p 
+                INNER JOIN mobile_app_configurable mac ON mac.AccountId = p.AccountId 
+                WHERE (p.MobileNo = @Input OR CAST(p.PsngrId AS CHAR) = @Input) AND (p.Active IS NULL OR p.Active = 1)
+                LIMIT 1;";
+            string? foundUser = await connection.QueryFirstOrDefaultAsync<string>(resolveSql, new { Input = request.MobileNo });
+            if (!string.IsNullOrWhiteSpace(foundUser))
+            {
+                username = foundUser;
+            }
         }
 
-        // Step 2: Fetch Dynamic Menus STRICTLY by Username in usersinroles
-        string query = @"
+        if (string.IsNullOrWhiteSpace(username))
+        {
+            return Results.Ok(new List<object>());
+        }
+
+        // Query 2: Query menus STRICTLY by Username in usersinroles
+        string menuSql = @"
             SELECT DISTINCT db.Id, db.menukey, db.menuvalue 
             FROM mobileappmenu db 
             INNER JOIN mobileappmenuinroles dr ON dr.MobileAppMenuId = db.Id 
             INNER JOIN roles r ON r.ID = dr.RoleId 
             INNER JOIN usersinroles ur ON ur.RoleId = r.ID 
-            WHERE ur.UserId = @TargetUsername;";
+            WHERE ur.UserId = @Username;";
 
-        var dt = await connection.QueryAsync(query, new { TargetUsername = targetUsername });
-
-        if (!dt.Any())
-        {
-            return Results.Ok("No Data");
-        }
-
-        return Results.Ok(dt);
+        var dt = await connection.QueryAsync(menuSql, new { Username = username });
+        return dt.Any() ? Results.Ok(dt) : Results.Ok("No Data");
     }
     catch (Exception ex)
     {
-        app.Logger.LogError(ex, "Error executing GetMenusByUser for input: {Input}", input);
+        app.Logger.LogError(ex, "Error executing GetMenusByUser.");
         return Results.Ok(new List<object>());
     }
 });
@@ -1014,4 +1018,4 @@ public record ErrorLogRequest(string Error, string DateTime);
 public record ResolveQrRequest(string QRCode);
 public record OtpAuthenticateRequest(string MobileNo);
 public record ImageUploadRequest(string Base64Image, string FileName);
-public record GetMenusRequest(string Username = "", string MobileNo = "");
+public record GetMenusRequest(string Username = "", string MobileNo = "", int? AccountId = null);
