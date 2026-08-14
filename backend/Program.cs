@@ -296,11 +296,11 @@ app.MapPost("/api/auth/validate-phone", async (ValidatePhoneRequest request, ICo
     }
 });
 
-// 2. GetMenusByUser (Dedicated Endpoint)
+// 2. GetMenusByUser (Dedicated Endpoint with 2-Step Account Username Resolution)
 app.MapPost("/api/auth/get-menus", async (GetMenusRequest request) =>
 {
-    string targetUser = !string.IsNullOrWhiteSpace(request.MobileNo) ? request.MobileNo : request.Username;
-    if (string.IsNullOrWhiteSpace(targetUser))
+    string input = !string.IsNullOrWhiteSpace(request.MobileNo) ? request.MobileNo : request.Username;
+    if (string.IsNullOrWhiteSpace(input))
     {
         return Results.Ok(new List<object>());
     }
@@ -308,16 +308,32 @@ app.MapPost("/api/auth/get-menus", async (GetMenusRequest request) =>
     try
     {
         using var connection = new MySqlConnection(connectionString);
+
+        // Step 1: Resolve Account Username from Mobile Number / PsngrId if applicable
+        string targetUsername = input;
+        string resolveUsernameSql = @"
+            SELECT mac.Username 
+            FROM psngr_info p 
+            INNER JOIN mobile_app_configurable mac ON mac.AccountId = p.AccountId 
+            WHERE (p.MobileNo = @Input OR CAST(p.PsngrId AS CHAR) = @Input) AND (p.Active IS NULL OR p.Active = 1)
+            LIMIT 1;";
+
+        string? resolvedUsername = await connection.QueryFirstOrDefaultAsync<string>(resolveUsernameSql, new { Input = input });
+        if (!string.IsNullOrWhiteSpace(resolvedUsername))
+        {
+            targetUsername = resolvedUsername;
+        }
+
+        // Step 2: Fetch Dynamic Menus STRICTLY by Username in usersinroles
         string query = @"
-            SELECT db.Id, db.menukey, db.menuvalue 
+            SELECT DISTINCT db.Id, db.menukey, db.menuvalue 
             FROM mobileappmenu db 
             INNER JOIN mobileappmenuinroles dr ON dr.MobileAppMenuId = db.Id 
             INNER JOIN roles r ON r.ID = dr.RoleId 
             INNER JOIN usersinroles ur ON ur.RoleId = r.ID 
-            LEFT JOIN psngr_info p ON p.PsngrId = ur.UserId
-            WHERE (p.MobileNo = @TargetUser OR ur.UserId = @TargetUser) AND (p.Active IS NULL OR p.Active = 1);";
+            WHERE ur.UserId = @TargetUsername;";
 
-        var dt = await connection.QueryAsync(query, new { TargetUser = targetUser });
+        var dt = await connection.QueryAsync(query, new { TargetUsername = targetUsername });
 
         if (!dt.Any())
         {
@@ -328,7 +344,7 @@ app.MapPost("/api/auth/get-menus", async (GetMenusRequest request) =>
     }
     catch (Exception ex)
     {
-        app.Logger.LogError(ex, "Error executing GetMenusByUser for user: {User}", targetUser);
+        app.Logger.LogError(ex, "Error executing GetMenusByUser for input: {Input}", input);
         return Results.Ok(new List<object>());
     }
 });
