@@ -556,8 +556,60 @@ app.MapPost("/api/alerts/panic", async (PanicAlertRequest request) =>
     try
     {
         using var connection = new MySqlConnection(connectionString);
+        string cleanVehicleId = (request.VehicleId ?? "").Replace("\"", "").Trim();
+        string cleanId = (request.Id ?? "").Trim();
+        string cleanType = (request.Type ?? "Passenger").Trim();
+
+        // 1. Insert into panic_alerts table
         string sql = "INSERT INTO panic_alerts (VehicleId, `Timestamp`, From_Type, From_Id) VALUES (@VehicleId, NOW(), @Type, @Id);";
-        await connection.ExecuteAsync(sql, new { Id = request.Id, VehicleId = request.VehicleId, Type = request.Type });
+        await connection.ExecuteAsync(sql, new { Id = cleanId, VehicleId = cleanVehicleId, Type = cleanType });
+
+        // 2. Fetch Passenger & Account Details
+        string psngrSql = "SELECT PsngrName, MobileNo, RegionName, AccountId FROM psngr_info WHERE PsngrId = @PsngrId OR MobileNo = @PsngrId LIMIT 1;";
+        var psngrInfo = await connection.QueryFirstOrDefaultAsync<dynamic>(psngrSql, new { PsngrId = cleanId });
+
+        string psngrName = psngrInfo?.PsngrName ?? "Passenger";
+        string psngrMobile = psngrInfo?.MobileNo ?? cleanId;
+        string psngrRegion = psngrInfo?.RegionName ?? "";
+        int accountId = psngrInfo?.AccountId != null ? Convert.ToInt32(psngrInfo.AccountId) : 0;
+
+        // 3. Find Transporter/Fleet Manager LoginId for Vehicle
+        string loginSql = "SELECT vm.LoginId FROM vehiclesgroupsmap vm WHERE REPLACE(vm.VehicleId, ' ', '') = REPLACE(@VehicleId, ' ', '') LIMIT 1;";
+        string? loginId = await connection.QueryFirstOrDefaultAsync<string>(loginSql, new { VehicleId = cleanVehicleId });
+        if (string.IsNullOrWhiteSpace(loginId)) loginId = "admin";
+
+        // 4. Insert Transporter Control Room Notification
+        string subjectStr = $"{cleanVehicleId}-Passenger pressed Panic Button";
+        string infoStr = $"Passenger travelling in {cleanVehicleId} pressed panic button.<br/>Name:{psngrName} {psngrRegion}<br/>MobileNo:{psngrMobile}";
+        string tnSql = @"INSERT INTO transporternotification (LoginId, Subject, Info, Datetime, Isnotified, NotifiedTime, Priority) 
+                         VALUES (@LoginId, @Subject, @Info, NOW(), 0, '0000-00-00 00:00:00', 1);";
+        await connection.ExecuteAsync(tnSql, new { LoginId = loginId, Subject = subjectStr, Info = infoStr });
+
+        // 5. Check Emergency Email Configuration & Log Simulated Email
+        if (accountId > 0)
+        {
+            string mailSql = "SELECT EmailIds FROM mailidsconfig WHERE AccountId = @AccountId AND ConfigKey = 'PSNGR_APP_PANIC' LIMIT 1;";
+            string? configuredEmails = await connection.QueryFirstOrDefaultAsync<string>(mailSql, new { AccountId = accountId });
+            if (!string.IsNullOrWhiteSpace(configuredEmails))
+            {
+                app.Logger.LogInformation("==================================================");
+                app.Logger.LogInformation("📧 SIMULATED PANIC ALERT EMAIL FOR {VehicleId}:", cleanVehicleId);
+                app.Logger.LogInformation("To: {Emails}", configuredEmails);
+                app.Logger.LogInformation("Subject: {Subject}", $"{cleanVehicleId}-Passenger pressed Panic Button {psngrRegion}".Trim());
+                app.Logger.LogInformation("Body: Dear Sir/Madam,<br/><br/>Following passenger pressed panic button through Passenger App.<br/><br/>Passenger Name:{PsngrName} {Region}<br/>Passenger MobileNo:{MobileNo}<br/>Vehicle Id:{VehicleId}<br/><br/>Best Regards,<br/>Sensel Telematics", psngrName, psngrRegion, psngrMobile, cleanVehicleId);
+                app.Logger.LogInformation("==================================================");
+            }
+        }
+
+        // 6. Simulated Amazon Panic SMS (Account ID 5632)
+        if (accountId == 5632)
+        {
+            app.Logger.LogInformation("==================================================");
+            app.Logger.LogInformation("🚨 SIMULATED AMAZON PANIC SMS FOR {VehicleId}:", cleanVehicleId);
+            app.Logger.LogInformation("A passenger travelling in {VehicleId} pressed the panic button. Name: {PsngrName} Mobile No: {PsngrMobile}", cleanVehicleId, psngrName, psngrMobile);
+            app.Logger.LogInformation("==================================================");
+        }
+
         return Results.Ok("Alert Sent Successfully");
     }
     catch (Exception ex)
