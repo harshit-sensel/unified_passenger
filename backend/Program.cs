@@ -500,9 +500,11 @@ app.MapPost("/api/checklist/insert", async (ChecklistInsertRequest request) =>
                  IFNULL((SELECT MIN(GroupId) FROM vehiclesgroupsmap WHERE REPLACE(VehicleId, ' ', '') = REPLACE(@VehicleId, ' ', '')), 0));
             SELECT LAST_INSERT_ID();";
 
+        string cleanVehicleId = (request.VehicleId ?? "").Replace("\"", "").Trim();
+
         int tagId = await connection.ExecuteScalarAsync<int>(sqlTag, new {
             PsngrId = pId,
-            VehicleId = request.VehicleId ?? "",
+            VehicleId = cleanVehicleId,
             DriverId = dId,
             Imei = request.Imei ?? "",
             Lat = decimal.TryParse(request.Lat, out decimal lt) ? lt : (decimal?)null,
@@ -537,7 +539,7 @@ app.MapPost("/api/checklist/insert", async (ChecklistInsertRequest request) =>
         }
 
         string updatePsngr = "UPDATE psngr_info SET IsLogged = 1, AssignedVehicleId = @VehicleId WHERE PsngrId = @PsngrId;";
-        await connection.ExecuteAsync(updatePsngr, new { VehicleId = request.VehicleId, PsngrId = pId });
+        await connection.ExecuteAsync(updatePsngr, new { VehicleId = cleanVehicleId, PsngrId = pId });
 
         return Results.Ok("Inserted Successfully");
     }
@@ -726,7 +728,8 @@ app.MapPost("/api/vehicle/resolve-qr", async (ResolveQrRequest request) =>
         using var connection = new MySqlConnection(connectionString);
         string sql = "SELECT Vehicleid FROM vehicleqrmapping WHERE QRCode = @QRCode LIMIT 1;";
         var dt = await connection.QuerySingleOrDefaultAsync<string>(sql, new { QRCode = request.QRCode });
-        return Results.Ok(dt ?? "Invalid QRCode");
+        string cleanResult = (dt ?? "Invalid QRCode").Replace("\"", "").Trim();
+        return Results.Text(cleanResult, "text/plain");
     }
     catch (Exception ex)
     {

@@ -222,7 +222,9 @@ public class WebServices {
         try {
             JSONObject json = new JSONObject();
             json.put("QRCode", qrcode);
-            return makeHttpRequest("vehicle/resolve-qr", "POST", json.toString());
+            String resp = makeHttpRequest("vehicle/resolve-qr", "POST", json.toString());
+            if (resp != null) resp = resp.replace("\"", "").trim();
+            return resp;
         } catch (Exception e) {
             return "Invalid QRCode";
         }
