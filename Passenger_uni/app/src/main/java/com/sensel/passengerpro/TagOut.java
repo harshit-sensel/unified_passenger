@@ -242,8 +242,12 @@ public class TagOut extends AppCompatActivity {
                                 @Override
                                 public void onClick(View v) {
                                     //if (userInput.getText().toString().trim().length() > 0 && (Long.valueOf(taginOMR)<=Long.valueOf(userInput.getText().toString()))) {
-                                    if (userInput.getText().toString().trim().length() > 0 && (Long.valueOf(taginOMR)<=Long.valueOf(userInput.getText().toString()))) {
-                                        OMR = userInput.getText().toString();
+                                     if (userInput.getText().toString().trim().length() > 0 && (Long.valueOf(taginOMR)<=Long.valueOf(userInput.getText().toString()))) {
+                                         if (imagecapturepath == null || imagecapturepath.isEmpty() || !new File(imagecapturepath).exists()) {
+                                             Toast.makeText(TagOut.this, "Please capture Tag-Out Odometer photo before tagging out", Toast.LENGTH_SHORT).show();
+                                             return;
+                                         }
+                                         OMR = userInput.getText().toString();
                                         if (Long.valueOf(OMR) - Long.valueOf(taginOMR) < 999) {
                                             new Thread(new Runnable() {
                                                 @Override

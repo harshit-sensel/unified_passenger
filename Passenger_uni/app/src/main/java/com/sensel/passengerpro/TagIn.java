@@ -269,13 +269,16 @@ public class TagIn extends AppCompatActivity {
                                                                  validation = false;
                                                              }
                                                              else {
-                                                                for (int i = 0; i < validateRules.length; i++) {
-                                                                    if (validateRules[i] == null && ruleTypes[i].equals("Radio")) {
-                                                                        validation = false;
-                                                                        break;
-                                                                    } else if (validateRules[i] == null && ruleTypes[i].equals("Text"))
-                                                                        validateRules[i] = " ";
-                                                                }
+                                                                 for (int i = 0; i < validateRules.length; i++) {
+                                                                     if (validateRules[i] == null && ruleTypes[i].equals("Radio")) {
+                                                                         validation = false;
+                                                                         break;
+                                                                     } else if ((validateRules[i] == null || validateRules[i].trim().isEmpty() || "No Configuration".equalsIgnoreCase(validateRules[i])) && ruleTypes[i].equals("FileUpload")) {
+                                                                         validation = false;
+                                                                         break;
+                                                                     } else if (validateRules[i] == null && ruleTypes[i].equals("Text"))
+                                                                         validateRules[i] = " ";
+                                                                 }
                                                             }
                                                             if (validation) {
                                                                 runOnUiThread(new Runnable() {
@@ -379,7 +382,7 @@ public class TagIn extends AppCompatActivity {
                                                                 runOnUiThread(new Runnable() {
                                                                     @Override
                                                                     public void run() {
-                                                                        Toast.makeText(TagIn.this, "Please validate all rules", Toast.LENGTH_SHORT).show();
+                                                                        Toast.makeText(TagIn.this, "Please complete all rules and capture required photos", Toast.LENGTH_SHORT).show();
                                                                     }
                                                                 });
                                                             }
