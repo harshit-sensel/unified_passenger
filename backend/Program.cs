@@ -522,6 +522,7 @@ app.MapPost("/api/checklist/insert", async (ChecklistInsertRequest request) =>
             TagoutOdometerPhoto = request.TagoutOdometerPhoto ?? ""
         });
 
+        bool hasRuleFailure = false;
         if (!string.IsNullOrWhiteSpace(request.Rules))
         {
             string[] ruleItems = request.Rules.Split(new string[] { "@#" }, StringSplitOptions.RemoveEmptyEntries);
@@ -532,9 +533,64 @@ app.MapPost("/api/checklist/insert", async (ChecklistInsertRequest request) =>
                 {
                     int chkId = int.TryParse(parts[0], out int c) ? c : 0;
                     string status = parts[1];
+                    if (status.Trim().ToLower() == "no")
+                    {
+                        hasRuleFailure = true;
+                    }
                     string sqlRule = "INSERT INTO psngr_chklist_status (TagId, ChkId, Status) VALUES (@TagId, @ChkId, @Status);";
                     await connection.ExecuteAsync(sqlRule, new { TagId = tagId, ChkId = chkId, Status = status });
                 }
+            }
+
+            // Transporter Control Room Notifications for Checklist Pass / Fail & Non-Compliance Driver
+            try
+            {
+                string loginSql = "SELECT vm.LoginId FROM vehiclesgroupsmap vm WHERE REPLACE(vm.VehicleId, ' ', '') = REPLACE(@VehicleId, ' ', '') LIMIT 1;";
+                string? loginId = await connection.QueryFirstOrDefaultAsync<string>(loginSql, new { VehicleId = cleanVehicleId });
+                if (string.IsNullOrWhiteSpace(loginId)) loginId = "admin";
+
+                string driverName = request.DriverDetails ?? "";
+                if (string.IsNullOrWhiteSpace(driverName) && dId > 0)
+                {
+                    string dSql = "SELECT Name FROM driverinfo WHERE DriverId = @DriverId LIMIT 1;";
+                    driverName = await connection.QueryFirstOrDefaultAsync<string>(dSql, new { DriverId = dId }) ?? "";
+                }
+
+                string psngrSql = "SELECT PsngrName, EmpId, MobileNo FROM psngr_info WHERE PsngrId = @PsngrId LIMIT 1;";
+                var psngrInfo = await connection.QueryFirstOrDefaultAsync<dynamic>(psngrSql, new { PsngrId = pId });
+                string psngrName = psngrInfo?.PsngrName ?? "Passenger";
+                string empId = psngrInfo?.EmpId ?? "";
+                string psngrMobile = psngrInfo?.MobileNo ?? "";
+
+                if (hasRuleFailure)
+                {
+                    string subj = $"{cleanVehicleId}({driverName}) is Failed in Passenger Checklist";
+                    string info = $"{cleanVehicleId}({driverName}) is Failed in Passenger Checklist,WFM ID:{wfmId} PTW:{request.Ptw ?? ""}<br/>Passenger Name:{psngrName}({empId}) - {psngrMobile}";
+                    string tnSql = @"INSERT INTO transporternotification (LoginId, Subject, Info, Datetime, Isnotified, NotifiedTime, Priority) 
+                                     VALUES (@LoginId, @Subject, @Info, NOW(), 0, '0000-00-00 00:00:00', 1);";
+                    await connection.ExecuteAsync(tnSql, new { LoginId = loginId, Subject = subj, Info = info });
+                }
+                else
+                {
+                    string subj = $"{cleanVehicleId}({driverName}) is Success in Passenger Checklist";
+                    string info = $"{cleanVehicleId}({driverName}) is Success in Passenger Checklist,WFM ID:{wfmId} PTW:{request.Ptw ?? ""}<br/>Passenger Name:{psngrName}({empId}) - {psngrMobile}";
+                    string tnSql = @"INSERT INTO transporternotification (LoginId, Subject, Info, Datetime, Isnotified, NotifiedTime, Priority) 
+                                     VALUES (@LoginId, @Subject, @Info, NOW(), 0, '0000-00-00 00:00:00', 0);";
+                    await connection.ExecuteAsync(tnSql, new { LoginId = loginId, Subject = subj, Info = info });
+                }
+
+                if (dId == 0)
+                {
+                    string subjNc = $"{cleanVehicleId}-Non compliance Driver";
+                    string infoNc = $"{cleanVehicleId} is assigned to non compliance driver. Driver Details -{request.DriverDetails ?? ""}";
+                    string tnSqlNc = @"INSERT INTO transporternotification (LoginId, Subject, Info, Datetime, Isnotified, NotifiedTime, Priority) 
+                                       VALUES (@LoginId, @Subject, @Info, NOW(), 0, '0000-00-00 00:00:00', 1);";
+                    await connection.ExecuteAsync(tnSqlNc, new { LoginId = loginId, Subject = subjNc, Info = infoNc });
+                }
+            }
+            catch (Exception exNotification)
+            {
+                app.Logger.LogError(exNotification, "Error inserting checklist transporter notification.");
             }
         }
 
