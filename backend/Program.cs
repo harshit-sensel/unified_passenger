@@ -667,11 +667,11 @@ app.MapPost("/api/alerts/panic", async (PanicAlertRequest request) =>
                 var dDict = (IDictionary<string, object>)cfg;
                 if (dDict.TryGetValue("PanicPressEmail", out object? eVal) && eVal != null)
                 {
-                    panicEmailEnabled = Convert.ToString(eVal) == "1" || Convert.ToString(eVal).Equals("True", StringComparison.OrdinalIgnoreCase);
+                    panicEmailEnabled = Convert.ToString(eVal) == "1" || string.Equals(Convert.ToString(eVal), "True", StringComparison.OrdinalIgnoreCase);
                 }
                 if (dDict.TryGetValue("PanicPressSMS", out object? sVal) && sVal != null)
                 {
-                    panicSmsEnabled = Convert.ToString(sVal) == "1" || Convert.ToString(sVal).Equals("True", StringComparison.OrdinalIgnoreCase);
+                    panicSmsEnabled = Convert.ToString(sVal) == "1" || string.Equals(Convert.ToString(sVal), "True", StringComparison.OrdinalIgnoreCase);
                 }
             }
         }
