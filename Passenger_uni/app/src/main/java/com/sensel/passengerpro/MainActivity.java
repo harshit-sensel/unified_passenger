@@ -92,7 +92,12 @@ public class MainActivity extends AppCompatActivity {
         }
         setContentView(R.layout.activity_main);
         context = getApplicationContext();
-        ForceUpdateChecker.checkAndPrompt(this);
+        String accountIdStr = appConstants.getShrdPrefValByKeyWithTag(context, "passengerinfo", "AccountId");
+        int accountId = 0;
+        try { if (accountIdStr != null) accountId = Integer.parseInt(accountIdStr); } catch (Exception ignored) {}
+        if (accountId > 0) {
+            ForceUpdateChecker.checkAndPromptForAccount(this, accountId);
+        }
 
         applyMainMenuWindowInsetsApi35();
 

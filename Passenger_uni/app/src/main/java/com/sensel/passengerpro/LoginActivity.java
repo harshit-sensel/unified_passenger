@@ -457,6 +457,11 @@ public class LoginActivity extends AppCompatActivity {
                                     if (dialog != null && dialog.isShowing()) dialog.dismiss();
                                     scheduleLoginActivityLogDelayed("Login_Success", 1200);
 
+                                    // Enforce Account-Level Force Update requirement
+                                    if (finalAccountConfig != null && ForceUpdateChecker.checkAndPrompt(LoginActivity.this, finalAccountConfig)) {
+                                        return;
+                                    }
+
                                     if (!finalPrivacyAccepted && finalAccountConfig != null && finalAccountConfig.privacyPolicyEnabled) {
                                         PrivacyPolicyDialog.show(LoginActivity.this, tempMobileNo, finalAccountId, finalAccountConfig.privacyPolicyText, new PrivacyPolicyDialog.OnPrivacyPolicyAcceptedListener() {
                                             @Override

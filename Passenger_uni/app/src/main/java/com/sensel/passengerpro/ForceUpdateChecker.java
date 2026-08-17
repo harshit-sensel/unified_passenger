@@ -8,95 +8,96 @@ import android.net.Uri;
 
 import androidx.appcompat.view.ContextThemeWrapper;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
-
-/** Centralized app-version update check (same behavior as legacy Force Download flow). */
+/**
+ * Account-Driven Remote Force Update Guard.
+ * Enforces minimum version requirements configured in table mobile_app_configurable per corporate account.
+ */
 public final class ForceUpdateChecker {
 
     private ForceUpdateChecker() {}
 
-    public static void checkAndPrompt(final Activity activity) {
-        if (activity == null) return;
+    /**
+     * Checks if the currently running app version satisfies the Account's minimum required version.
+     * If deprecated and ForceUpdateEnabled == 1, prompts a non-dismissible Play Store update dialog.
+     *
+     * @param activity Current calling Activity
+     * @param config The AccountConfig object for the user's AccountId
+     * @return true if update is required and dialog is shown; false if version is acceptable
+     */
+    public static boolean checkAndPrompt(final Activity activity, final AccountConfig config) {
+        if (activity == null || config == null || !config.forceUpdateEnabled) {
+            return false;
+        }
+
+        String currentVersion = BuildConfig.VERSION_NAME; // e.g. "1.0.0"
+        if (config.isVersionDeprecated(currentVersion)) {
+            showUpdateAlert(activity, config.minRequiredVersion);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Asynchronously fetches AccountConfig from the backend and checks version requirements.
+     * Used on Dashboard (MainActivity) startup for already logged-in users.
+     */
+    public static void checkAndPromptForAccount(final Activity activity, final int accountId) {
+        if (activity == null || accountId <= 0) return;
+
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
                     WebServices webServices = new WebServices();
-                    String appData = webServices.GetAppVersion(activity.getPackageName());
-                    if (appData == null || !appData.contains("VersionCode")) return;
-
-                    JSONArray array = new JSONArray(appData);
-                    if (array.length() == 0) return;
-                    JSONObject data = new JSONObject(array.get(0).toString());
-
-                    int latestVersion = parseIntSafe(data.optString("VersionCode", "0"));
-                    int priority = parseIntSafe(data.optString("Priority", "0"));
-                    int stableVersion = parseIntSafe(data.optString("StableVersion", "0"));
-                    if (latestVersion > BuildConfig.VERSION_CODE) {
-                        showUpdateAlert(activity, priority, stableVersion);
+                    String configJson = webServices.GetAccountConfig(accountId);
+                    final AccountConfig config = AccountConfig.fromJson(configJson);
+                    if (config != null && config.forceUpdateEnabled) {
+                        String currentVersion = BuildConfig.VERSION_NAME;
+                        if (config.isVersionDeprecated(currentVersion)) {
+                            activity.runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    showUpdateAlert(activity, config.minRequiredVersion);
+                                }
+                            });
+                        }
                     }
                 } catch (Exception ignored) {
                 }
             }
-        }, "ForceUpdateCheck").start();
+        }, "AccountForceUpdateCheck").start();
     }
 
-    private static int parseIntSafe(String value) {
-        try {
-            return Integer.parseInt(value);
-        } catch (Exception e) {
-            return 0;
-        }
-    }
+    private static void showUpdateAlert(final Activity activity, final String minRequiredVersion) {
+        if (activity == null || activity.isFinishing()) return;
 
-    private static void showUpdateAlert(final Activity activity, final int priority, final int stableVersion) {
-        activity.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                if (activity.isFinishing()) return;
-                // Same rules as FleetSmart MainActivity.showUpdateAlert: only an "Update" action (no Cancel).
-                // - Below StableVersion: "You are using old version" — must update.
-                // - Priority 1 or 2 (and already >= StableVersion): "New Version available" — still only Update.
-                // - Other priority values with version >= stable: no dialog (server did not flag this client).
-                if (BuildConfig.VERSION_CODE < stableVersion) {
-                    new AlertDialog.Builder(new ContextThemeWrapper(activity, android.R.style.Theme_Holo_Light_Dialog))
-                            .setTitle("You are using old version")
-                            .setIcon(R.drawable.error)
-                            .setMessage("Please update the app to new version")
-                            .setCancelable(false)
-                            .setPositiveButton("Update", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int id) {
-                                    openStoreAndExit(activity);
-                                }
-                            })
-                            .show();
-                } else if (priority == 1 || priority == 2) {
-                    new AlertDialog.Builder(new ContextThemeWrapper(activity, android.R.style.Theme_Holo_Light_Dialog))
-                            .setTitle("New Version available")
-                            .setIcon(R.drawable.error)
-                            .setMessage("Please update the app to new version")
-                            .setCancelable(false)
-                            .setPositiveButton("Update", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int id) {
-                                    openStoreAndExit(activity);
-                                }
-                            })
-                            .show();
-                }
-            }
-        });
+        new AlertDialog.Builder(new ContextThemeWrapper(activity, android.R.style.Theme_Holo_Light_Dialog))
+                .setTitle("App Update Required")
+                .setIcon(R.drawable.error)
+                .setMessage("Please update the app to version " + minRequiredVersion + " or higher to continue.")
+                .setCancelable(false)
+                .setPositiveButton("Update", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int id) {
+                        openStoreAndExit(activity);
+                    }
+                })
+                .show();
     }
 
     private static void openStoreAndExit(Activity activity) {
+        if (activity == null) return;
         final String appPackageName = activity.getPackageName();
         try {
-            activity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + appPackageName)));
-            System.exit(0);
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + appPackageName));
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            activity.startActivity(intent);
         } catch (Exception ignored) {
-            activity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + appPackageName)));
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + appPackageName));
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            activity.startActivity(intent);
         }
+        activity.finishAffinity();
+        System.exit(0);
     }
 }
