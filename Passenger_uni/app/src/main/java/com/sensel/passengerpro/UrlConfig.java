@@ -3,10 +3,7 @@ package com.sensel.passengerpro;
 /**
  * Server URL Configuration for Unified Passenger Application.
  */
-
 public class UrlConfig {
-    public static String WSDL_TARGET_NAMESPACE = "http://tempuri.org/";
-
     // New .NET Core REST API Base URL (127.0.0.1 with adb reverse for Physical Phone & Emulator)
     public static String REST_BASE_URL = "http://127.0.0.1:5228/api/";
 
@@ -29,7 +26,4 @@ public class UrlConfig {
 
     public static String IMAGE_DIRECTORY_NAME = "PassengerApp";
     public static String tata_accountid = "4315";
-
-    public static final String ADMINPANELHTTPSURL = "https://adminpanel.mysensel.com/Forms/Service.asmx";
-    public static final String ADMINPANELHTTPURL = "http://adminpanel.mysensel.com/Forms/Service.asmx";
 }
