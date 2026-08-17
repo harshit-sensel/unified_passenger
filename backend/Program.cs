@@ -989,33 +989,200 @@ app.MapPost("/api/image/upload", async (HttpRequest req, string? fileName, strin
     }
 });
 
-// 22. Vehicle Mobile GPS Check
-app.MapPost("/api/vehicle/gps-check", (GpsCheckRequest request) =>
+// Helper function: Geodesic distance in meters (Haversine formula)
+static double ComputeDistance(double lat1, double lon1, double lat2, double lon2)
+{
+    double r = 6371; // Earth radius in km
+    double dLat = (lat2 - lat1) * Math.PI / 180.0;
+    double dLon = (lon2 - lon1) * Math.PI / 180.0;
+    double a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
+               Math.Cos(lat1 * Math.PI / 180.0) * Math.Cos(lat2 * Math.PI / 180.0) *
+               Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
+    double c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
+    return r * c * 1000; // Return distance in meters
+}
+
+// 22. Vehicle Mobile GPS Check (Pre-Trip Checklist Geofence)
+app.MapPost("/api/vehicle/gps-check", async (GpsCheckRequest request) =>
 {
     try
     {
         using var connection = new MySqlConnection(connectionString);
-        return Results.Ok("Allow@&@Success@&@0");
+
+        // 1. Two-Tier Qualification: proximity_check in mobileappmenuinroles AND Designation == 'Engineer'
+        var menuCheck = await connection.QueryFirstOrDefaultAsync<string>(
+            @"SELECT m.menukey FROM usersinroles ur 
+              JOIN mobileappmenuinroles mr ON ur.RoleId = mr.RoleId 
+              JOIN mobileappmenu m ON mr.MobileAppMenuId = m.Id 
+              WHERE ur.UserId = @SourceId AND m.menukey = 'proximity_check'",
+            new { request.SourceId });
+
+        var psngr = await connection.QueryFirstOrDefaultAsync(
+            "SELECT Designation FROM psngr_info WHERE PsngrId = @SourceId",
+            new { request.SourceId });
+
+        bool hasProximityMenu = (menuCheck != null);
+        bool isEngineer = (psngr?.Designation?.ToString().Trim().Equals("Engineer", StringComparison.OrdinalIgnoreCase) == true);
+
+        // MUST satisfy BOTH: Company feature enabled AND user is an Engineer
+        if (!hasProximityMenu || !isEngineer)
+        {
+            return Results.Ok("Allow@&@No Need of GPS Check@&@0");
+        }
+
+        // 2. Fetch live vehicle telemetry from lastupdtdata
+        var vehData = await connection.QueryFirstOrDefaultAsync(
+            "SELECT timestamp, latitude, longitude FROM lastupdtdata WHERE REPLACE(truckid,' ','') = REPLACE(@VehicleId,' ','')",
+            new { request.VehicleId });
+
+        if (vehData == null)
+        {
+            return Results.Ok("Block@&@No update of vehicle is available within the system@&@0");
+        }
+
+        DateTime vehLastUpdt = Convert.ToDateTime(vehData.timestamp);
+        double vehLat = Convert.ToDouble(vehData.latitude);
+        double vehLng = Convert.ToDouble(vehData.longitude);
+        double mobLat = double.TryParse(request.Lat, out var mlat) ? mlat : 0.0;
+        double mobLng = double.TryParse(request.Lng, out var mlng) ? mlng : 0.0;
+
+        string status = "Block";
+        string remarks = "";
+
+        // 3. Check 30-minute freshness and 300-meter range
+        if ((DateTime.Now - vehLastUpdt).TotalMinutes <= 30)
+        {
+            double distMeters = ComputeDistance(mobLat, mobLng, vehLat, vehLng);
+            if (distMeters <= 300)
+            {
+                status = "Allow";
+                remarks = "Conditions Satisfied";
+            }
+            else
+            {
+                status = "Block";
+                remarks = "Vehicle is not in the range";
+            }
+        }
+        else
+        {
+            status = "Block";
+            remarks = "No update of vehicle is available in last 30 minutes";
+        }
+
+        // 4. Audit Log insertion into mobile_vehicle_gps
+        int sourceIdInt = int.TryParse(request.SourceId, out var sid) ? sid : 0;
+        var logId = await connection.ExecuteScalarAsync<int>(
+            @"INSERT INTO mobile_vehicle_gps 
+              (Source, SourceId, DateTime, MobileLat, MobileLng, VehicleId, VehicleLat, VehicleLng, VehLastUpdt, Status, Remarks)
+              VALUES (@Source, @SourceId, @DateTime, @MobileLat, @MobileLng, @VehicleId, @VehicleLat, @VehicleLng, @VehLastUpdt, @Status, @Remarks);
+              SELECT LAST_INSERT_ID();",
+            new {
+                Source = request.Source ?? "Passenger",
+                SourceId = sourceIdInt,
+                DateTime = DateTime.Now,
+                MobileLat = (decimal)mobLat,
+                MobileLng = (decimal)mobLng,
+                VehicleId = request.VehicleId,
+                VehicleLat = (decimal)vehLat,
+                VehicleLng = (decimal)vehLng,
+                VehLastUpdt = vehLastUpdt,
+                Status = status,
+                Remarks = remarks
+            });
+
+        return Results.Ok($"{status}@&@{remarks}@&@{logId}");
     }
     catch (Exception ex)
     {
         app.Logger.LogError(ex, "Error in /api/vehicle/gps-check");
-        return Results.Ok("Allow@&@Success@&@0");
+        return Results.Ok("Block@&@Service issue contact admin Or Try Again@&@0");
     }
 });
 
-// 23. Vehicle Proximity Check
-app.MapPost("/api/vehicle/proximity-check", (ProximityCheckRequest request) =>
+// 23. Vehicle Proximity Check (Live Tracking Tag In / Tag Out Gate)
+app.MapPost("/api/vehicle/proximity-check", async (ProximityCheckRequest request) =>
 {
     try
     {
         using var connection = new MySqlConnection(connectionString);
-        return Results.Ok("Allow@&@Success@&@0");
+
+        // 1. Fetch live vehicle telemetry from lastupdtdata
+        var vehData = await connection.QueryFirstOrDefaultAsync(
+            "SELECT timestamp, latitude, longitude FROM lastupdtdata WHERE REPLACE(truckid,' ','') = REPLACE(@VehicleId,' ','')",
+            new { request.VehicleId });
+
+        if (vehData == null)
+        {
+            return Results.Ok("Block-No update of vehicle is available within the system");
+        }
+
+        DateTime vehLastUpdt = Convert.ToDateTime(vehData.timestamp);
+        double vehLat = Convert.ToDouble(vehData.latitude);
+        double vehLng = Convert.ToDouble(vehData.longitude);
+        double mobLat = double.TryParse(request.Lat, out var mlat) ? mlat : 0.0;
+        double mobLng = double.TryParse(request.Lng, out var mlng) ? mlng : 0.0;
+        int timeThreshold = int.TryParse(request.TimeThreshold, out var tt) ? tt : 15;
+        int distThreshold = int.TryParse(request.DistThreshold, out var dt) ? dt : 50;
+
+        string status = "Block";
+        string remarks = "";
+
+        // 2. Check freshness and distance against dynamic thresholds
+        if ((DateTime.Now - vehLastUpdt).TotalMinutes <= timeThreshold)
+        {
+            double distMeters = ComputeDistance(mobLat, mobLng, vehLat, vehLng);
+            if (distMeters <= distThreshold)
+            {
+                status = "Allow";
+                remarks = "Conditions Satisfied";
+            }
+            else
+            {
+                status = "Block";
+                remarks = $"Vehicle is not in the range of {distThreshold} meters";
+            }
+        }
+        else
+        {
+            if (request.Source == "Passenger")
+            {
+                status = "Allow";
+                remarks = $"No update of vehicle is available in last {timeThreshold} minutes";
+            }
+            else
+            {
+                status = "Block";
+                remarks = $"No update of vehicle is available in last {timeThreshold} minutes";
+            }
+        }
+
+        // 3. Audit Log insertion into mobile_vehicle_gps
+        int sourceIdInt = int.TryParse(request.SourceId, out var sid) ? sid : 0;
+        await connection.ExecuteAsync(
+            @"INSERT INTO mobile_vehicle_gps 
+              (Source, SourceId, DateTime, MobileLat, MobileLng, VehicleId, VehicleLat, VehicleLng, VehLastUpdt, Status, Remarks)
+              VALUES (@Source, @SourceId, @DateTime, @MobileLat, @MobileLng, @VehicleId, @VehicleLat, @VehicleLng, @VehLastUpdt, @Status, @Remarks)",
+            new {
+                Source = request.Source ?? "Passenger",
+                SourceId = sourceIdInt,
+                DateTime = DateTime.Now,
+                MobileLat = (decimal)mobLat,
+                MobileLng = (decimal)mobLng,
+                VehicleId = request.VehicleId,
+                VehicleLat = (decimal)vehLat,
+                VehicleLng = (decimal)vehLng,
+                VehLastUpdt = vehLastUpdt,
+                Status = status,
+                Remarks = remarks
+            });
+
+        return Results.Ok($"{status}-{remarks}");
     }
     catch (Exception ex)
     {
         app.Logger.LogError(ex, "Error in /api/vehicle/proximity-check");
-        return Results.Ok("Allow@&@Success@&@0");
+        return Results.Ok("Block-Service issue contact admin Or Try Again");
     }
 });
 

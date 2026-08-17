@@ -178,7 +178,13 @@ public class MainActivity extends AppCompatActivity {
                                     public void run() {
                                         if (dialog != null && dialog.isShowing()) dialog.dismiss();
                                         if (tagResult != null && (tagResult.contains("TagOut") || tagResult.contains("TagIn")) && tagResult.trim().startsWith("[")) {
-                                            Intent i = new Intent(MainActivity.this, TrackOnMap.class);
+                                            String userMenus = appConstants.getShrdPrefValByKey(getApplicationContext(), "UserMenus");
+                                            Intent i;
+                                            if (userMenus != null && userMenus.contains("assigned_veh_tracking")) {
+                                                i = new Intent(MainActivity.this, TagTrack.class);
+                                            } else {
+                                                i = new Intent(MainActivity.this, TrackOnMap.class);
+                                            }
                                             i.putExtra("tagDetails", tagResult);
                                             i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                                             startActivity(i);
@@ -457,6 +463,7 @@ public class MainActivity extends AppCompatActivity {
                                 icons.add(R.drawable.ic_tag_in_otp);
                             }
                             break;
+                        case "live_tracking":
                         case "assigned_veh_tracking":
                         case "school_bus_tracking":
                             if (!labels.contains("Track Your Vehicle")) {
