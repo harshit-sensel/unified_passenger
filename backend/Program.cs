@@ -626,13 +626,16 @@ app.MapPost("/api/alerts/panic", async (PanicAlertRequest request) =>
         string sql = "INSERT INTO panic_alerts (VehicleId, `Timestamp`, From_Type, From_Id) VALUES (@VehicleId, NOW(), @Type, @Id);";
         await connection.ExecuteAsync(sql, new { Id = cleanId, VehicleId = cleanVehicleId, Type = cleanType });
 
-        // 2. Fetch Passenger & Account Details
-        string psngrSql = "SELECT PsngrName, MobileNo, AccountId FROM psngr_info WHERE PsngrId = @PsngrId OR MobileNo = @PsngrId LIMIT 1;";
+        // 2. Fetch Passenger & Account Details (Joined with regioninfo like legacy XmlDB.cs Line 43685)
+        string psngrSql = @"SELECT p.PsngrName, p.MobileNo, p.AccountId, ri.RegionName 
+                            FROM psngr_info p 
+                            LEFT JOIN regioninfo ri ON ri.RegionId = p.RegionId 
+                            WHERE p.PsngrId = @PsngrId OR p.MobileNo = @PsngrId LIMIT 1;";
         var psngrInfo = await connection.QueryFirstOrDefaultAsync<dynamic>(psngrSql, new { PsngrId = cleanId });
 
         string psngrName = psngrInfo?.PsngrName ?? "Passenger";
         string psngrMobile = psngrInfo?.MobileNo ?? cleanId;
-        string psngrRegion = "";
+        string psngrRegion = psngrInfo?.RegionName ?? "";
         int accountId = psngrInfo?.AccountId != null ? Convert.ToInt32(psngrInfo.AccountId) : 0;
 
         // 3. Find Transporter/Fleet Manager Login for Vehicle
