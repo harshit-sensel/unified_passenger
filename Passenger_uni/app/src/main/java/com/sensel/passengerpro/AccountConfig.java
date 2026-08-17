@@ -15,6 +15,8 @@ public class AccountConfig {
     public String minRequiredVersion = "1.0.0";
     public boolean privacyPolicyEnabled = false;
     public String privacyPolicyText = "";
+    public boolean panicPressEmail = true;
+    public boolean panicPressSMS = false;
 
     public static AccountConfig fromJson(String jsonStr) {
         AccountConfig config = new AccountConfig();
@@ -33,6 +35,8 @@ public class AccountConfig {
             config.minRequiredVersion = obj.optString("MinRequiredVersion", "1.0.0");
             config.privacyPolicyEnabled = obj.optInt("PrivacyPolicyEnabled", 0) == 1;
             config.privacyPolicyText = obj.optString("PrivacyPolicyText", "");
+            config.panicPressEmail = obj.optInt("PanicPressEmail", 1) == 1;
+            config.panicPressSMS = obj.optInt("PanicPressSMS", 0) == 1;
         } catch (Exception e) {
             e.printStackTrace();
         }

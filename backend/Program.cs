@@ -545,8 +545,11 @@ app.MapPost("/api/checklist/insert", async (ChecklistInsertRequest request) =>
             // Transporter Control Room Notifications for Checklist Pass / Fail & Non-Compliance Driver
             try
             {
-                string loginSql = "SELECT vm.LoginId FROM vehiclesgroupsmap vm WHERE REPLACE(vm.VehicleId, ' ', '') = REPLACE(@VehicleId, ' ', '') LIMIT 1;";
-                string? loginId = await connection.QueryFirstOrDefaultAsync<string>(loginSql, new { VehicleId = cleanVehicleId });
+                string loginSql = "SELECT ugm.Login FROM vehiclesgroupsmap vm JOIN usersgroupsmap ugm ON vm.GroupId = ugm.GroupId WHERE REPLACE(vm.VehicleId, ' ', '') = REPLACE(@VehicleId, ' ', '') LIMIT 1;";
+                string? loginId = null;
+                try {
+                    loginId = await connection.QueryFirstOrDefaultAsync<string>(loginSql, new { VehicleId = cleanVehicleId });
+                } catch {}
                 if (string.IsNullOrWhiteSpace(loginId)) loginId = "admin";
 
                 string driverName = request.DriverDetails ?? "";
@@ -565,26 +568,29 @@ app.MapPost("/api/checklist/insert", async (ChecklistInsertRequest request) =>
                 if (hasRuleFailure)
                 {
                     string subj = $"{cleanVehicleId}({driverName}) is Failed in Passenger Checklist";
+                    if (subj.Length > 50) subj = subj.Substring(0, 50);
                     string info = $"{cleanVehicleId}({driverName}) is Failed in Passenger Checklist,WFM ID:{wfmId} PTW:{request.Ptw ?? ""}<br/>Passenger Name:{psngrName}({empId}) - {psngrMobile}";
-                    string tnSql = @"INSERT INTO transporternotification (LoginId, Subject, Info, Datetime, Isnotified, NotifiedTime, Priority) 
-                                     VALUES (@LoginId, @Subject, @Info, NOW(), 0, '0000-00-00 00:00:00', 1);";
+                    string tnSql = @"INSERT INTO transporternotification (Loginid, Subject, Info, Datetime, IsNotified, Notifiedtime, Priority) 
+                                     VALUES (@LoginId, @Subject, @Info, NOW(), 0, NULL, 1);";
                     await connection.ExecuteAsync(tnSql, new { LoginId = loginId, Subject = subj, Info = info });
                 }
                 else
                 {
                     string subj = $"{cleanVehicleId}({driverName}) is Success in Passenger Checklist";
+                    if (subj.Length > 50) subj = subj.Substring(0, 50);
                     string info = $"{cleanVehicleId}({driverName}) is Success in Passenger Checklist,WFM ID:{wfmId} PTW:{request.Ptw ?? ""}<br/>Passenger Name:{psngrName}({empId}) - {psngrMobile}";
-                    string tnSql = @"INSERT INTO transporternotification (LoginId, Subject, Info, Datetime, Isnotified, NotifiedTime, Priority) 
-                                     VALUES (@LoginId, @Subject, @Info, NOW(), 0, '0000-00-00 00:00:00', 0);";
+                    string tnSql = @"INSERT INTO transporternotification (Loginid, Subject, Info, Datetime, IsNotified, Notifiedtime, Priority) 
+                                     VALUES (@LoginId, @Subject, @Info, NOW(), 0, NULL, 0);";
                     await connection.ExecuteAsync(tnSql, new { LoginId = loginId, Subject = subj, Info = info });
                 }
 
                 if (dId == 0)
                 {
                     string subjNc = $"{cleanVehicleId}-Non compliance Driver";
+                    if (subjNc.Length > 50) subjNc = subjNc.Substring(0, 50);
                     string infoNc = $"{cleanVehicleId} is assigned to non compliance driver. Driver Details -{request.DriverDetails ?? ""}";
-                    string tnSqlNc = @"INSERT INTO transporternotification (LoginId, Subject, Info, Datetime, Isnotified, NotifiedTime, Priority) 
-                                       VALUES (@LoginId, @Subject, @Info, NOW(), 0, '0000-00-00 00:00:00', 1);";
+                    string tnSqlNc = @"INSERT INTO transporternotification (Loginid, Subject, Info, Datetime, IsNotified, Notifiedtime, Priority) 
+                                       VALUES (@LoginId, @Subject, @Info, NOW(), 0, NULL, 1);";
                     await connection.ExecuteAsync(tnSqlNc, new { LoginId = loginId, Subject = subjNc, Info = infoNc });
                 }
             }
@@ -621,57 +627,120 @@ app.MapPost("/api/alerts/panic", async (PanicAlertRequest request) =>
         await connection.ExecuteAsync(sql, new { Id = cleanId, VehicleId = cleanVehicleId, Type = cleanType });
 
         // 2. Fetch Passenger & Account Details
-        string psngrSql = "SELECT PsngrName, MobileNo, RegionName, AccountId FROM psngr_info WHERE PsngrId = @PsngrId OR MobileNo = @PsngrId LIMIT 1;";
+        string psngrSql = "SELECT PsngrName, MobileNo, AccountId FROM psngr_info WHERE PsngrId = @PsngrId OR MobileNo = @PsngrId LIMIT 1;";
         var psngrInfo = await connection.QueryFirstOrDefaultAsync<dynamic>(psngrSql, new { PsngrId = cleanId });
 
         string psngrName = psngrInfo?.PsngrName ?? "Passenger";
         string psngrMobile = psngrInfo?.MobileNo ?? cleanId;
-        string psngrRegion = psngrInfo?.RegionName ?? "";
+        string psngrRegion = "";
         int accountId = psngrInfo?.AccountId != null ? Convert.ToInt32(psngrInfo.AccountId) : 0;
 
-        // 3. Find Transporter/Fleet Manager LoginId for Vehicle
-        string loginSql = "SELECT vm.LoginId FROM vehiclesgroupsmap vm WHERE REPLACE(vm.VehicleId, ' ', '') = REPLACE(@VehicleId, ' ', '') LIMIT 1;";
-        string? loginId = await connection.QueryFirstOrDefaultAsync<string>(loginSql, new { VehicleId = cleanVehicleId });
+        // 3. Find Transporter/Fleet Manager Login for Vehicle
+        string loginSql = "SELECT ugm.Login FROM vehiclesgroupsmap vm JOIN usersgroupsmap ugm ON vm.GroupId = ugm.GroupId WHERE REPLACE(vm.VehicleId, ' ', '') = REPLACE(@VehicleId, ' ', '') LIMIT 1;";
+        string? loginId = null;
+        try {
+            loginId = await connection.QueryFirstOrDefaultAsync<string>(loginSql, new { VehicleId = cleanVehicleId });
+        } catch {}
         if (string.IsNullOrWhiteSpace(loginId)) loginId = "admin";
 
         // 4. Insert Transporter Control Room Notification
         string subjectStr = $"{cleanVehicleId}-Passenger pressed Panic Button";
+        if (subjectStr.Length > 50) subjectStr = subjectStr.Substring(0, 50);
         string infoStr = $"Passenger travelling in {cleanVehicleId} pressed panic button.<br/>Name:{psngrName} {psngrRegion}<br/>MobileNo:{psngrMobile}";
-        string tnSql = @"INSERT INTO transporternotification (LoginId, Subject, Info, Datetime, Isnotified, NotifiedTime, Priority) 
-                         VALUES (@LoginId, @Subject, @Info, NOW(), 0, '0000-00-00 00:00:00', 1);";
+        string tnSql = @"INSERT INTO transporternotification (Loginid, Subject, Info, Datetime, IsNotified, Notifiedtime, Priority) 
+                         VALUES (@LoginId, @Subject, @Info, NOW(), 0, NULL, 1);";
         await connection.ExecuteAsync(tnSql, new { LoginId = loginId, Subject = subjectStr, Info = infoStr });
 
-        // 5. Check Emergency Email Configuration & Log Simulated Email
+        // 5. Query Account Configuration for Panic Alerts
+        bool panicEmailEnabled = true;
+        bool panicSmsEnabled = false;
+
         if (accountId > 0)
         {
-            string mailSql = "SELECT EmailIds FROM mailidsconfig WHERE AccountId = @AccountId AND ConfigKey = 'PSNGR_APP_PANIC' LIMIT 1;";
-            string? configuredEmails = await connection.QueryFirstOrDefaultAsync<string>(mailSql, new { AccountId = accountId });
-            if (!string.IsNullOrWhiteSpace(configuredEmails))
+            string cfgSql = "SELECT PanicPressEmail, PanicPressSMS FROM mobile_app_configurable WHERE AccountId = @AccountId LIMIT 1;";
+            var cfg = await connection.QueryFirstOrDefaultAsync<dynamic>(cfgSql, new { AccountId = accountId });
+            if (cfg != null)
             {
-                app.Logger.LogInformation("==================================================");
-                app.Logger.LogInformation("📧 SIMULATED PANIC ALERT EMAIL FOR {VehicleId}:", cleanVehicleId);
-                app.Logger.LogInformation("To: {Emails}", configuredEmails);
-                app.Logger.LogInformation("Subject: {Subject}", $"{cleanVehicleId}-Passenger pressed Panic Button {psngrRegion}".Trim());
-                app.Logger.LogInformation("Body: Dear Sir/Madam,<br/><br/>Following passenger pressed panic button through Passenger App.<br/><br/>Passenger Name:{PsngrName} {Region}<br/>Passenger MobileNo:{MobileNo}<br/>Vehicle Id:{VehicleId}<br/><br/>Best Regards,<br/>Sensel Telematics", psngrName, psngrRegion, psngrMobile, cleanVehicleId);
-                app.Logger.LogInformation("==================================================");
+                var dDict = (IDictionary<string, object>)cfg;
+                if (dDict.TryGetValue("PanicPressEmail", out object? eVal) && eVal != null)
+                {
+                    panicEmailEnabled = Convert.ToString(eVal) == "1" || Convert.ToString(eVal).Equals("True", StringComparison.OrdinalIgnoreCase);
+                }
+                if (dDict.TryGetValue("PanicPressSMS", out object? sVal) && sVal != null)
+                {
+                    panicSmsEnabled = Convert.ToString(sVal) == "1" || Convert.ToString(sVal).Equals("True", StringComparison.OrdinalIgnoreCase);
+                }
             }
         }
 
-        // 6. Simulated Amazon Panic SMS (Account ID 5632)
-        if (accountId == 5632)
+        // 6. Configurable Emergency Email Alert
+        if (panicEmailEnabled && accountId > 0)
         {
-            app.Logger.LogInformation("==================================================");
-            app.Logger.LogInformation("🚨 SIMULATED AMAZON PANIC SMS FOR {VehicleId}:", cleanVehicleId);
-            app.Logger.LogInformation("A passenger travelling in {VehicleId} pressed the panic button. Name: {PsngrName} Mobile No: {PsngrMobile}", cleanVehicleId, psngrName, psngrMobile);
-            app.Logger.LogInformation("==================================================");
+            string mailSql = "SELECT EmailIds FROM mailidconfig WHERE AccountId = @AccountId AND Purpose = 'PSNGR_APP_PANIC' AND Active = 1 LIMIT 1;";
+            string? configuredEmails = null;
+            try {
+                configuredEmails = await connection.QueryFirstOrDefaultAsync<string>(mailSql, new { AccountId = accountId });
+            } catch {}
+
+            if (string.IsNullOrWhiteSpace(configuredEmails))
+            {
+                try {
+                    string mFallback = "SELECT EmailIds FROM mailidsconfig WHERE AccountId = @AccountId AND ConfigKey = 'PSNGR_APP_PANIC' LIMIT 1;";
+                    configuredEmails = await connection.QueryFirstOrDefaultAsync<string>(mFallback, new { AccountId = accountId });
+                } catch {}
+            }
+
+            if (!string.IsNullOrWhiteSpace(configuredEmails))
+            {
+                app.Logger.LogWarning(
+                    "\n======================= 📧 STAGED PANIC EMAIL ALERT =======================\n" +
+                    "To: {To}\n" +
+                    "Subject: {Subject}\n" +
+                    "Body:\n" +
+                    "Dear Sir/Madam,\n\n" +
+                    "The following passenger pressed the Panic Button through the Passenger App:\n" +
+                    "  • Passenger Name: {PsngrName} ({Region})\n" +
+                    "  • Mobile Number:  {MobileNo}\n" +
+                    "  • Vehicle ID:     {VehicleId}\n" +
+                    "  • Timestamp:      {Timestamp}\n\n" +
+                    "Best Regards,\nSensel Telematics Safety Desk\n" +
+                    "===========================================================================",
+                    configuredEmails, $"{cleanVehicleId}-Passenger pressed Panic Button {psngrRegion}".Trim(),
+                    psngrName, psngrRegion, psngrMobile, cleanVehicleId, DateTime.Now.ToString("dd/MM/yyyy hh:mm:ss tt"));
+            }
+        }
+
+        // 7. Configurable Emergency SMS Alert (Reads SmsPhone from noupdates)
+        if (panicSmsEnabled)
+        {
+            string smsSql = "SELECT SmsPhone FROM noupdates WHERE REPLACE(truckid, ' ', '') = REPLACE(@VehicleId, ' ', '') LIMIT 1;";
+            string? smsPhone = null;
+            try {
+                smsPhone = await connection.QueryFirstOrDefaultAsync<string>(smsSql, new { VehicleId = cleanVehicleId });
+            } catch {}
+
+            if (string.IsNullOrWhiteSpace(smsPhone))
+            {
+                smsPhone = "Assigned Fleet Safety Officer";
+            }
+
+            string smsMessage = $"EMERGENCY ALERT: Passenger {psngrName} ({psngrMobile}) travelling in {cleanVehicleId} has pressed the PANIC button at {DateTime.Now:dd/MM/yyyy hh:mm tt}.";
+
+            app.Logger.LogWarning(
+                "\n======================= 🚨 STAGED PANIC SMS ALERT =========================\n" +
+                "Recipient Phone: {Phone}\n" +
+                "Vehicle ID:      {VehicleId}\n" +
+                "SMS Message:     {Message}\n" +
+                "===========================================================================",
+                smsPhone, cleanVehicleId, smsMessage);
         }
 
         return Results.Ok("Alert Sent Successfully");
     }
     catch (Exception ex)
     {
-        app.Logger.LogError(ex, "Error inserting panic alert.");
-        return Results.Ok("Failed");
+        app.Logger.LogError(ex, "Error inserting panic alert: {Message}", ex.Message);
+        return Results.Ok($"Failed: {ex.Message}");
     }
 });
 
@@ -774,7 +843,8 @@ app.MapGet("/api/config/by-account", async (int accountId) =>
         using var connection = new MySqlConnection(connectionString);
         string query = @"
             SELECT AccountId, AutoLogoutEnabled, AutoLogoutTimeoutMinutes, TwoFactorAuthEnabled, 
-                   ActivityLogEnabled, ForceUpdateEnabled, MinRequiredVersion, PrivacyPolicyEnabled, PrivacyPolicyText 
+                   ActivityLogEnabled, ForceUpdateEnabled, MinRequiredVersion, PrivacyPolicyEnabled, PrivacyPolicyText,
+                   PanicPressEmail, PanicPressSMS
             FROM mobile_app_configurable 
             WHERE AccountId = @AccountId LIMIT 1;";
 
@@ -792,15 +862,17 @@ app.MapGet("/api/config/by-account", async (int accountId) =>
             TwoFactorAuthEnabled = 0,
             ActivityLogEnabled = 1,
             ForceUpdateEnabled = 0,
-            MinRequiredVersion = "2.0.0",
+            MinRequiredVersion = "1.0.0",
             PrivacyPolicyEnabled = 0,
-            PrivacyPolicyText = ""
+            PrivacyPolicyText = "",
+            PanicPressEmail = 1,
+            PanicPressSMS = 0
         });
     }
     catch (Exception ex)
     {
         app.Logger.LogError(ex, "Error fetching account config for AccountId: {AccountId}", accountId);
-        return Results.Ok(new { AccountId = accountId, AutoLogoutEnabled = 0, AutoLogoutTimeoutMinutes = 15, TwoFactorAuthEnabled = 0, ActivityLogEnabled = 0, ForceUpdateEnabled = 0, MinRequiredVersion = "2.0.0", PrivacyPolicyEnabled = 0, PrivacyPolicyText = "" });
+        return Results.Ok(new { AccountId = accountId, AutoLogoutEnabled = 0, AutoLogoutTimeoutMinutes = 15, TwoFactorAuthEnabled = 0, ActivityLogEnabled = 0, ForceUpdateEnabled = 0, MinRequiredVersion = "1.0.0", PrivacyPolicyEnabled = 0, PrivacyPolicyText = "", PanicPressEmail = 1, PanicPressSMS = 0 });
     }
 });
 
