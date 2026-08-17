@@ -821,11 +821,44 @@ app.MapGet("/api/config/check-privacy-accepted", async (string mobileNo) =>
     }
 });
 
-// 14. ErrorRecordSendMail (SOAP)
-app.MapPost("/api/logs/error", (ErrorLogRequest request) =>
+// 14. ErrorRecordSendMail (Modernized with Database Persistence & Email Staging)
+app.MapPost("/api/logs/error", async (ErrorLogRequest request) =>
 {
-    app.Logger.LogError("Client Logged Error: {Error}", request.Error);
-    return Results.Ok("Logged");
+    try
+    {
+        using var connection = new MySqlConnection(connectionString);
+        string sql = "INSERT INTO stl_errormessage (ErrorMessage, Timestamp) VALUES (@ErrorMessage, @Timestamp);";
+        string timestampStr = string.IsNullOrWhiteSpace(request.DateTime) 
+            ? DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") 
+            : request.DateTime;
+
+        await connection.ExecuteAsync(sql, new { 
+            ErrorMessage = request.Error ?? "Unknown Client Error", 
+            Timestamp = DateTime.Now 
+        });
+
+        // Staged Email Logging for DevOps / Support Team
+        string emailTo = "harshit@sensel.in, madhuri@sensel.in";
+        string emailFrom = "reports@senseltelematics.com";
+        string emailSubject = "Passenger App Error Report";
+
+        app.Logger.LogWarning(
+            "\n======================= 📧 STAGED ERROR EMAIL ALERT =======================\n" +
+            "To: {To}\n" +
+            "From: {From}\n" +
+            "Subject: {Subject}\n" +
+            "Timestamp: {Timestamp}\n" +
+            "Error Details:\n{Error}\n" +
+            "===========================================================================",
+            emailTo, emailFrom, emailSubject, timestampStr, request.Error);
+
+        return Results.Ok("Logged");
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogError(ex, "Error inserting client error log into database.");
+        return Results.Ok("Logged");
+    }
 });
 
 // 15. ResolveQRCode (SOAP) — URL matches WebServices.java L218
