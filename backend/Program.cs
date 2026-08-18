@@ -442,7 +442,15 @@ app.MapPost("/api/checklist/insert", async (ChecklistInsertRequest request) =>
                 TagoutOdometerPhoto = request.TagoutOdometerPhoto ?? ""
             });
 
-            string updateOut = "UPDATE psngr_info SET IsLogged = 0, AssignedVehicleId = NULL WHERE PsngrId = @PsngrId;";
+            string updateOut = @"
+                UPDATE psngr_info p 
+                SET p.IsLogged = 0,
+                    p.AssignedVehicleId = CASE 
+                        WHEN p.AccountId = 5632 AND p.ReallocatedVehicle IS NOT NULL AND TRIM(p.ReallocatedVehicle) != '' 
+                        THEN p.ReallocatedVehicle 
+                        ELSE p.AssignedVehicleId 
+                    END
+                WHERE p.PsngrId = @PsngrId;";
             await connection.ExecuteAsync(updateOut, new { PsngrId = pId });
 
             return Results.Ok("Inserted Successfully");

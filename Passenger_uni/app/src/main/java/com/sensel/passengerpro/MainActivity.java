@@ -477,9 +477,12 @@ public class MainActivity extends AppCompatActivity {
                             }
                             break;
                         case "panic_sos":
-                            if (!labels.contains("Panic")) {
-                                labels.add("Panic");
-                                icons.add(R.drawable.panic);
+                            String panicFlag = appConstants.getShrdPrefValByKeyWithTag(getApplicationContext(), "passengerinfo", "PanicFlag");
+                            if ("1".equals(panicFlag)) {
+                                if (!labels.contains("Panic")) {
+                                    labels.add("Panic");
+                                    icons.add(R.drawable.panic);
+                                }
                             }
                             break;
                         case "checklist":
