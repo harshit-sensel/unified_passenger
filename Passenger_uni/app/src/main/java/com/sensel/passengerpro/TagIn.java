@@ -641,6 +641,9 @@ public class TagIn extends AppCompatActivity {
                                     }
                                 }
                             }
+                            if (CheckListDesign.imagePaths != null) {
+                                CheckListDesign.imagePaths.clear();
+                            }
 
                             runOnUiThread(new Runnable() {
                                 public void run() {
@@ -1020,6 +1023,9 @@ public class TagIn extends AppCompatActivity {
                                 new DialogInterface.OnClickListener() {
                                     public void onClick(DialogInterface dialog, int id) {
                                         dialog.cancel();
+                                        if (CheckListDesign.imagePaths != null) {
+                                            CheckListDesign.imagePaths.clear();
+                                        }
                                         finish();
                                     }
                                 });
@@ -1089,12 +1095,14 @@ public class TagIn extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        if (CheckListDesign.imagePaths != null) {
+            CheckListDesign.imagePaths.clear();
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && backInvokedCallback != null) {
             getOnBackInvokedDispatcher().unregisterOnBackInvokedCallback(backInvokedCallback);
         }
     }
     private void handleOnBackPressed() {
-        // Custom behavior for back gesture
-        finish(); // Or handle the back press as needed
+        onBackPressed();
     }
 }

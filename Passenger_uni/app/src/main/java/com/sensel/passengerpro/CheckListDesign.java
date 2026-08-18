@@ -63,6 +63,9 @@ public class CheckListDesign extends ArrayAdapter<String> {
         this.ruleIds = ruleIds;
         this.ruleTypes=ruleTypes;
         strRules=new String[rules.length];
+        if (imagePaths != null) {
+            imagePaths.clear();
+        }
         this.tagInContext = context; // Directly assign without casting
     }
     @Override
