@@ -24,17 +24,13 @@ import android.provider.MediaStore;
 import android.provider.Settings;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.view.ContextThemeWrapper;
 import androidx.core.content.FileProvider;
-import android.view.MenuItem;
 
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
@@ -95,11 +91,89 @@ public class TagOut extends AppCompatActivity {
         setContentView(R.layout.activity_tagout);
         PassengerActivityLogger.log(this, "TagOut");
 
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.setDisplayHomeAsUpEnabled(true);
-            actionBar.setHomeButtonEnabled(true);
-        }
+        // Setup Panic button with blinking animation
+        ImageView btnPanic = findViewById(R.id.btn_panic);
+        Animation mAnimation = new AlphaAnimation(1, 0);
+        mAnimation.setDuration(500);
+        mAnimation.setInterpolator(new LinearInterpolator());
+        mAnimation.setRepeatCount(Animation.INFINITE);
+        mAnimation.setRepeatMode(Animation.REVERSE);
+        btnPanic.startAnimation(mAnimation);
+        btnPanic.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                runOnUiThread(new Runnable() {
+                    public void run() {
+                        final AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
+                                new ContextThemeWrapper(TagOut.this, android.R.style.Theme_Holo_Light_Dialog));
+                        alertDialogBuilder.setTitle("Panic ");
+                        alertDialogBuilder.setIcon(R.drawable.panic);
+                        alertDialogBuilder.setMessage("Are you really Panic?")
+                                .setCancelable(false)
+                                .setPositiveButton("No",
+                                        new DialogInterface.OnClickListener() {
+                                            public void onClick(DialogInterface dialog, int id) {
+                                                dialog.cancel();
+                                            }
+                                        })
+                                .setNegativeButton("Yes",
+                                        new DialogInterface.OnClickListener() {
+                                            public void onClick(DialogInterface dialog, int id) {
+                                                progressDialog = ProgressDialog.show(TagOut.this, "", "Loading...", true);
+                                                new Thread(new Runnable() {
+                                                    @Override
+                                                    public void run() {
+                                                        final String res=webServices.InsertPanicAlertFromApp(psngrId,vehicleid,"Passenger");
+                                                        runOnUiThread(new Runnable() {
+                                                            @Override
+                                                            public void run() {
+                                                                if(res.contains("Inserted Successfully"))
+                                                                    Toast.makeText(getApplicationContext(),"Panic alert sent successfully",Toast.LENGTH_SHORT).show();
+                                                                else {
+                                                                    ErrorRecordSendMail errorRecordSendMail = new ErrorRecordSendMail();
+                                                                    errorRecordSendMail.errorrecordSendMail(res + "-TagOut("+new Exception().getStackTrace()[0].getLineNumber()+")-" + mobileno+"-InsertPanicAlertFromApp("+psngrId+","+vehicleid+",\"Passenger\")");
+                                                                    Toast.makeText(getApplicationContext(), "Panic alert failed to send", Toast.LENGTH_SHORT).show();
+                                                                }
+                                                                progressDialog.dismiss();
+                                                            }
+                                                        });
+                                                    }
+                                                }).start();
+                                                dialog.cancel();
+                                            }
+                                        });
+                        AlertDialog alert = alertDialogBuilder.create();
+                        alert.show();
+                    }
+                });
+            }
+        });
+
+        // Setup Logout button
+        ImageView btnLogout = findViewById(R.id.btn_logout);
+        btnLogout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                runOnUiThread(new Runnable() {
+                    public void run() {
+                        final AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
+                                new ContextThemeWrapper(TagOut.this, android.R.style.Theme_Holo_Light_Dialog));
+                        alertDialogBuilder.setIcon(R.drawable.error);
+                        alertDialogBuilder.setTitle("Logout ");
+                        alertDialogBuilder.setMessage("First you need to do TagOut and then try LogOut.")
+                                .setCancelable(false)
+                                .setPositiveButton("OK",
+                                        new DialogInterface.OnClickListener() {
+                                            public void onClick(DialogInterface dialog, int id) {
+                                                dialog.cancel();
+                                            }
+                                        });
+                        AlertDialog alert = alertDialogBuilder.create();
+                        alert.show();
+                    }
+                });
+            }
+        });
         txtVehicle=(TextView) findViewById(R.id.vehicleid);
         txtTagInTime=(TextView) findViewById(R.id.tagInTime);
         txtTagInOMR=(TextView) findViewById(R.id.tagInOMR);
@@ -695,101 +769,4 @@ public class TagOut extends AppCompatActivity {
         }
     }
 
-    @Override
-    public boolean onPrepareOptionsMenu(final Menu menu) {
-        getMenuInflater().inflate(R.menu.menu, menu);
-        MenuItem item = menu.findItem(R.id.menu_refresh);
-        item.setVisible(false);
-        item = menu.findItem(R.id.menu_panic);
-        ImageView imgView = new ImageView(this);
-        imgView.setBackground(getResources().getDrawable(R.drawable.panic));
-        item.setActionView(imgView);
-        Animation mAnimation = new AlphaAnimation(1, 0);
-        mAnimation.setDuration(500);
-        mAnimation.setInterpolator(new LinearInterpolator());
-        mAnimation.setRepeatCount(Animation.INFINITE);
-        mAnimation.setRepeatMode(Animation.REVERSE);
-        item.getActionView().startAnimation(mAnimation);
-        imgView.setOnClickListener(new View.OnClickListener() {
-
-            @Override
-            public void onClick(View v) {
-                runOnUiThread(new Runnable() {
-                    public void run() {
-                        final AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
-                                new ContextThemeWrapper(TagOut.this, android.R.style.Theme_Holo_Light_Dialog));
-                        alertDialogBuilder.setTitle("Panic ");
-                        alertDialogBuilder.setIcon(R.drawable.panic);
-                        alertDialogBuilder.setMessage("Are you really Panic?")
-                                .setCancelable(false)
-                                .setPositiveButton("No",
-                                        new DialogInterface.OnClickListener() {
-                                            public void onClick(DialogInterface dialog, int id) {
-                                                dialog.cancel();
-                                            }
-                                        })
-                                .setNegativeButton("Yes",
-                                        new DialogInterface.OnClickListener() {
-                                            public void onClick(DialogInterface dialog, int id) {
-                                                progressDialog = ProgressDialog.show(TagOut.this, "", "Loading...", true);
-                                                new Thread(new Runnable() {
-                                                    @Override
-                                                    public void run() {
-                                                        final String res=webServices.InsertPanicAlertFromApp(psngrId,vehicleid,"Passenger");
-                                                        runOnUiThread(new Runnable() {
-                                                            @Override
-                                                            public void run() {
-                                                                if(res.contains("Inserted Successfully"))
-                                                                    Toast.makeText(getApplicationContext(),"Panic alert sent successfully",Toast.LENGTH_SHORT).show();
-                                                                else {
-                                                                    ErrorRecordSendMail errorRecordSendMail = new ErrorRecordSendMail();
-                                                                    errorRecordSendMail.errorrecordSendMail(res + "-TagOut("+new Exception().getStackTrace()[0].getLineNumber()+")-" + mobileno+"-InsertPanicAlertFromApp("+psngrId+","+vehicleid+",\"Passenger\")");
-                                                                    Toast.makeText(getApplicationContext(), "Panic alert failed to send", Toast.LENGTH_SHORT).show();
-                                                                }
-                                                                progressDialog.dismiss();
-                                                            }
-                                                        });
-                                                    }
-                                                }).start();
-                                                dialog.cancel();
-                                            }
-                                        });
-                        AlertDialog alert = alertDialogBuilder.create();
-                        alert.show();
-                    }
-                });
-            }
-        });
-        return super.onCreateOptionsMenu(menu);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case android.R.id.home:
-                finish();
-                return true;
-            case R.id.menu_logout:
-                runOnUiThread(new Runnable() {
-                    public void run() {
-                        final AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
-                                new ContextThemeWrapper(TagOut.this, android.R.style.Theme_Holo_Light_Dialog));
-                        alertDialogBuilder.setIcon(R.drawable.error);
-                        alertDialogBuilder.setTitle("Logout ");
-                        alertDialogBuilder.setMessage("First you need to do TagOut and then try LogOut.")
-                                .setCancelable(false)
-                                .setPositiveButton("OK",
-                                        new DialogInterface.OnClickListener() {
-                                            public void onClick(DialogInterface dialog, int id) {
-                                                dialog.cancel();
-                                            }
-                                        });
-                        AlertDialog alert = alertDialogBuilder.create();
-                        alert.show();
-                    }
-                });
-                break;
-        }
-        return super.onOptionsItemSelected(item);
-    }
 }

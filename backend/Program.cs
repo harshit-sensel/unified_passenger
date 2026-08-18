@@ -738,7 +738,7 @@ app.MapPost("/api/alerts/panic", async (PanicAlertRequest request) =>
                 smsPhone, cleanVehicleId, smsMessage);
         }
 
-        return Results.Ok("Alert Sent Successfully");
+        return Results.Ok("Inserted Successfully");
     }
     catch (Exception ex)
     {
