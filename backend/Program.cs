@@ -271,6 +271,24 @@ app.MapPost("/api/auth/validate-phone", async (ValidatePhoneRequest request, ICo
             {
                 return Results.Ok(tagDt);
             }
+
+            // Fallback for idle/not-tagged-in state: return AssignedVehicleId with Status = 'TagIn'
+            string assignedSql = @"
+                SELECT 
+                    IFNULL(NULLIF(TRIM(p.AssignedVehicleId), ''), 'No Vehicle Assigned') AS VehicleId,
+                    '' AS TagInTime,
+                    0 AS TagInOMR,
+                    'TagIn' AS Status,
+                    '' AS sessionid
+                FROM psngr_info p 
+                WHERE RIGHT(TRIM(p.MobileNo), 10) = RIGHT(@MobileNo, 10) AND p.Active = 1 
+                ORDER BY p.PsngrId DESC LIMIT 1;";
+            var assignedDt = await connection.QueryAsync(assignedSql, new { MobileNo = cleanMobileNo });
+            if (assignedDt.Any())
+            {
+                return Results.Ok(assignedDt);
+            }
+
             return Results.Ok("No Data");
         }
 

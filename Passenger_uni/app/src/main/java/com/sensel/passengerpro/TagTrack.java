@@ -116,6 +116,14 @@ public class TagTrack extends AppCompatActivity {
             tagintime = "0";
             tagtype = "TagIn";
         }
+
+        // Safety fallback: if vehicleid is still unassigned, retrieve AssignedVehicleId from saved passenger profile
+        if (vehicleid == null || vehicleid.trim().isEmpty() || "No Vehicle Assigned".equalsIgnoreCase(vehicleid) || "null".equalsIgnoreCase(vehicleid)) {
+            String savedVeh = appConstants.getShrdPrefValByKeyWithTag(getApplicationContext(), "passengerinfo", "AssignedVehicleId");
+            if (savedVeh != null && !savedVeh.trim().isEmpty() && !"null".equalsIgnoreCase(savedVeh)) {
+                vehicleid = savedVeh.trim();
+            }
+        }
     }
 
     @Override
