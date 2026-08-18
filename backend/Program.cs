@@ -256,7 +256,8 @@ app.MapPost("/api/auth/validate-phone", async (ValidatePhoneRequest request, ICo
                     p.VehicleId, 
                     CONCAT('/Date(', UNIX_TIMESTAMP(p.TagInTime) * 1000, ')/') AS TagInTime, 
                     IFNULL(p.TagInOMR, 0) AS TagInOMR, 
-                    'TagOut' AS Status 
+                    'TagOut' AS Status,
+                    '' AS sessionid 
                 FROM psngr_tag p 
                 WHERE p.Id = (
                     SELECT MAX(t.Id) 

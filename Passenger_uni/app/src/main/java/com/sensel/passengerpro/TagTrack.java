@@ -79,42 +79,44 @@ public class TagTrack extends AppCompatActivity {
             }
         });
         try {
-            JSONArray jArr = new JSONArray(resultFromPrev);
-            for (int j = 0; j < jArr.length(); j++) {
-                JSONObject data = jArr.getJSONObject(j);
+            if (resultFromPrev != null && !resultFromPrev.trim().isEmpty() && !"No Data".equalsIgnoreCase(resultFromPrev.trim())) {
+                JSONArray jArr = new JSONArray(resultFromPrev);
+                for (int j = 0; j < jArr.length(); j++) {
+                    JSONObject data = jArr.getJSONObject(j);
 
-                if (data.getString("VehicleId").trim().length() > 0 && data.getString("VehicleId").trim()!="null") {
-                    vehicleid= data.getString("VehicleId");
-                }
-                else{
-                    vehicleid= "No Vehicle Assigned";
-                }
-                if (data.getString("sessionid").trim().length() > 0 && data.getString("sessionid").trim()!="null") {
-                    sessionid= data.getString("sessionid");
-                }
-                else{
-                    sessionid= "";
-                }
-                if (data.getString("TagInTime").trim().length() > 0 && data.getString("TagInTime").trim()!="null") {
-                    tagintime= data.getString("TagInTime");
-                    tagintime=tagintime.substring(tagintime.indexOf("(")+1,tagintime.indexOf(")"));
-                }
-                else{
-                    tagintime= "0";
-                }
-                if (data.getString("Status").trim().length() > 0 && data.getString("Status").trim()!="null") {
-                    tagtype= data.getString("Status");
-                }
-                else{
-                    tagtype= "TagIn";
+                    String vId = data.optString("VehicleId", "").trim();
+                    if (!vId.isEmpty() && !"null".equalsIgnoreCase(vId)) {
+                        vehicleid = vId;
+                    } else {
+                        vehicleid = "No Vehicle Assigned";
+                    }
+
+                    String sId = data.optString("sessionid", "").trim();
+                    if (!sId.isEmpty() && !"null".equalsIgnoreCase(sId)) {
+                        sessionid = sId;
+                    } else {
+                        sessionid = "";
+                    }
+
+                    String tTime = data.optString("TagInTime", "").trim();
+                    if (!tTime.isEmpty() && !"null".equalsIgnoreCase(tTime) && tTime.contains("(") && tTime.contains(")")) {
+                        tagintime = tTime.substring(tTime.indexOf("(") + 1, tTime.indexOf(")"));
+                    } else if (!tTime.isEmpty() && !"null".equalsIgnoreCase(tTime)) {
+                        tagintime = tTime;
+                    } else {
+                        tagintime = "0";
+                    }
+
+                    String st = data.optString("Status", "").trim();
+                    if (!st.isEmpty() && !"null".equalsIgnoreCase(st)) {
+                        tagtype = st;
+                    } else {
+                        tagtype = "TagIn";
+                    }
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
-            vehicleid = "No Vehicle Assigned";
-            sessionid = "";
-            tagintime = "0";
-            tagtype = "TagIn";
         }
 
         // Safety fallback: if vehicleid is still unassigned, retrieve AssignedVehicleId from saved passenger profile

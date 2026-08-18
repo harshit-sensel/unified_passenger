@@ -454,8 +454,11 @@ public class StatusFragment extends Fragment {
                                                                 public void run() {
                                                                     try {
                                                                         Intent i = new Intent(getContext(), LoginActivity.class);
-                                                                        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                                                        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                                                                         startActivity(i);
+                                                                        if (getActivity() != null) {
+                                                                            getActivity().finish();
+                                                                        }
                                                                     } catch (Exception e) {
                                                                         e.printStackTrace();
                                                                         ErrorRecordSendMail errorRecordSendMail = new ErrorRecordSendMail();
@@ -494,8 +497,11 @@ public class StatusFragment extends Fragment {
                                                                     public void run() {
                                                                         try {
                                                                             Intent i = new Intent(getContext(), LoginActivity.class);
-                                                                            i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                                                            i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                                                                             startActivity(i);
+                                                                            if (getActivity() != null) {
+                                                                                getActivity().finish();
+                                                                            }
                                                                         } catch (Exception e) {
                                                                             e.printStackTrace();
                                                                             ErrorRecordSendMail errorRecordSendMail = new ErrorRecordSendMail();
