@@ -1,6 +1,7 @@
 # Ignore large database dump file (GitHub max file size is 100MB)
 *.sql
 !database_migration_remote_config.sql
+!LIVE_DATABASE_MIGRATION.sql
 important files from manger/rds2_data.sql
 
 # Sensitive backend config (Passphrase & Database Passwords)

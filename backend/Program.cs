@@ -844,14 +844,16 @@ app.MapPost("/api/logs/activity", async (ActivityLogEntryRequest request) =>
     {
         using var connection = new MySqlConnection(connectionString);
         string pkgName = string.IsNullOrWhiteSpace(request.PackageName) ? "com.sensel.passenger" : request.PackageName;
+        string appVer = string.IsNullOrWhiteSpace(request.AppVersion) ? "" : request.AppVersion;
         string sql = @"
-            INSERT INTO mobileapp_activitylog (MobileNo, AccountId, PackageName, Activity, Latitude, Longitude, CreatedAt)
-            VALUES (@MobileNo, @AccountId, @PackageName, @Activity, @Latitude, @Longitude, NOW());";
+            INSERT INTO mobileapp_activitylog (MobileNo, AccountId, PackageName, AppVersion, Activity, Latitude, Longitude, CreatedAt)
+            VALUES (@MobileNo, @AccountId, @PackageName, @AppVersion, @Activity, @Latitude, @Longitude, NOW());";
 
         await connection.ExecuteAsync(sql, new {
             MobileNo = request.MobileNo,
             AccountId = request.AccountId,
             PackageName = pkgName,
+            AppVersion = appVer,
             Activity = request.Activity,
             Latitude = request.Latitude,
             Longitude = request.Longitude
@@ -1412,7 +1414,7 @@ public record CheckTowerRequest(string MobileNo, string TowerName);
 public record GpsCheckRequest(string VehicleId, string Source, string SourceId, string Lat, string Lng);
 public record ProximityCheckRequest(string VehicleId, string Source, string SourceId, string TimeThreshold, string DistThreshold, string Lat, string Lng);
 public record ActivityLogRequest(string PassengerId, string VehicleId, string Page, string Lat, string Lng, string AppVersion);
-public record ActivityLogEntryRequest(string MobileNo, int AccountId, string PackageName = "com.sensel.passenger", string Activity = "", string Latitude = "", string Longitude = "");
+public record ActivityLogEntryRequest(string MobileNo, int AccountId, string PackageName = "com.sensel.passenger", string AppVersion = "", string Activity = "", string Latitude = "", string Longitude = "");
 public record ErrorLogRequest(string Error, string DateTime);
 public record ResolveQrRequest(string QRCode);
 public record OtpAuthenticateRequest(string MobileNo);

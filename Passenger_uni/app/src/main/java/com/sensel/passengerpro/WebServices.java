@@ -386,10 +386,11 @@ public class WebServices {
             JSONObject json = new JSONObject();
             json.put("MobileNo", mobileNo);
             json.put("AccountId", accountId);
-            json.put("PackageName", "com.sensel.passenger");
+            json.put("PackageName", BuildConfig.APPLICATION_ID);
+            json.put("AppVersion", BuildConfig.VERSION_NAME);
             json.put("Activity", activity);
-            json.put("Latitude", lat);
-            json.put("Longitude", lng);
+            json.put("Latitude", lat != null ? lat : "");
+            json.put("Longitude", lng != null ? lng : "");
             return makeHttpRequest("logs/activity", "POST", json.toString());
         } catch (Exception e) {
             return "Failed";
