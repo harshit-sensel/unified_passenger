@@ -361,10 +361,19 @@ public class TrackOnMap extends BaseActivity {
 
     @Override
     public void onBackPressed() {
-        Intent intent = new Intent(TrackOnMap.this, MainActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        startActivity(intent);
-        finish();
+        String userMenus = appConstants.getShrdPrefValByKey(getApplicationContext(), "UserMenus");
+        if (userMenus != null && userMenus.contains("dashboard")) {
+            Intent intent = new Intent(TrackOnMap.this, MainActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            startActivity(intent);
+            finish();
+        } else {
+            Intent intent = new Intent(Intent.ACTION_MAIN);
+            intent.addCategory(Intent.CATEGORY_HOME);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity(intent);
+            finish();
+        }
     }
 
     @Override
