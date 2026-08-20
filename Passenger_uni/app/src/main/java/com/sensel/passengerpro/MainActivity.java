@@ -204,28 +204,43 @@ public class MainActivity extends BaseActivity {
                         }
                     }).start();
                 } else if ("Panic".equals(label)) {
-                    if (isNetworkAvailable()) {
-                        new AlertDialog.Builder(new ContextThemeWrapper(MainActivity.this, android.R.style.Theme_Holo_Light_Dialog))
+                    if (!isNetworkAvailable()) {
+                        Toast.makeText(MainActivity.this, "No internet. Check your connection.", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    String taggedVehicle = appConstants.getShrdPrefValByKey(getApplicationContext(), AppConstants.KEY_CURRENT_TAGGED_VEHICLE_ID);
+                    if (taggedVehicle == null || taggedVehicle.trim().isEmpty() || "0".equals(taggedVehicle.trim())) {
+                        new AlertDialog.Builder(MainActivity.this)
                                 .setIcon(R.drawable.panic)
-                                .setTitle("Panic")
-                                .setMessage("Are you in an emergency? Send panic alert?")
-                                .setCancelable(true)
-                                .setPositiveButton("Send", new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface d, int id) {
-                                        sendPanicAlert();
-                                    }
-                                })
-                                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                                .setTitle("Tag In Required")
+                                .setMessage("You are not tagged in to any vehicle. Please Tag In first to trigger a Panic Alert.")
+                                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                                     @Override
                                     public void onClick(DialogInterface d, int id) {
                                         d.dismiss();
                                     }
                                 })
                                 .show();
-                    } else {
-                        Toast.makeText(MainActivity.this, "No internet", Toast.LENGTH_SHORT).show();
+                        return;
                     }
+                    new AlertDialog.Builder(new ContextThemeWrapper(MainActivity.this, android.R.style.Theme_Holo_Light_Dialog))
+                            .setIcon(R.drawable.panic)
+                            .setTitle("Panic")
+                            .setMessage("Are you in an emergency? Send panic alert?")
+                            .setCancelable(true)
+                            .setPositiveButton("Send", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface d, int id) {
+                                    sendPanicAlert();
+                                }
+                            })
+                            .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface d, int id) {
+                                    d.dismiss();
+                                }
+                            })
+                            .show();
                 } else if ("Tagout".equals(label)) {
                     if (!isNetworkAvailable()) {
                         Toast.makeText(MainActivity.this, "No internet. Check your connection.", Toast.LENGTH_SHORT).show();
@@ -587,6 +602,11 @@ public class MainActivity extends BaseActivity {
     }
 
     private void sendPanicAlert() {
+        String taggedVeh = appConstants.getShrdPrefValByKey(getApplicationContext(), AppConstants.KEY_CURRENT_TAGGED_VEHICLE_ID);
+        if (taggedVeh == null || taggedVeh.trim().isEmpty() || "0".equals(taggedVeh.trim())) {
+            Toast.makeText(MainActivity.this, "You are not tagged in to any vehicle. Please Tag In first to trigger a Panic Alert.", Toast.LENGTH_LONG).show();
+            return;
+        }
         final ProgressDialog pd = ProgressDialog.show(this, "", "Sending...", true);
         new Thread(new Runnable() {
             @Override
