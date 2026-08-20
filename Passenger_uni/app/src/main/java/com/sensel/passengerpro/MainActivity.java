@@ -307,6 +307,7 @@ public class MainActivity extends BaseActivity {
                                                         dialog.dismiss();
                                                         if (insertResult != null && insertResult.contains("Inserted Successfully")) {
                                                             appConstants.putShrdPrefValWithKey(getApplicationContext(), AppConstants.KEY_CURRENT_TAGGED_VEHICLE_ID, "");
+                                                            updateStatusBadge();
                                                             Toast.makeText(MainActivity.this, "Tagout done successfully.", Toast.LENGTH_LONG).show();
                                                         } else {
                                                             String msg = insertResult != null && insertResult.contains("PsngrMessage-") ? insertResult.replace("PsngrMessage-", "").trim() : "Tagout failed. Try again.";
@@ -575,6 +576,20 @@ public class MainActivity extends BaseActivity {
         updateStatusBadge();
     }
 
+    private String sanitizeVehicleId(String raw) {
+        if (raw == null) return "";
+        String cleaned = raw.replace("\"", "").replace("'", "").trim();
+        if (cleaned.isEmpty()
+                || "0".equals(cleaned)
+                || "null".equalsIgnoreCase(cleaned)
+                || "No Vehicle Assigned".equalsIgnoreCase(cleaned)
+                || "N/A".equalsIgnoreCase(cleaned)
+                || "Select".equalsIgnoreCase(cleaned)) {
+            return "";
+        }
+        return cleaned;
+    }
+
     private void updateStatusBadge() {
         try {
             android.widget.TextView tvGreeting = findViewById(R.id.tv_passenger_greeting);
@@ -586,14 +601,15 @@ public class MainActivity extends BaseActivity {
                 tvGreeting.setText("Hello, " + name.trim() + "! 👋");
             }
 
-            String taggedVeh = appConstants.getShrdPrefValByKey(getApplicationContext(), AppConstants.KEY_CURRENT_TAGGED_VEHICLE_ID);
-            if (taggedVeh == null || taggedVeh.isEmpty()) {
-                taggedVeh = resolveAssignedVehicleIdForOtpTagIn();
-            }
+            String activeTaggedVeh = sanitizeVehicleId(appConstants.getShrdPrefValByKey(getApplicationContext(), AppConstants.KEY_CURRENT_TAGGED_VEHICLE_ID));
+            String assignedVeh = sanitizeVehicleId(resolveAssignedVehicleIdForOtpTagIn());
 
-            if (taggedVeh != null && !taggedVeh.isEmpty() && !"0".equals(taggedVeh)) {
-                if (tvStatusTitle != null) tvStatusTitle.setText("Currently Active");
-                if (tvStatusVehicle != null) tvStatusVehicle.setText("Vehicle ID: " + taggedVeh);
+            if (!activeTaggedVeh.isEmpty()) {
+                if (tvStatusTitle != null) tvStatusTitle.setText("🟢 Currently Tagged In");
+                if (tvStatusVehicle != null) tvStatusVehicle.setText("Vehicle ID: " + activeTaggedVeh);
+            } else if (!assignedVeh.isEmpty()) {
+                if (tvStatusTitle != null) tvStatusTitle.setText("Assigned Vehicle");
+                if (tvStatusVehicle != null) tvStatusVehicle.setText("Vehicle ID: " + assignedVeh + " (Not Tagged In)");
             } else {
                 if (tvStatusTitle != null) tvStatusTitle.setText("Status: Not Tagged In");
                 if (tvStatusVehicle != null) tvStatusVehicle.setText("Tag in via QR or OTP to track vehicle");
@@ -871,6 +887,7 @@ public class MainActivity extends BaseActivity {
                         if (tagInDialog.isShowing()) tagInDialog.dismiss();
                         if (insertResult != null && insertResult.contains("Inserted Successfully")) {
                             appConstants.putShrdPrefValWithKey(getApplicationContext(), AppConstants.KEY_CURRENT_TAGGED_VEHICLE_ID, vehicleId);
+                            updateStatusBadge();
                             Toast.makeText(MainActivity.this, "Tag In done successfully.", Toast.LENGTH_LONG).show();
                         } else {
                             String msg = insertResult != null && insertResult.contains("PsngrMessage-")

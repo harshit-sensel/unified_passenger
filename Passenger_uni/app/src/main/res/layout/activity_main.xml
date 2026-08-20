@@ -76,7 +76,7 @@
                         android:id="@+id/tv_status_title"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Currently Active"
+                        android:text="Status"
                         android:textColor="#64748B"
                         android:textSize="12sp"
                         android:textStyle="bold" />
@@ -86,7 +86,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
-                        android:text="Vehicle: KA-01-AB-1234 • Route 5B"
+                        android:text="Loading status..."
                         android:textColor="#0F172A"
                         android:textSize="14sp"
                         android:textStyle="bold" />
