@@ -14,7 +14,7 @@ import android.widget.Button;
 import android.widget.TextView;
 
 
-public class HomeLocation extends AppCompatActivity {
+public class HomeLocation extends BaseActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

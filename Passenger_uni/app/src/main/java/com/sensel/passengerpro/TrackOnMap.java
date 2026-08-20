@@ -29,7 +29,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class TrackOnMap extends AppCompatActivity {
+public class TrackOnMap extends BaseActivity {
 
     /** Map must track backend-assigned vehicle only, not the tag-in VehicleId. */
     private static String optAssignedVehicleId(JSONObject data) {

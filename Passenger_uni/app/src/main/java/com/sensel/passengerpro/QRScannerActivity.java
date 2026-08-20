@@ -24,7 +24,7 @@ import com.google.zxing.integration.android.IntentResult;
 /**
  * Tag In with QR: scan QR, validate vehicle via GetVehicleidByQRCode, then InsertPsngrChecklist (TagIn).
  */
-public class QRScannerActivity extends AppCompatActivity {
+public class QRScannerActivity extends BaseActivity {
 
     private static final int MY_PERMISSIONS_REQUEST_CAMERA = 102;
     private static final int MY_PERMISSIONS_REQUEST_LOCATION = 103;

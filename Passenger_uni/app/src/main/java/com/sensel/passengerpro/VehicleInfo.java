@@ -64,7 +64,7 @@ import java.util.Locale;
  * Created by MS on 16-Oct-17.
  */
 
-public class VehicleInfo extends AppCompatActivity {
+public class VehicleInfo extends BaseActivity {
     AutoCompleteTextView autoCompleteTextView;
     AutoCompleteTextView autoCompleteVehTextView;
     ProgressDialog dialog;
@@ -174,10 +174,11 @@ public class VehicleInfo extends AppCompatActivity {
                                         }).start();
                                     }
 
-                                    appConstants.putShrdPrefValWithKey(getApplicationContext(), "passengerinfo", "");
-                                    appConstants.putShrdPrefValWithKey(getApplicationContext(), "UserMenus", "");
-                                    appConstants.setJwtToken(getApplicationContext(), "");
-                                    WebServices.currentJwtToken = "";
+                                     appConstants.putShrdPrefValWithKey(getApplicationContext(), "passengerinfo", "");
+                                     appConstants.putShrdPrefValWithKey(getApplicationContext(), "UserMenus", "");
+                                     appConstants.setJwtToken(getApplicationContext(), "");
+                                     appConstants.setLastInteractionTime(getApplicationContext(), 0);
+                                     WebServices.currentJwtToken = "";
                                     Intent intent = new Intent(VehicleInfo.this, LoginActivity.class);
                                     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                                     startActivity(intent);

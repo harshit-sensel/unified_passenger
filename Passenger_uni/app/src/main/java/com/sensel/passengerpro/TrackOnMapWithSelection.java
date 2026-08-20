@@ -23,7 +23,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
 
-public class TrackOnMapWithSelection extends AppCompatActivity {
+public class TrackOnMapWithSelection extends BaseActivity {
     String vehicleid="";
     String sessionid="";
     private boolean mapErrorToastShown = false;

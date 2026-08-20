@@ -76,9 +76,23 @@ public class LoginActivity extends AppCompatActivity {
         btnResendOtp = (TextView) findViewById(R.id.btn_resend_otp);
 
         setupOtpAutoAdvance();
-        passengerinfo=appConstants.getShrdPrefValByKey(getApplicationContext(),"passengerinfo");
-        IMEI=getIMEI();
-        if(passengerinfo!=null && passengerinfo.contains("PsngrId")){
+        passengerinfo = appConstants.getShrdPrefValByKey(getApplicationContext(), "passengerinfo");
+        AccountConfig cachedConfig = appConstants.getAccountConfig(getApplicationContext());
+        if (cachedConfig != null && cachedConfig.autoLogoutEnabled && cachedConfig.autoLogoutTimeoutMinutes > 0) {
+            long lastTime = appConstants.getLastInteractionTime(getApplicationContext());
+            long now = System.currentTimeMillis();
+            long timeoutMs = (long) cachedConfig.autoLogoutTimeoutMinutes * 60 * 1000;
+            if (lastTime > 0 && (now - lastTime >= timeoutMs)) {
+                // Session expired while app was closed
+                appConstants.putShrdPrefValWithKey(getApplicationContext(), "passengerinfo", "");
+                appConstants.putShrdPrefValWithKey(getApplicationContext(), "UserMenus", "");
+                appConstants.setJwtToken(getApplicationContext(), "");
+                appConstants.setLastInteractionTime(getApplicationContext(), 0);
+                passengerinfo = "";
+            }
+        }
+        IMEI = getIMEI();
+        if (passengerinfo != null && passengerinfo.contains("PsngrId")) {
             dialog = ProgressDialog.show(LoginActivity.this, "", "Loading...", true);
             new Thread(new Runnable() {
                 @Override
@@ -130,7 +144,8 @@ public class LoginActivity extends AppCompatActivity {
                                  i = new Intent(getApplicationContext(), MainActivity.class);
                              }
                              i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                            startActivity(i);
+                             appConstants.setLastInteractionTime(getApplicationContext(), System.currentTimeMillis());
+                             startActivity(i);
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
@@ -406,6 +421,7 @@ public class LoginActivity extends AppCompatActivity {
                                 if (accountId > 0) {
                                     String configJson = webServices.GetAccountConfig(accountId);
                                     accountConfig = AccountConfig.fromJson(configJson);
+                                    appConstants.saveAccountConfig(getApplicationContext(), configJson);
                                     
                                     // Log LOGIN activity audit event
                                     if (accountConfig != null && accountConfig.activityLogEnabled) {
@@ -466,11 +482,13 @@ public class LoginActivity extends AppCompatActivity {
                                         PrivacyPolicyDialog.show(LoginActivity.this, tempMobileNo, finalAccountId, finalAccountConfig.privacyPolicyText, new PrivacyPolicyDialog.OnPrivacyPolicyAcceptedListener() {
                                             @Override
                                             public void onAccepted() {
+                                                appConstants.setLastInteractionTime(getApplicationContext(), System.currentTimeMillis());
                                                 startActivity(targetIntent);
                                                 finish();
                                             }
                                         });
                                     } else {
+                                        appConstants.setLastInteractionTime(getApplicationContext(), System.currentTimeMillis());
                                         startActivity(targetIntent);
                                         finish();
                                     }

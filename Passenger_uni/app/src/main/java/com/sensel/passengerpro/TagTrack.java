@@ -30,7 +30,7 @@ import org.json.JSONObject;
 /**
  * Created by MS on 23-May-18.
  */
-public class TagTrack extends AppCompatActivity {
+public class TagTrack extends BaseActivity {
     AppConstants appConstants=new AppConstants();
     public static String vehicleid = "No Vehicle Assigned";
     public static String sessionid = "";

@@ -37,7 +37,7 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class TrackRegionVehiclesOnMap extends AppCompatActivity {
+public class TrackRegionVehiclesOnMap extends BaseActivity {
     AutoCompleteTextView autoCompleteVehTextView;
     WebServices webServices=new WebServices();
     AppConstants appConstants=new AppConstants();

@@ -70,7 +70,7 @@ import androidx.appcompat.app.AppCompatActivity;
  * Created by Vamsi on 14-Oct-17.
  */
 
-public class TagIn extends AppCompatActivity {
+public class TagIn extends BaseActivity {
     AppConstants appConstants=new AppConstants();
     String vehicle;
     String towername;

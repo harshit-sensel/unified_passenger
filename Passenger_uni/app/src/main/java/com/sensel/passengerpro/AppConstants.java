@@ -105,4 +105,35 @@ public class AppConstants {
             return code;*/
         return code;
     }
+
+    public static final String KEY_ACCOUNT_CONFIG = "cached_account_config";
+    public static final String KEY_LAST_INTERACTION_TIME = "last_user_interaction_time";
+
+    public void saveAccountConfig(Context context, String configJson) {
+        if (context == null || configJson == null) return;
+        putShrdPrefValWithKey(context, KEY_ACCOUNT_CONFIG, configJson);
+    }
+
+    public AccountConfig getAccountConfig(Context context) {
+        if (context == null) return null;
+        String json = getShrdPrefValByKey(context, KEY_ACCOUNT_CONFIG);
+        if (json == null || json.trim().isEmpty()) return null;
+        return AccountConfig.fromJson(json);
+    }
+
+    public void setLastInteractionTime(Context context, long timestamp) {
+        if (context == null) return;
+        putShrdPrefValWithKey(context, KEY_LAST_INTERACTION_TIME, String.valueOf(timestamp));
+    }
+
+    public long getLastInteractionTime(Context context) {
+        if (context == null) return 0;
+        String val = getShrdPrefValByKey(context, KEY_LAST_INTERACTION_TIME);
+        if (val == null || val.trim().isEmpty()) return 0;
+        try {
+            return Long.parseLong(val.trim());
+        } catch (Exception e) {
+            return 0;
+        }
+    }
 }

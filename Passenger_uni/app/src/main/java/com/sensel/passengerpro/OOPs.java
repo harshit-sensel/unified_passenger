@@ -14,7 +14,7 @@ import android.widget.TextView;
  * Created by MS on 17-Oct-17.
  */
 
-public class OOPs extends AppCompatActivity {
+public class OOPs extends BaseActivity {
     AppConstants appConstants=new AppConstants();
 
     @Override

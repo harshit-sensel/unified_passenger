@@ -57,7 +57,7 @@ import java.util.Locale;
  * Created by MS on 16-Oct-17.
  */
 
-public class TagOut extends AppCompatActivity {
+public class TagOut extends BaseActivity {
     String vehicleid="";
     String tagInTime="";
     String taginOMR="";

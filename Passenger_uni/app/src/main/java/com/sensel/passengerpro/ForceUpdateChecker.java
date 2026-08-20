@@ -51,6 +51,19 @@ public final class ForceUpdateChecker {
                     WebServices webServices = new WebServices();
                     String configJson = webServices.GetAccountConfig(accountId);
                     final AccountConfig config = AccountConfig.fromJson(configJson);
+                    
+                    AppConstants appConstants = new AppConstants();
+                    appConstants.saveAccountConfig(activity.getApplicationContext(), configJson);
+
+                    if (activity instanceof BaseActivity) {
+                        activity.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                ((BaseActivity) activity).checkAndStartInactivityTimer();
+                            }
+                        });
+                    }
+
                     if (config != null && config.forceUpdateEnabled) {
                         String currentVersion = BuildConfig.VERSION_NAME;
                         if (config.isVersionDeprecated(currentVersion)) {

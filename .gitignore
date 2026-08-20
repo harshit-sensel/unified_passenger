@@ -28,3 +28,11 @@ local.properties
 .idea/
 *.apk
 *.aar
+
+# Build output & Zip archives
+*.zip
+publish/
+publish_self_contained/
+backend/publish/
+backend/publish_self_contained/
+*.pdf

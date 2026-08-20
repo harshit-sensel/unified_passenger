@@ -50,7 +50,7 @@ import java.util.Map;
  * Post-login menu: 3-column grid with bordered cards, icon + label.
  * Items: Tag In with QR, Tag In with OTP, Track Your Vehicle, Panic, Tagout, Logout.
  */
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends BaseActivity {
     private static final int MY_PERMISSIONS_REQUEST_LOCATION_OTP = 1403;
     /** Ask for location once on main menu so Tag In (QR), Tagout, panic, and activity logs can use GPS — not only when opening Tag In. */
     private static final int MY_PERMISSIONS_REQUEST_LOCATION_MAIN_MENU = 1404;
@@ -340,10 +340,11 @@ public class MainActivity extends AppCompatActivity {
                                         }).start();
                                     }
 
-                                    appConstants.putShrdPrefValWithKey(getApplicationContext(), "passengerinfo", null);
-                                    appConstants.putShrdPrefValWithKey(getApplicationContext(), "UserMenus", null);
-                                    appConstants.setJwtToken(getApplicationContext(), "");
-                                    WebServices.currentJwtToken = "";
+                                     appConstants.putShrdPrefValWithKey(getApplicationContext(), "passengerinfo", null);
+                                     appConstants.putShrdPrefValWithKey(getApplicationContext(), "UserMenus", null);
+                                     appConstants.setJwtToken(getApplicationContext(), "");
+                                     appConstants.setLastInteractionTime(getApplicationContext(), 0);
+                                     WebServices.currentJwtToken = "";
                                     Intent i = new Intent(MainActivity.this, LoginActivity.class);
                                     i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                                     startActivity(i);

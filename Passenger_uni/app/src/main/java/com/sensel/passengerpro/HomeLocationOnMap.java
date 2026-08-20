@@ -26,7 +26,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
 
-public class HomeLocationOnMap extends AppCompatActivity {
+public class HomeLocationOnMap extends BaseActivity {
     public static String latlng=null;
     private static final int MY_PERMISSIONS_REQUEST_LOCATION = 10;
     @Override
