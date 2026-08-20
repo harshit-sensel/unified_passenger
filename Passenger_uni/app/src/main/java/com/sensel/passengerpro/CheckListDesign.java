@@ -57,7 +57,11 @@ public class CheckListDesign extends ArrayAdapter<String> {
 
     public static ImageUpdateListener imageUpdateListener;
 
+    public static String restoredWfmId = "";
+    public static String restoredPtw = "";
+    public static String restoredWfmTask = "";
     private final TagIn tagInContext;
+
     public CheckListDesign(TagIn context,
                            String[] rules, String[] ruleIds, String[] ruleTypes) {
         super(context, R.layout.checklist_design, rules);
@@ -85,16 +89,28 @@ public class CheckListDesign extends ArrayAdapter<String> {
         try {
             AppConstants appConstants = new AppConstants();
             JSONObject obj = new JSONObject();
+
+            // Check if there is an existing draft saved on disk
+            JSONObject existingObj = null;
+            String existingJson = appConstants.getShrdPrefValByKey(ctx, "TAGIN_DRAFT_" + vehicleId.trim());
+            if (existingJson != null && !existingJson.trim().isEmpty()) {
+                try {
+                    existingObj = new JSONObject(existingJson);
+                } catch (Exception ignored) {}
+            }
             
-            if (strRules != null) {
+            if (strRules != null && strRules.length > 0) {
                 JSONArray arr = new JSONArray();
                 for (String r : strRules) {
                     arr.put(r == null ? "" : r);
                 }
                 obj.put("strRules", arr);
+            } else if (existingObj != null && existingObj.has("strRules")) {
+                // Preserve previous answers if in-memory array is not initialized yet
+                obj.put("strRules", existingObj.getJSONArray("strRules"));
             }
             
-            if (imagePaths != null) {
+            if (imagePaths != null && !imagePaths.isEmpty()) {
                 JSONObject imgObj = new JSONObject();
                 for (Map.Entry<Integer, String> entry : imagePaths.entrySet()) {
                     if (entry.getValue() != null && !entry.getValue().trim().isEmpty()) {
@@ -102,10 +118,43 @@ public class CheckListDesign extends ArrayAdapter<String> {
                     }
                 }
                 obj.put("imagePaths", imgObj);
+            } else if (existingObj != null && existingObj.has("imagePaths")) {
+                // Preserve previous image paths if in-memory map is empty
+                obj.put("imagePaths", existingObj.getJSONObject("imagePaths"));
             }
             
             if (imagecapturepath != null && !imagecapturepath.isEmpty()) {
                 obj.put("imagecapturepath", imagecapturepath);
+            } else if (existingObj != null && existingObj.has("imagecapturepath")) {
+                obj.put("imagecapturepath", existingObj.optString("imagecapturepath", ""));
+            }
+
+            if (ctx instanceof TagIn) {
+                TagIn tagIn = (TagIn) ctx;
+                if (tagIn.wfm != null && tagIn.wfm.getText() != null) {
+                    obj.put("wfmId", tagIn.wfm.getText().toString().trim());
+                } else if (existingObj != null && existingObj.has("wfmId")) {
+                    obj.put("wfmId", existingObj.optString("wfmId", ""));
+                }
+
+                if (tagIn.ptw != null && tagIn.ptw.getText() != null) {
+                    obj.put("ptw", tagIn.ptw.getText().toString().trim());
+                } else if (existingObj != null && existingObj.has("ptw")) {
+                    obj.put("ptw", existingObj.optString("ptw", ""));
+                }
+
+                if (tagIn.chosenWfmTask != null && !tagIn.chosenWfmTask.isEmpty()) {
+                    obj.put("wfmTask", tagIn.chosenWfmTask.trim());
+                } else if (tagIn.wfmTask != null && tagIn.wfmTask.getSelectedItem() != null) {
+                    String sel = tagIn.wfmTask.getSelectedItem().toString().trim();
+                    if (!"Select".equalsIgnoreCase(sel)) {
+                        obj.put("wfmTask", sel);
+                    } else if (existingObj != null && existingObj.has("wfmTask")) {
+                        obj.put("wfmTask", existingObj.optString("wfmTask", ""));
+                    }
+                } else if (existingObj != null && existingObj.has("wfmTask")) {
+                    obj.put("wfmTask", existingObj.optString("wfmTask", ""));
+                }
             }
             
             appConstants.putShrdPrefValWithKey(ctx, "TAGIN_DRAFT_" + vehicleId.trim(), obj.toString());
@@ -124,13 +173,16 @@ public class CheckListDesign extends ArrayAdapter<String> {
             JSONObject obj = new JSONObject(json);
             if (obj.has("strRules")) {
                 JSONArray arr = obj.getJSONArray("strRules");
-                if (strRules == null || strRules.length != ruleCount) {
-                    strRules = new String[ruleCount];
-                }
-                for (int i = 0; i < arr.length() && i < ruleCount; i++) {
-                    String val = arr.optString(i, "");
-                    if (!val.isEmpty()) {
-                        strRules[i] = val;
+                int targetCount = (ruleCount > 0) ? ruleCount : arr.length();
+                if (targetCount > 0) {
+                    if (strRules == null || strRules.length != targetCount) {
+                        strRules = new String[targetCount];
+                    }
+                    for (int i = 0; i < arr.length() && i < targetCount; i++) {
+                        String val = arr.optString(i, "");
+                        if (!val.isEmpty()) {
+                            strRules[i] = val;
+                        }
                     }
                 }
             }
@@ -159,6 +211,17 @@ public class CheckListDesign extends ArrayAdapter<String> {
             if (obj.has("imagecapturepath")) {
                 imagecapturepath = obj.optString("imagecapturepath", "");
             }
+
+            if (obj.has("wfmId")) {
+                restoredWfmId = obj.optString("wfmId", "");
+            }
+            if (obj.has("ptw")) {
+                restoredPtw = obj.optString("ptw", "");
+            }
+            if (obj.has("wfmTask")) {
+                restoredWfmTask = obj.optString("wfmTask", "");
+            }
+
             return true;
         } catch (Exception e) {
             e.printStackTrace();
@@ -178,6 +241,9 @@ public class CheckListDesign extends ArrayAdapter<String> {
                     strRules[i] = null;
                 }
             }
+            restoredWfmId = "";
+            restoredPtw = "";
+            restoredWfmTask = "";
             if (imagePaths != null) {
                 imagePaths.clear();
             }

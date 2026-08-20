@@ -145,6 +145,8 @@ public class TagIn extends BaseActivity {
             if (savedInstanceState.containsKey("ruleTypes")) ruleTypes = savedInstanceState.getStringArray("ruleTypes");
             if (savedInstanceState.containsKey("strRules")) CheckListDesign.strRules = savedInstanceState.getStringArray("strRules");
         }
+        CheckListDesign.restoreDraft(TagIn.this, vehicle, 0);
+
         final View headerView = getLayoutInflater().inflate(R.layout.chklist_header, null);
         vehicleid=(TextView) headerView.findViewById(R.id.vehicleid);
         drivername=(TextView) headerView.findViewById(R.id.drivername);
@@ -153,6 +155,36 @@ public class TagIn extends BaseActivity {
         ptw=(EditText) headerView.findViewById(R.id.ptw);
         wfmTask=(Spinner) headerView.findViewById(R.id.wfmTask);
         vehicleid.setText(vehicle);
+
+        final boolean[] isInitializingDraft = new boolean[]{true};
+
+        if (CheckListDesign.restoredWfmId != null && !CheckListDesign.restoredWfmId.isEmpty()) {
+            wfm.setText(CheckListDesign.restoredWfmId);
+        }
+        if (CheckListDesign.restoredPtw != null && !CheckListDesign.restoredPtw.isEmpty()) {
+            ptw.setText(CheckListDesign.restoredPtw);
+        }
+        if (CheckListDesign.restoredWfmTask != null && !CheckListDesign.restoredWfmTask.isEmpty()) {
+            chosenWfmTask = CheckListDesign.restoredWfmTask;
+        }
+
+        isInitializingDraft[0] = false;
+
+        android.text.TextWatcher draftWatcher = new android.text.TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            @Override
+            public void afterTextChanged(android.text.Editable s) {
+                if (!isInitializingDraft[0]) {
+                    CheckListDesign.saveDraft(TagIn.this, vehicle);
+                    checkTagInFormValidation();
+                }
+            }
+        };
+        wfm.addTextChangedListener(draftWatcher);
+        ptw.addTextChangedListener(draftWatcher);
 
         //Added By Madhuri 12-12-24
         // Display captured images
@@ -208,13 +240,19 @@ public class TagIn extends BaseActivity {
                                                 String item = parent.getItemAtPosition(position).toString().trim();
                                                 chosenWfmTask = "Select".equalsIgnoreCase(item) ? "" : item;
                                             }
-                                            checkTagInFormValidation();
+                                            if (!isInitializingDraft[0]) {
+                                                CheckListDesign.saveDraft(TagIn.this, vehicle);
+                                                checkTagInFormValidation();
+                                            }
                                         }
 
                                         @Override
                                         public void onNothingSelected(AdapterView<?> parent) {
                                             chosenWfmTask = "";
-                                            checkTagInFormValidation();
+                                            if (!isInitializingDraft[0]) {
+                                                CheckListDesign.saveDraft(TagIn.this, vehicle);
+                                                checkTagInFormValidation();
+                                            }
                                         }
                                     });
                                 }
@@ -694,6 +732,7 @@ public class TagIn extends BaseActivity {
                             if (CheckListDesign.imagePaths != null) {
                                 CheckListDesign.imagePaths.clear();
                             }
+                            CheckListDesign.clearDraft(TagIn.this, vehicle);
 
                             runOnUiThread(new Runnable() {
                                 public void run() {
