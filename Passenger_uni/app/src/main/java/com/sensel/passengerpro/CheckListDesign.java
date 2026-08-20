@@ -2,6 +2,7 @@ package com.sensel.passengerpro;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -27,12 +28,15 @@ import android.widget.Toast;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.FileProvider;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -46,7 +50,6 @@ public class CheckListDesign extends ArrayAdapter<String> {
     private final String[] ruleTypes;
     public static String[] strRules;
     public static HashMap<Integer, String> imagePaths = new HashMap<>(); // Store image paths by position
-    //public static Map<Integer, String> imagePaths = new LinkedHashMap<>();
 
     public static final int CAMERA_CAPTURE_IMAGE_REQUEST_CODE = 100;
     static String imagecapturepath = "";
@@ -56,94 +59,201 @@ public class CheckListDesign extends ArrayAdapter<String> {
 
     private final TagIn tagInContext;
     public CheckListDesign(TagIn context,
-                           String[] rules,String[] ruleIds,String[] ruleTypes) {
+                           String[] rules, String[] ruleIds, String[] ruleTypes) {
         super(context, R.layout.checklist_design, rules);
         this.context = context;
         this.rules = rules;
         this.ruleIds = ruleIds;
-        this.ruleTypes=ruleTypes;
-        strRules=new String[rules.length];
-        if (imagePaths != null) {
-            imagePaths.clear();
+        this.ruleTypes = ruleTypes;
+        
+        if (strRules == null || strRules.length != rules.length) {
+            strRules = new String[rules.length];
         }
-        this.tagInContext = context; // Directly assign without casting
+        if (imagePaths == null) {
+            imagePaths = new HashMap<>();
+        }
+        
+        // Restore existing draft for this vehicle if present
+        if (context != null && context.vehicle != null) {
+            restoreDraft(context, context.vehicle, rules.length);
+        }
+        this.tagInContext = context;
     }
+
+    public static void saveDraft(Context ctx, String vehicleId) {
+        if (ctx == null || vehicleId == null || vehicleId.trim().isEmpty()) return;
+        try {
+            AppConstants appConstants = new AppConstants();
+            JSONObject obj = new JSONObject();
+            
+            if (strRules != null) {
+                JSONArray arr = new JSONArray();
+                for (String r : strRules) {
+                    arr.put(r == null ? "" : r);
+                }
+                obj.put("strRules", arr);
+            }
+            
+            if (imagePaths != null) {
+                JSONObject imgObj = new JSONObject();
+                for (Map.Entry<Integer, String> entry : imagePaths.entrySet()) {
+                    if (entry.getValue() != null && !entry.getValue().trim().isEmpty()) {
+                        imgObj.put(String.valueOf(entry.getKey()), entry.getValue());
+                    }
+                }
+                obj.put("imagePaths", imgObj);
+            }
+            
+            if (imagecapturepath != null && !imagecapturepath.isEmpty()) {
+                obj.put("imagecapturepath", imagecapturepath);
+            }
+            
+            appConstants.putShrdPrefValWithKey(ctx, "TAGIN_DRAFT_" + vehicleId.trim(), obj.toString());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static boolean restoreDraft(Context ctx, String vehicleId, int ruleCount) {
+        if (ctx == null || vehicleId == null || vehicleId.trim().isEmpty()) return false;
+        try {
+            AppConstants appConstants = new AppConstants();
+            String json = appConstants.getShrdPrefValByKey(ctx, "TAGIN_DRAFT_" + vehicleId.trim());
+            if (json == null || json.trim().isEmpty()) return false;
+
+            JSONObject obj = new JSONObject(json);
+            if (obj.has("strRules")) {
+                JSONArray arr = obj.getJSONArray("strRules");
+                if (strRules == null || strRules.length != ruleCount) {
+                    strRules = new String[ruleCount];
+                }
+                for (int i = 0; i < arr.length() && i < ruleCount; i++) {
+                    String val = arr.optString(i, "");
+                    if (!val.isEmpty()) {
+                        strRules[i] = val;
+                    }
+                }
+            }
+
+            if (obj.has("imagePaths")) {
+                JSONObject imgObj = obj.getJSONObject("imagePaths");
+                if (imagePaths == null) {
+                    imagePaths = new HashMap<>();
+                }
+                Iterator<String> keys = imgObj.keys();
+                while (keys.hasNext()) {
+                    String k = keys.next();
+                    try {
+                        int pos = Integer.parseInt(k);
+                        String pth = imgObj.getString(k);
+                        if (pth != null && new File(pth).exists()) {
+                            imagePaths.put(pos, pth);
+                            if (strRules != null && pos < strRules.length) {
+                                strRules[pos] = "ImageCaptured";
+                            }
+                        }
+                    } catch (Exception ignored) {}
+                }
+            }
+
+            if (obj.has("imagecapturepath")) {
+                imagecapturepath = obj.optString("imagecapturepath", "");
+            }
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public static void clearDraft(Context ctx, String vehicleId) {
+        if (ctx == null) return;
+        try {
+            AppConstants appConstants = new AppConstants();
+            if (vehicleId != null && !vehicleId.trim().isEmpty()) {
+                appConstants.putShrdPrefValWithKey(ctx, "TAGIN_DRAFT_" + vehicleId.trim(), "");
+            }
+            if (strRules != null) {
+                for (int i = 0; i < strRules.length; i++) {
+                    strRules[i] = null;
+                }
+            }
+            if (imagePaths != null) {
+                imagePaths.clear();
+            }
+            imagecapturepath = "";
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     @Override
     public int getCount() {
-        // TODO Auto-generated method stub
-        return ruleIds.length;
+        return ruleIds != null ? ruleIds.length : 0;
     }
+
     @Override
     public String getItem(int position) {
-        // TODO Auto-generated method stub
-        return ruleIds[position];
+        return (ruleIds != null && position < ruleIds.length) ? ruleIds[position] : "";
     }
+
     @Override
     public long getItemId(int position) {
-        // TODO Auto-generated method stub
-        return 0;
+        return position;
     }
+
     @Override
     public View getView(final int position, final View view, ViewGroup parent) {
         LayoutInflater inflater = context.getLayoutInflater();
-        final View rowView= inflater.inflate(R.layout.checklist_design, null, true);
+        final View rowView = inflater.inflate(R.layout.checklist_design, null, true);
         TextView txtTitle = (TextView) rowView.findViewById(R.id.txt);
-        RadioGroup rgp=(RadioGroup) rowView.findViewById(R.id.radioType);
-        final RadioButton pass=(RadioButton) rowView.findViewById(R.id.pass);
-        final RadioButton fail=(RadioButton) rowView.findViewById(R.id.fail);
-        final TextView status=(TextView) rowView.findViewById(R.id.status);
-        final EditText editText=(EditText) rowView.findViewById(R.id.edittxt);
-        //Added By Madhuri for Nokia-06122024
+        RadioGroup rgp = (RadioGroup) rowView.findViewById(R.id.radioType);
+        final RadioButton pass = (RadioButton) rowView.findViewById(R.id.pass);
+        final RadioButton fail = (RadioButton) rowView.findViewById(R.id.fail);
+        final TextView status = (TextView) rowView.findViewById(R.id.status);
+        final EditText editText = (EditText) rowView.findViewById(R.id.edittxt);
         imageView = rowView.findViewById(R.id.image_camera);
-        String ruleImageDirectory ="/storage/emulated/0/Android/data/com.sensel.hardware.camera/files/Pictures" + File.separator ;
-        File dir = new File(ruleImageDirectory);
-        if (!dir.exists()) dir.mkdirs();
-        SimpleDateFormat sdfDate = new SimpleDateFormat("HHmmss");//dd/MM/yyyy
-        Date now = new Date();
-        String strDate = sdfDate.format(now);
 
         txtTitle.setText(rules[position]);
-        if(ruleTypes[position].equals("Radio")){
+        if (ruleTypes[position].equals("Radio")) {
             rgp.setVisibility(View.VISIBLE);
             editText.setVisibility(View.GONE);
             imageView.setVisibility(View.GONE);
-        }
-        else if(ruleTypes[position].equals("Text")){
+        } else if (ruleTypes[position].equals("Text")) {
             rgp.setVisibility(View.GONE);
             status.setVisibility(View.GONE);
             editText.setVisibility(View.VISIBLE);
             imageView.setVisibility(View.GONE);
-        }
-        //Added By Madhuri For photo upload
-        else if(ruleTypes[position].equals("FileUpload")) {
+        } else if (ruleTypes[position].equals("FileUpload")) {
             rgp.setVisibility(View.GONE);
             status.setVisibility(View.GONE);
             editText.setVisibility(View.GONE);
             imageView.setVisibility(View.VISIBLE);
-            // Display the captured image if available
-            // Display the captured image if available
-            // Check if an image is available for this position and update the ImageView
-            if (imagePaths.containsKey(position)) {
+
+            if (imagePaths != null && imagePaths.containsKey(position)) {
                 Bitmap bitmap = BitmapFactory.decodeFile(imagePaths.get(position));
                 if (bitmap != null) {
                     imageView.setImageBitmap(bitmap);
+                } else {
+                    imageView.setImageResource(R.drawable.file_add);
                 }
             } else {
-                imageView.setImageResource(R.drawable.file_add); // Default image or placeholder
+                imageView.setImageResource(R.drawable.file_add);
             }
 
             imageView.setOnClickListener(v -> {
-                dispatchTakePictureIntent(position); // Capture new image for this item
+                dispatchTakePictureIntent(position);
             });
-        }
-        else {
+        } else {
             rgp.setVisibility(View.GONE);
             editText.setVisibility(View.GONE);
             imageView.setVisibility(View.GONE);
-            strRules[position] = "No Configuration";
+            if (strRules != null && position < strRules.length) {
+                strRules[position] = "No Configuration";
+            }
         }
 
-        if (strRules[position] != null) {
+        if (strRules != null && position < strRules.length && strRules[position] != null) {
             if (ruleTypes[position].equals("Radio")) {
                 if (strRules[position].contains("NO")) {
                     fail.setChecked(true);
@@ -156,21 +266,18 @@ public class CheckListDesign extends ArrayAdapter<String> {
                 }
             } else if (ruleTypes[position].equals("Text")) {
                 editText.setText(strRules[position]);
-            }
-            else if (ruleTypes[position].equals("FileUpload")) {
+            } else if (ruleTypes[position].equals("FileUpload")) {
                 imageView.setVisibility(View.VISIBLE);
-
-                // Check if an image is available for this position
-                if (imagePaths.containsKey(position)) {
+                if (imagePaths != null && imagePaths.containsKey(position)) {
                     Bitmap bitmap = BitmapFactory.decodeFile(imagePaths.get(position));
                     if (bitmap != null) {
                         imageView.setImageBitmap(bitmap);
+                    } else {
+                        imageView.setImageResource(R.drawable.file_add);
                     }
                 } else {
-                    imageView.setImageResource(R.drawable.file_add); // Placeholder for no image
+                    imageView.setImageResource(R.drawable.file_add);
                 }
-
-                // Handle image capture
                 imageView.setOnClickListener(v -> {
                     dispatchTakePictureIntent(position);
                 });
@@ -178,12 +285,11 @@ public class CheckListDesign extends ArrayAdapter<String> {
                 imageView.setVisibility(View.GONE);
             }
         }
-        rgp.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
 
+        rgp.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(RadioGroup group, int checkedId) {
                 try {
-                    // TODO Auto-generated method stub
                     if (pass.isChecked()) {
                         strRules[position] = "YES";
                         status.setText("Passed");
@@ -194,6 +300,7 @@ public class CheckListDesign extends ArrayAdapter<String> {
                         status.setTextColor(Color.RED);
                     }
                     if (context instanceof TagIn) {
+                        saveDraft(context, ((TagIn) context).vehicle);
                         ((TagIn) context).checkTagInFormValidation();
                     }
                 } catch (Exception e) {
@@ -201,42 +308,53 @@ public class CheckListDesign extends ArrayAdapter<String> {
                 }
             }
         });
-        // Set OnClickListener for the ImageView
-            /*imageView.setOnClickListener(v -> {
-                dispatchTakePictureIntent(position);
-            });*/
-
 
         editText.addTextChangedListener(new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
-            }
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
             @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-
-            }
+            public void onTextChanged(CharSequence s, int start, int before, int count) {}
 
             @Override
             public void afterTextChanged(Editable s) {
-                strRules[position]=editText.getText().toString();
+                if (strRules != null && position < strRules.length) {
+                    strRules[position] = editText.getText().toString();
+                    if (context instanceof TagIn) {
+                        saveDraft(context, ((TagIn) context).vehicle);
+                        ((TagIn) context).checkTagInFormValidation();
+                    }
+                }
             }
         });
+
         return rowView;
     }
+
     public interface ImageUpdateListener {
         void onImageUpdated(int position);
     }
-    public static void saveCapturedImage(int position, String imagePath) {
-        imagePaths.put(position, imagePath); // Map the image to the correct position
-        strRules[position] = "ImageCaptured"; // Mark this rule as completed with an image
 
-        // Notify the adapter to refresh the specific row
+    public static void saveCapturedImage(int position, String imagePath, Context ctx, String vehicleId) {
+        if (imagePaths == null) {
+            imagePaths = new HashMap<>();
+        }
+        imagePaths.put(position, imagePath);
+        if (strRules != null && position < strRules.length) {
+            strRules[position] = "ImageCaptured";
+        }
+        if (ctx != null && vehicleId != null) {
+            saveDraft(ctx, vehicleId);
+        }
         if (imageUpdateListener != null) {
             imageUpdateListener.onImageUpdated(position);
         }
     }
+
+    public static void saveCapturedImage(int position, String imagePath) {
+        saveCapturedImage(position, imagePath, null, null);
+    }
+
     private void dispatchTakePictureIntent(int position) {
         AppConstants appConstants = new AppConstants();
         String pId = appConstants.getShrdPrefValByKeyWithTag(context, "passengerinfo", "PsngrId");
@@ -258,40 +376,38 @@ public class CheckListDesign extends ArrayAdapter<String> {
                         getContext().getPackageName() + ".provider",
                         photoFile);
                 takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
-                //Added for Android 14 - 13012025
                 takePictureIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 takePictureIntent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-                takePictureIntent.putExtra("position", position); // Pass the position explicitly
+                takePictureIntent.putExtra("position", position);
+                
+                // Save current state to draft before launching camera
+                if (context instanceof TagIn) {
+                    saveDraft(context, ((TagIn) context).vehicle);
+                }
+                
                 ((Activity) context).startActivityForResult(takePictureIntent, CAMERA_CAPTURE_IMAGE_REQUEST_CODE + position);
             }
         }
     }
-    private String getFileNameFromFullPath(){
-        return imagecapturepath.substring(imagecapturepath.lastIndexOf('/')+1,imagecapturepath.length());
+
+    private String getFileNameFromFullPath() {
+        return imagecapturepath.substring(imagecapturepath.lastIndexOf('/') + 1);
     }
+
     private String[] getFileNameAndFormat(String fileName) {
         return new String[]{fileName, "PNG"};
     }
-    private File createImageFile() throws IOException {
-        // Create an image file name
-        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-        //String imageFileName =  timeStamp;
-        File storageDir =((Activity) context).getExternalFilesDir(Environment.DIRECTORY_PICTURES);
-        //File storageDir = new File(RULE.ruleImageDirectory);
-        Log.d("StorageDirectory","StorageDirectory"+storageDir);
-        storageDir.mkdirs(); // make sure you call mkdirs() and not mkdir()
-        String imageFileName=getFileNameFromFullPath();
-        String[] FileName=getFileNameAndFormat(imageFileName);
 
-        /*File image = File.createTempFile(
-                FileName[0],  *//* prefix *//*
-                ".PNG" ,*//* suffix *//*
-                storageDir      *//* directory *//*
-        );*/
+    private File createImageFile() throws IOException {
+        File storageDir = ((Activity) context).getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        if (storageDir != null) {
+            storageDir.mkdirs();
+        }
+        String imageFileName = getFileNameFromFullPath();
+        String[] FileName = getFileNameAndFormat(imageFileName);
+
         File image = new File(storageDir, FileName[0] + ".PNG");
         imagecapturepath = image.getAbsolutePath();
         return image;
     }
-
 }
-

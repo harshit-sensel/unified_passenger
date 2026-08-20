@@ -37,6 +37,9 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.HeaderViewListAdapter;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -131,6 +134,17 @@ public class TagIn extends BaseActivity {
         resultFromPrev=getIntent().getStringExtra("vehicleWithDriver").split("@#");
         vehicle=resultFromPrev[0];
         towername=getIntent().getStringExtra("towerName");
+        if (savedInstanceState != null) {
+            if (savedInstanceState.containsKey("vehicle")) vehicle = savedInstanceState.getString("vehicle");
+            if (savedInstanceState.containsKey("towername")) towername = savedInstanceState.getString("towername");
+            if (savedInstanceState.containsKey("chosenWfmTask")) chosenWfmTask = savedInstanceState.getString("chosenWfmTask");
+            if (savedInstanceState.containsKey("OMR")) OMR = savedInstanceState.getString("OMR");
+            if (savedInstanceState.containsKey("imagecapturepath")) CheckListDesign.imagecapturepath = savedInstanceState.getString("imagecapturepath");
+            if (savedInstanceState.containsKey("ruleIds")) ruleIds = savedInstanceState.getStringArray("ruleIds");
+            if (savedInstanceState.containsKey("rules")) rules = savedInstanceState.getStringArray("rules");
+            if (savedInstanceState.containsKey("ruleTypes")) ruleTypes = savedInstanceState.getStringArray("ruleTypes");
+            if (savedInstanceState.containsKey("strRules")) CheckListDesign.strRules = savedInstanceState.getStringArray("strRules");
+        }
         final View headerView = getLayoutInflater().inflate(R.layout.chklist_header, null);
         vehicleid=(TextView) headerView.findViewById(R.id.vehicleid);
         drivername=(TextView) headerView.findViewById(R.id.drivername);
@@ -179,6 +193,14 @@ public class TagIn extends BaseActivity {
                                 @Override
                                 public void run() {
                                     wfmTask.setAdapter(adapter);
+                                    if (chosenWfmTask != null && !chosenWfmTask.isEmpty()) {
+                                        for (int k = 0; k < options.size(); k++) {
+                                            if (chosenWfmTask.equalsIgnoreCase(options.get(k).toString())) {
+                                                wfmTask.setSelection(k);
+                                                break;
+                                            }
+                                        }
+                                    }
                                     wfmTask.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                                         @Override
                                         public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -396,15 +418,22 @@ public class TagIn extends BaseActivity {
                                                 }
                                             }
                                         });
-                                        list.addFooterView(footerView,null,false);
-                                        list.addHeaderView(headerView,null,false);
+                                        if (list.getHeaderViewsCount() == 0) {
+                                            list.addHeaderView(headerView, null, false);
+                                        }
+                                        if (list.getFooterViewsCount() == 0) {
+                                            list.addFooterView(footerView, null, false);
+                                        }
                                         list.setAdapter(adapter);
+                                        displayCapturedImages();
                                         // Set the image update listener
                                         CheckListDesign.imageUpdateListener = new CheckListDesign.ImageUpdateListener() {
                                             @Override
                                             public void onImageUpdated(int position) {
                                                 // Refresh the specific row in the ListView
                                                 adapter.notifyDataSetChanged();
+                                                displayCapturedImages();
+                                                checkTagInFormValidation();
                                             }
                                         };
                                     }
@@ -527,6 +556,27 @@ public class TagIn extends BaseActivity {
 */
         }
     }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode == RESULT_OK) {
+            int position = requestCode - CheckListDesign.CAMERA_CAPTURE_IMAGE_REQUEST_CODE;
+            if (position >= 0 && CheckListDesign.imagecapturepath != null && !CheckListDesign.imagecapturepath.isEmpty()) {
+                File imgFile = new File(CheckListDesign.imagecapturepath);
+                if (imgFile.exists() && imgFile.length() > 0) {
+                    CheckListDesign.imagePaths.put(position, CheckListDesign.imagecapturepath);
+                    CheckListDesign.saveDraft(TagIn.this, vehicle);
+                    if (CheckListDesign.imageUpdateListener != null) {
+                        CheckListDesign.imageUpdateListener.onImageUpdated(position);
+                    }
+                }
+            }
+            displayCapturedImages();
+            checkTagInFormValidation();
+        }
+    }
+
     public void displayCapturedImages() {
         LinearLayout imageContainer = findViewById(R.id.image_container); // Make sure this is defined in your XML
         imageContainer.removeAllViews(); // Clear existing images
@@ -818,56 +868,6 @@ public class TagIn extends BaseActivity {
         }
     }
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        if (resultCode == RESULT_OK) {
-            try {
-                int position = requestCode - CheckListDesign.CAMERA_CAPTURE_IMAGE_REQUEST_CODE; // Get position from requestCode
-                File fl = new File(CheckListDesign.imagecapturepath);
-                if (fl.exists()) {
-                    // Save the captured image
-                    CheckListDesign.saveCapturedImage(position, CheckListDesign.imagecapturepath);
-
-                    // Get ListView and its current visible items
-                    ListView listView = findViewById(R.id.listRules);
-                    int firstVisiblePosition = listView.getFirstVisiblePosition();
-                    int lastVisiblePosition = listView.getLastVisiblePosition();
-
-                    // Check if the position is visible
-                    if (position >= firstVisiblePosition && position <= lastVisiblePosition) {
-                        // Get the specific row (view) for the captured item
-                        View rowView = listView.getChildAt(position - firstVisiblePosition);
-
-                        if (rowView != null) {
-                            // Find the ImageView for that row and set the image
-                            ImageView imageView = rowView.findViewById(R.id.image_camera);
-                            Bitmap bitmap = BitmapFactory.decodeFile(CheckListDesign.imagecapturepath);
-                            if (bitmap != null) {
-                                imageView.setImageBitmap(bitmap);
-                                // Optionally, you could compress the image or save it again before deleting
-                                FileUpload file_upload = new FileUpload();
-                                String path = file_upload.compressImage(CheckListDesign.imagecapturepath); // Compress the image if needed
-                                imageView.setTag(path);
-                            }
-                        }
-                    }
-                    // Notify the adapter if necessary for non-visible rows
-                    /*CheckListDesign adapter = (CheckListDesign) listView.getAdapter();
-                    if (adapter != null) {
-                        adapter.notifyDataSetChanged();
-                    }*/
-                    /*if (fl.exists()) {
-                        fl.delete();
-                    }*/
-
-                }
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-        }
-    }
-    @Override
     public void onRequestPermissionsResult(int requestCode,String permissions[], int[] grantResults) {
         switch (requestCode) {
             case MY_PERMISSIONS_REQUEST_READ_CONTACTS: {
@@ -1023,9 +1023,7 @@ public class TagIn extends BaseActivity {
                                 new DialogInterface.OnClickListener() {
                                     public void onClick(DialogInterface dialog, int id) {
                                         dialog.cancel();
-                                        if (CheckListDesign.imagePaths != null) {
-                                            CheckListDesign.imagePaths.clear();
-                                        }
+                                        CheckListDesign.clearDraft(TagIn.this, vehicle);
                                         finish();
                                     }
                                 });
