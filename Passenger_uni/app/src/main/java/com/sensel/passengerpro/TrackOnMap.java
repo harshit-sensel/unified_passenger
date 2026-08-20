@@ -328,10 +328,19 @@ public class TrackOnMap extends BaseActivity {
         try {
             my.getSettings().setUseWideViewPort(true);
             if(sessionid!="") {
-                // Home location not shown on Track Your Vehicle map
+                String userMenus = appConstants.getShrdPrefValByKey(getApplicationContext(), "UserMenus");
+                boolean isSchoolBus = (userMenus != null && userMenus.contains("school_bus_tracking"));
+                String homeLocationParam = "";
+                if (isSchoolBus) {
+                    String lat = appConstants.getShrdPrefValByKeyWithTag(getApplicationContext(), "passengerinfo", "HomeLatitude");
+                    String lng = appConstants.getShrdPrefValByKeyWithTag(getApplicationContext(), "passengerinfo", "HomeLongitude");
+                    if (lat != null && !lat.trim().isEmpty() && lng != null && !lng.trim().isEmpty()) {
+                        homeLocationParam = "&psngrHomeLocation=" + lat.trim() + "," + lng.trim();
+                    }
+                }
                 String mapParams = "sessionid=" + sessionid + "&vehicleid=" + vehicleid + "&domain=" + UrlConfig.MAP_DOMAIN
                         + "&defaultZoom=" + MAP_ZOOM_LEVEL + "&zoom=" + MAP_ZOOM_LEVEL + "&scaleMeters=50"
-                        + "&drawRoute=1&showRouteLine=1&animateVehicle=1";
+                        + "&drawRoute=1&showRouteLine=1&animateVehicle=1" + homeLocationParam;
                 my.loadUrl(UrlConfig.MAP_PAGE_URL + "?" + mapParams);
             }
             else
@@ -380,7 +389,13 @@ public class TrackOnMap extends BaseActivity {
     public boolean onPrepareOptionsMenu(final Menu menu) {
         menu.clear();
         getMenuInflater().inflate(R.menu.menu_options, menu);
-        return super.onCreateOptionsMenu(menu);
+        String userMenus = appConstants.getShrdPrefValByKey(getApplicationContext(), "UserMenus");
+        boolean isSchoolBus = (userMenus != null && userMenus.contains("school_bus_tracking"));
+        if (!isSchoolBus) {
+            menu.removeItem(R.id.menu_home_location_marker);
+            menu.removeItem(R.id.menu_logout);
+        }
+        return super.onPrepareOptionsMenu(menu);
     }
 
     @Override
