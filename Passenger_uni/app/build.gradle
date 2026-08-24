@@ -49,9 +49,6 @@ android {
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation files('libs/ksoap2-android-assembly-2.5.8-jar-with-dependencies.jar')
-    implementation files('libs/mail.jar')
-    implementation files('libs/activation.jar')
-    implementation files('libs/additionnal.jar')
     testImplementation 'junit:junit:4.12'
     implementation 'com.google.android.material:material:1.0.0'
     implementation 'org.apache.httpcomponents:httpmime:4.3.1'
