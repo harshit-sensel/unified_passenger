@@ -31,16 +31,16 @@
 
         <activity android:name=".MainActivity"
                   android:configChanges="orientation|screenSize"
-                  android:theme="@style/Theme.AppCompat.NoActionBar">
+                  android:theme="@style/AppTheme.NoActionBar">
         </activity>
         <activity android:name=".QRScannerActivity"
                   android:configChanges="orientation|screenSize"
                   android:screenOrientation="portrait"
-                  android:theme="@style/Theme.AppCompat.NoActionBar">
+                  android:theme="@style/AppTheme.NoActionBar">
         </activity>
         <activity android:name=".LoginActivity"
                   android:configChanges="orientation|screenSize"
-                  android:theme="@style/Theme.AppCompat.NoActionBar"
+                  android:theme="@style/AppTheme.NoActionBar"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -49,19 +49,19 @@
         </activity>
         <activity android:name=".TagIn"
                   android:configChanges="orientation|screenSize"
-                  android:theme="@style/Theme.AppCompat.NoActionBar">
+                  android:theme="@style/AppTheme.NoActionBar">
         </activity>
         <activity android:name=".TagOut"
                   android:configChanges="orientation|screenSize"
-                  android:theme="@style/Theme.AppCompat.NoActionBar">
+                  android:theme="@style/AppTheme.NoActionBar">
         </activity>
         <activity android:name=".OOPs"
                   android:configChanges="orientation|screenSize"
-                  android:theme="@style/Theme.AppCompat.NoActionBar">
+                  android:theme="@style/AppTheme.NoActionBar">
         </activity>
         <activity android:name=".VehicleInfo"
                   android:configChanges="orientation|screenSize"
-                  android:theme="@style/Theme.AppCompat.NoActionBar">
+                  android:theme="@style/AppTheme.NoActionBar">
         </activity>
         <activity android:name=".TagTrack"
                   android:configChanges="orientation|screenSize"
