@@ -1,11 +1,13 @@
 package com.sensel.passengerpro;
 
 import android.app.Notification;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.os.IBinder;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
@@ -18,6 +20,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class AlarmService extends Service {
+
+    public static final String NOTIFICATION_CHANNEL_ID = "passenger_school_alerts";
 
     WebServices webServices=new WebServices();
     AppConstants appConstants=new AppConstants();
@@ -71,11 +75,25 @@ public class AlarmService extends Service {
                                 JSONObject data = jArr.getJSONObject(latest_index);
                                 String Subject = data.getString("Subject");
                                 String Info = data.getString("Info");
+
+                                NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                    NotificationChannel channel = new NotificationChannel(
+                                            NOTIFICATION_CHANNEL_ID,
+                                            "Passenger School Alerts",
+                                            NotificationManager.IMPORTANCE_HIGH);
+                                    channel.setDescription("Notifications for school bus tracking and student updates");
+                                    if (manager != null) {
+                                        manager.createNotificationChannel(channel);
+                                    }
+                                }
+
                                 NotificationCompat.Builder builder =
-                                        new NotificationCompat.Builder(getApplicationContext())
+                                        new NotificationCompat.Builder(getApplicationContext(), NOTIFICATION_CHANNEL_ID)
                                                 .setContentTitle(Subject)
                                                 .setContentText(Info)
                                                 .setDefaults(Notification.DEFAULT_ALL)
+                                                .setPriority(NotificationCompat.PRIORITY_HIGH)
                                                 .setSmallIcon(R.drawable.noti_icon)
                                                 .setColor(getResources().getColor(R.color.colorPrimary))
                                                 .setOnlyAlertOnce(true)
@@ -91,8 +109,9 @@ public class AlarmService extends Service {
                                 builder.setContentIntent(contentIntent);
 
                                 // Add as notification
-                                NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-                                manager.notify(0, builder.build());
+                                if (manager != null) {
+                                    manager.notify(0, builder.build());
+                                }
                             }
                         } catch (JSONException js) {
                             // Toast.makeText(cont,"Oops something went wrong, Try again",Toast.LENGTH_SHORT).show();
