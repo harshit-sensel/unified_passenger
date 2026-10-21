@@ -1454,7 +1454,7 @@ app.MapGet("/api/checklist/dropdown", async (string? appName, string? key) =>
     try
     {
         using var connection = new MySqlConnection(connectionString);
-        string query = "SELECT DropDown FROM mobiledropdowns WHERE AppId = 'com.sensel.passenger';";
+        string query = "SELECT DISTINCT DropDown FROM mobiledropdowns WHERE AppId IN ('com.sensel.passenger', 'com.sensel.passengerapp');";
         var rows = await connection.QueryAsync<string>(query);
         var resultList = rows.Select(d => new { DropDown = d }).ToList();
         return Results.Ok(resultList);
