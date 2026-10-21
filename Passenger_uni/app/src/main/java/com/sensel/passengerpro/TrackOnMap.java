@@ -329,7 +329,7 @@ public class TrackOnMap extends BaseActivity {
             my.getSettings().setUseWideViewPort(true);
             if(sessionid!="") {
                 String userMenus = appConstants.getShrdPrefValByKey(getApplicationContext(), "UserMenus");
-                boolean isSchoolBus = (userMenus != null && userMenus.contains("school_bus_tracking"));
+                boolean isSchoolBus = (userMenus != null && userMenus.contains("psngr_school_bus_tracking"));
                 String homeLocationParam = "";
                 if (isSchoolBus) {
                     String lat = appConstants.getShrdPrefValByKeyWithTag(getApplicationContext(), "passengerinfo", "HomeLatitude");
@@ -371,7 +371,7 @@ public class TrackOnMap extends BaseActivity {
     @Override
     public void onBackPressed() {
         String userMenus = appConstants.getShrdPrefValByKey(getApplicationContext(), "UserMenus");
-        if (userMenus != null && userMenus.contains("dashboard")) {
+        if (userMenus != null && userMenus.contains("psngr_dashboard")) {
             Intent intent = new Intent(TrackOnMap.this, MainActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             startActivity(intent);
@@ -390,7 +390,7 @@ public class TrackOnMap extends BaseActivity {
         menu.clear();
         getMenuInflater().inflate(R.menu.menu_options, menu);
         String userMenus = appConstants.getShrdPrefValByKey(getApplicationContext(), "UserMenus");
-        boolean isSchoolBus = (userMenus != null && userMenus.contains("school_bus_tracking"));
+        boolean isSchoolBus = (userMenus != null && userMenus.contains("psngr_school_bus_tracking"));
         if (!isSchoolBus) {
             menu.removeItem(R.id.menu_home_location_marker);
             menu.removeItem(R.id.menu_logout);

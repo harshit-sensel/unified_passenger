@@ -124,21 +124,21 @@ public class LoginActivity extends AppCompatActivity {
                             }
                              String tagResult = webServices.GetPsngrInfoWithValidation(mobNo, "Tag");
                              Intent i;
-                             if (userMenus != null && userMenus.contains("dashboard")) {
+                             if (userMenus != null && userMenus.contains("psngr_dashboard")) {
                                  // Dashboard present: Always route to MainActivity (Grid Dashboard)
                                  i = new Intent(getApplicationContext(), MainActivity.class);
-                             } else if (userMenus != null && userMenus.contains("school_bus_tracking")) {
+                             } else if (userMenus != null && userMenus.contains("psngr_school_bus_tracking")) {
                                  // Legacy School Bus Tracking: Go directly to live map (TrackOnMap)
                                  i = new Intent(getApplicationContext(), TrackOnMap.class);
                                  i.putExtra("tagDetails", tagResult);
-                             } else if (userMenus != null && userMenus.contains("assigned_veh_tracking")) {
+                             } else if (userMenus != null && userMenus.contains("psngr_assigned_veh_tracking")) {
                                  // SmartTrack flow: go directly to TagTrack (Status + Map tabs)
                                  i = new Intent(getApplicationContext(), TagTrack.class);
                                  i.putExtra("tagDetails", tagResult);
                              } else if (tagResult != null && tagResult.contains("TagOut")) {
                                  i = new Intent(getApplicationContext(), TagOut.class);
                                  i.putExtra("details", tagResult);
-                             } else if (userMenus != null && userMenus.contains("checklist")) {
+                             } else if (userMenus != null && userMenus.contains("psngr_checklist")) {
                                  i = new Intent(getApplicationContext(), VehicleInfo.class);
                              } else {
                                  i = new Intent(getApplicationContext(), MainActivity.class);
@@ -442,21 +442,21 @@ public class LoginActivity extends AppCompatActivity {
 
                             String tagResultOtp = webServices.GetPsngrInfoWithValidation(tempMobileNo, "Tag");
                             final Intent targetIntent;
-                            if (userMenus != null && userMenus.contains("dashboard")) {
+                            if (userMenus != null && userMenus.contains("psngr_dashboard")) {
                                 // Dashboard present: Always route to MainActivity (Grid Dashboard)
                                 targetIntent = new Intent(getApplicationContext(), MainActivity.class);
-                            } else if (userMenus != null && userMenus.contains("school_bus_tracking")) {
+                            } else if (userMenus != null && userMenus.contains("psngr_school_bus_tracking")) {
                                 // Legacy School Bus Tracking: Go directly to live map (TrackOnMap)
                                 targetIntent = new Intent(getApplicationContext(), TrackOnMap.class);
                                 targetIntent.putExtra("tagDetails", tagResultOtp);
-                            } else if (userMenus != null && userMenus.contains("assigned_veh_tracking")) {
+                            } else if (userMenus != null && userMenus.contains("psngr_assigned_veh_tracking")) {
                                 // SmartTrack flow: go directly to TagTrack (Status + Map tabs)
                                 targetIntent = new Intent(getApplicationContext(), TagTrack.class);
                                 targetIntent.putExtra("tagDetails", tagResultOtp);
                             } else if (tagResultOtp != null && tagResultOtp.contains("TagOut")) {
                                 targetIntent = new Intent(getApplicationContext(), TagOut.class);
                                 targetIntent.putExtra("details", tagResultOtp);
-                            } else if (userMenus != null && userMenus.contains("checklist")) {
+                            } else if (userMenus != null && userMenus.contains("psngr_checklist")) {
                                 targetIntent = new Intent(getApplicationContext(), VehicleInfo.class);
                             } else {
                                 targetIntent = new Intent(getApplicationContext(), MainActivity.class);
@@ -523,6 +523,12 @@ public class LoginActivity extends AppCompatActivity {
                     if (obj.has("otp")) {
                         String backendOtp = obj.getString("otp");
                         appConstants.putShrdPrefValWithKey(getApplicationContext(), "otp", backendOtp);
+                    }
+                    if (obj.has("sessionid")) {
+                        String backendSessionId = obj.getString("sessionid");
+                        if (backendSessionId != null && !backendSessionId.trim().isEmpty()) {
+                            appConstants.putShrdPrefValWithKey(getApplicationContext(), "sessionid", backendSessionId);
+                        }
                     }
                 }
             } catch (Exception ignored) {}

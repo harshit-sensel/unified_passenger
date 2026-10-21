@@ -95,8 +95,8 @@ public class StatusFragment extends Fragment {
             tagrow.setVisibility(View.GONE);
             txttagInTime.setVisibility(View.GONE);
             String userMenus = appConstants.getShrdPrefValByKey(getActivity().getApplicationContext(), "UserMenus");
-            boolean hasProximityCheck = (userMenus != null && userMenus.contains("proximity_check"));
-            boolean hasVehicleChange = (userMenus != null && userMenus.contains("vehicle_change"));
+            boolean hasProximityCheck = (userMenus != null && userMenus.contains("psngr_proximity_check"));
+            boolean hasVehicleChange = (userMenus != null && userMenus.contains("psngr_vehicle_change"));
 
             if (hasProximityCheck) {
                 tagInCondition = true;

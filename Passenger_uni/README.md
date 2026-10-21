@@ -12,7 +12,7 @@ Native Android app for **Sensel Passenger Pro**: OTP login, QR / OTP tag-in, veh
 
 | Item | Value |
 |------|--------|
-| **Application ID** | `com.sensel.passengerpro` |
+| **Application ID** | `com.sensel.passenger` |
 | **Namespace** | `com.sensel.passengerpro` |
 | **Launcher activity** | `LoginActivity` |
 

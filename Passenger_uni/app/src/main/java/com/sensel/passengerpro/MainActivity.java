@@ -185,7 +185,7 @@ public class MainActivity extends BaseActivity {
                                         if (tagResult != null && (tagResult.contains("TagOut") || tagResult.contains("TagIn")) && tagResult.trim().startsWith("[")) {
                                             String userMenus = appConstants.getShrdPrefValByKey(getApplicationContext(), "UserMenus");
                                             Intent i;
-                                            if (userMenus != null && userMenus.contains("assigned_veh_tracking")) {
+                                            if (userMenus != null && userMenus.contains("psngr_assigned_veh_tracking")) {
                                                 i = new Intent(MainActivity.this, TagTrack.class);
                                             } else {
                                                 i = new Intent(MainActivity.this, TrackOnMap.class);
@@ -473,27 +473,27 @@ public class MainActivity extends BaseActivity {
                     JSONObject obj = arr.getJSONObject(i);
                     String key = obj.optString("menukey", "");
                     switch (key) {
-                        case "qr_scanner":
+                        case "psngr_qr_scanner":
                             if (!labels.contains("Tag In with QR")) {
                                 labels.add("Tag In with QR");
                                 icons.add(R.drawable.ic_tag_in_qr);
                             }
                             break;
-                        case "tag_in_otp":
+                        case "psngr_tag_in_otp":
                             if (!labels.contains("Tag In with OTP")) {
                                 labels.add("Tag In with OTP");
                                 icons.add(R.drawable.ic_tag_in_otp);
                             }
                             break;
-                        case "live_tracking":
-                        case "assigned_veh_tracking":
-                        case "school_bus_tracking":
+                        case "psngr_live_tracking":
+                        case "psngr_assigned_veh_tracking":
+                        case "psngr_school_bus_tracking":
                             if (!labels.contains("Track Your Vehicle")) {
                                 labels.add("Track Your Vehicle");
                                 icons.add(R.drawable.ic_track_vehicle_map);
                             }
                             break;
-                        case "panic_sos":
+                        case "psngr_panic_sos":
                             String panicFlag = appConstants.getShrdPrefValByKeyWithTag(getApplicationContext(), "passengerinfo", "PanicFlag");
                             if ("1".equals(panicFlag)) {
                                 if (!labels.contains("Panic")) {
@@ -502,37 +502,37 @@ public class MainActivity extends BaseActivity {
                                 }
                             }
                             break;
-                        case "checklist":
+                        case "psngr_checklist":
                             if (!labels.contains("Pre-Trip Checklist")) {
                                 labels.add("Pre-Trip Checklist");
                                 icons.add(android.R.drawable.ic_menu_agenda);
                             }
                             break;
-                        case "proximity_check":
+                        case "psngr_proximity_check":
                             if (!labels.contains("Proximity Check")) {
                                 labels.add("Proximity Check");
                                 icons.add(android.R.drawable.ic_menu_compass);
                             }
                             break;
-                        case "vehicle_change":
+                        case "psngr_vehicle_change":
                             if (!labels.contains("Change Vehicle")) {
                                 labels.add("Change Vehicle");
                                 icons.add(android.R.drawable.ic_menu_directions);
                             }
                             break;
-                        case "home_location":
+                        case "psngr_home_location":
                             if (!labels.contains("Home Location")) {
                                 labels.add("Home Location");
                                 icons.add(android.R.drawable.ic_menu_mylocation);
                             }
                             break;
-                        case "notifications":
+                        case "psngr_notifications":
                             if (!labels.contains("Notifications")) {
                                 labels.add("Notifications");
                                 icons.add(R.drawable.ic_notifications_modern);
                             }
                             break;
-                        case "tag_out":
+                        case "psngr_tag_out":
                             if (!labels.contains("Tagout")) {
                                 labels.add("Tagout");
                                 icons.add(R.drawable.ic_tagout);

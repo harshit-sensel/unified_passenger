@@ -256,8 +256,7 @@ app.MapPost("/api/auth/validate-phone", async (ValidatePhoneRequest request, ICo
                     p.VehicleId, 
                     CONCAT('/Date(', UNIX_TIMESTAMP(p.TagInTime) * 1000, ')/') AS TagInTime, 
                     IFNULL(p.TagInOMR, 0) AS TagInOMR, 
-                    'TagOut' AS Status,
-                    '' AS sessionid 
+                    'TagOut' AS Status
                 FROM psngr_tag p 
                 WHERE p.Id = (
                     SELECT MAX(t.Id) 
@@ -267,10 +266,22 @@ app.MapPost("/api/auth/validate-phone", async (ValidatePhoneRequest request, ICo
                       AND pi.Active = 1 
                       AND (t.TagOutTime IS NULL OR TRIM(t.TagOutTime) = '')
                 );";
-            var tagDt = await connection.QueryAsync(tagSql, new { MobileNo = cleanMobileNo });
-            if (tagDt.Any())
+            var tagRow = await connection.QueryFirstOrDefaultAsync<dynamic>(tagSql, new { MobileNo = cleanMobileNo });
+            if (tagRow != null)
             {
-                return Results.Ok(tagDt);
+                string vehId = tagRow.VehicleId?.ToString() ?? "";
+                string vehSession = await GetSessionIdByVehicleAsync(connection, vehId);
+                var tagResult = new[]
+                {
+                    new {
+                        VehicleId = vehId,
+                        TagInTime = tagRow.TagInTime?.ToString() ?? "",
+                        TagInOMR = (int)(tagRow.TagInOMR ?? 0),
+                        Status = "TagOut",
+                        sessionid = vehSession
+                    }
+                };
+                return Results.Ok(tagResult);
             }
 
             // Fallback for idle/not-tagged-in state: return AssignedVehicleId with Status = 'TagIn'
@@ -279,15 +290,26 @@ app.MapPost("/api/auth/validate-phone", async (ValidatePhoneRequest request, ICo
                     IFNULL(NULLIF(TRIM(p.AssignedVehicleId), ''), 'No Vehicle Assigned') AS VehicleId,
                     '' AS TagInTime,
                     0 AS TagInOMR,
-                    'TagIn' AS Status,
-                    '' AS sessionid
+                    'TagIn' AS Status
                 FROM psngr_info p 
                 WHERE RIGHT(TRIM(p.MobileNo), 10) = RIGHT(@MobileNo, 10) AND p.Active = 1 
                 ORDER BY p.PsngrId DESC LIMIT 1;";
-            var assignedDt = await connection.QueryAsync(assignedSql, new { MobileNo = cleanMobileNo });
-            if (assignedDt.Any())
+            var assignedRow = await connection.QueryFirstOrDefaultAsync<dynamic>(assignedSql, new { MobileNo = cleanMobileNo });
+            if (assignedRow != null)
             {
-                return Results.Ok(assignedDt);
+                string vehId = assignedRow.VehicleId?.ToString() ?? "";
+                string vehSession = await GetSessionIdByVehicleAsync(connection, vehId);
+                var assignedResult = new[]
+                {
+                    new {
+                        VehicleId = vehId,
+                        TagInTime = "",
+                        TagInOMR = 0,
+                        Status = "TagIn",
+                        sessionid = vehSession
+                    }
+                };
+                return Results.Ok(assignedResult);
             }
 
             return Results.Ok("No Data");
@@ -339,13 +361,13 @@ app.MapPost("/api/auth/get-menus", async (GetMenusRequest request) =>
             return Results.Ok(new List<object>());
         }
 
-        // Query 2: Query menus STRICTLY by Username in usersinroles
+        // Query 2: Query menus STRICTLY by Username in UsersInRoles
         string menuSql = @"
             SELECT DISTINCT db.Id, db.menukey, db.menuvalue 
             FROM mobileappmenu db 
             INNER JOIN mobileappmenuinroles dr ON dr.MobileAppMenuId = db.Id 
-            INNER JOIN roles r ON r.ID = dr.RoleId 
-            INNER JOIN usersinroles ur ON ur.RoleId = r.ID 
+            INNER JOIN Roles r ON r.ID = dr.RoleId 
+            INNER JOIN UsersInRoles ur ON ur.RoleId = r.ID 
             WHERE ur.UserId = @Username;";
 
         var dt = await connection.QueryAsync(menuSql, new { Username = username });
@@ -1063,22 +1085,45 @@ app.MapPost("/api/auth/send-otp", async (OtpAuthenticateRequest request) =>
 
         if (!dt.Any())
         {
-            return Results.Ok(new { result = "Mobile Number Not Registered", otp = "", token = "" });
+            return Results.Ok(new { result = "Mobile Number Not Registered", otp = "", sessionid = "", token = "" });
         }
 
+        var firstUser = dt.First();
+        string sessionId = Guid.NewGuid().ToString();
         string otpPin = request.MobileNo == "1020304050" ? "9080" : Random.Shared.Next(1000, 9999).ToString();
+
+        // Insert audit session into MySQL otp_sessions table (matches XmlDB.cs L2860)
+        try
+        {
+            string insertSessionSql = @"
+                INSERT INTO otp_sessions (`Type`, userid, MobileNo, OTP, OTP_GeneratedOn, sessionid, AccountId)
+                VALUES ('Passenger', @UserId, @MobileNo, @OTP, NOW(), @SessionId, @AccountId);";
+
+            await connection.ExecuteAsync(insertSessionSql, new {
+                UserId = firstUser.PsngrId?.ToString() ?? "",
+                MobileNo = cleanMobile,
+                OTP = otpPin,
+                SessionId = sessionId,
+                AccountId = firstUser.AccountId?.ToString() ?? ""
+            });
+        }
+        catch (Exception sessionEx)
+        {
+            app.Logger.LogWarning(sessionEx, "Note: otp_sessions insert skipped (table might be absent or locked).");
+        }
+
         app.Logger.LogInformation("==================================================");
-        app.Logger.LogInformation("🔑 GENERATED OTP FOR {MobileNo}: {OTP}", request.MobileNo, otpPin);
+        app.Logger.LogInformation("🔑 GENERATED OTP FOR {MobileNo}: {OTP} (Session: {SessionId})", request.MobileNo, otpPin, sessionId);
         app.Logger.LogInformation("==================================================");
 
         string jwtToken = GenerateJwtToken(cleanMobile, cleanMobile);
 
-        return Results.Ok(new { result = "OTP Sent Successfully", otp = otpPin, token = jwtToken });
+        return Results.Ok(new { result = "OTP Sent Successfully", otp = otpPin, sessionid = sessionId, token = jwtToken });
     }
     catch (Exception ex)
     {
         app.Logger.LogError(ex, "Error in PassengerProApp_Authenticate.");
-        return Results.Ok(new { result = "Failed to send OTP", otp = "", token = "" });
+        return Results.Ok(new { result = "Failed to send OTP", otp = "", sessionid = "", token = "" });
     }
 });
 
@@ -1139,6 +1184,34 @@ static double ComputeDistance(double lat1, double lon1, double lat2, double lon2
     return r * c * 1000; // Return distance in meters
 }
 
+// Helper function: Look up vehicle's tracking portal session ID (matches XmlDB.cs L24955)
+static async Task<string> GetSessionIdByVehicleAsync(MySqlConnection connection, string vehicleId)
+{
+    if (string.IsNullOrWhiteSpace(vehicleId) || vehicleId == "No Vehicle Assigned")
+    {
+        return "c52d1b490c9ac9432532c4ffe7364155b171387c";
+    }
+
+    try
+    {
+        string query = @"
+            SELECT s.SessionID 
+            FROM vehiclesgroupsmap v
+            JOIN usersgroupsmap u ON u.GroupId = v.GroupId
+            JOIN sessions s ON s.login = u.Login
+            WHERE REPLACE(v.VehicleId, ' ', '') = REPLACE(@VehicleId, ' ', '')
+            ORDER BY (s.SessionID = 'c52d1b490c9ac9432532c4ffe7364155b171387c') DESC, v.GroupId ASC
+            LIMIT 1;";
+
+        string? sessionId = await connection.QueryFirstOrDefaultAsync<string>(query, new { VehicleId = vehicleId });
+        return !string.IsNullOrWhiteSpace(sessionId) ? sessionId : "c52d1b490c9ac9432532c4ffe7364155b171387c";
+    }
+    catch
+    {
+        return "c52d1b490c9ac9432532c4ffe7364155b171387c";
+    }
+}
+
 // 22. Vehicle Mobile GPS Check (Pre-Trip Checklist Geofence)
 app.MapPost("/api/vehicle/gps-check", async (GpsCheckRequest request) =>
 {
@@ -1146,12 +1219,12 @@ app.MapPost("/api/vehicle/gps-check", async (GpsCheckRequest request) =>
     {
         using var connection = new MySqlConnection(connectionString);
 
-        // 1. Two-Tier Qualification: proximity_check in mobileappmenuinroles AND Designation == 'Engineer'
+        // 1. Two-Tier Qualification: psngr_proximity_check in mobileappmenuinroles AND Designation == 'Engineer'
         var menuCheck = await connection.QueryFirstOrDefaultAsync<string>(
-            @"SELECT m.menukey FROM usersinroles ur 
+            @"SELECT m.menukey FROM UsersInRoles ur 
               JOIN mobileappmenuinroles mr ON ur.RoleId = mr.RoleId 
               JOIN mobileappmenu m ON mr.MobileAppMenuId = m.Id 
-              WHERE ur.UserId = @SourceId AND m.menukey = 'proximity_check'",
+              WHERE ur.UserId = @SourceId AND m.menukey = 'psngr_proximity_check'",
             new { request.SourceId });
 
         var psngr = await connection.QueryFirstOrDefaultAsync(

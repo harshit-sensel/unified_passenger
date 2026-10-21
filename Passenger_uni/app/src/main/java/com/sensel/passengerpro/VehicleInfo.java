@@ -1197,13 +1197,17 @@ public class VehicleInfo extends BaseActivity {
                                     if (waited == 100) {
                                         if(dir_path!=null) {
                                             String imageName = "Psngr_" + System.currentTimeMillis() + ".jpg";
+                                            String uploadSessionId = appConstants.getShrdPrefValByKey(getApplicationContext(), "sessionid");
+                                            if (uploadSessionId == null || uploadSessionId.trim().isEmpty()) {
+                                                uploadSessionId = "c52d1b490c9ac9432532c4ffe7364155b171387c";
+                                            }
                                             RequestQueue mVolleyRequestQueue = Volley.newRequestQueue(getApplicationContext());
                                             String res = WebAccessor.getNewInstance().uploadImageService(mVolleyRequestQueue,
-                                                    "UploadFile", dir_path, imageName, "c52d1b490c9ac9432532c4ffe7364155b171387c");
+                                                    "UploadFile", dir_path, imageName, uploadSessionId);
                                             try {
                                                 if (!res.contains("success")) {
-                                                    res = res = WebAccessor.getNewInstance().uploadImageService(mVolleyRequestQueue,
-                                                            "UploadFile", dir_path, imageName, "c52d1b490c9ac9432532c4ffe7364155b171387c");
+                                                    res = WebAccessor.getNewInstance().uploadImageService(mVolleyRequestQueue,
+                                                            "UploadFile", dir_path, imageName, uploadSessionId);
                                                     if (res.contains("success")) {
                                                         // legacy TagIn driver image is not used in PassengerPro flow
                                                     }
@@ -1329,7 +1333,7 @@ public class VehicleInfo extends BaseActivity {
                                 if (result.contains("Allow")) {
                                     uploadfiles();
                                      String userMenus = appConstants.getShrdPrefValByKey(getApplicationContext(), "UserMenus");
-                                     Class<?> targetClass = (userMenus != null && userMenus.contains("qr_scanner")) ? QRScannerActivity.class : TagIn.class;
+                                     Class<?> targetClass = (userMenus != null && userMenus.contains("psngr_qr_scanner")) ? QRScannerActivity.class : TagIn.class;
                                      Intent i = new Intent(getApplicationContext(), targetClass);
                                     String[] parts = result.split("@&@");
                                     String gpsCheckId = parts.length > 2 ? parts[2] : "0";
@@ -1371,7 +1375,7 @@ public class VehicleInfo extends BaseActivity {
                                                                 try {
                                                                     uploadfiles();
                                                                     String userMenus = appConstants.getShrdPrefValByKey(getApplicationContext(), "UserMenus");
-                                                                    Class<?> targetClass = (userMenus != null && userMenus.contains("qr_scanner")) ? QRScannerActivity.class : TagIn.class;
+                                                                    Class<?> targetClass = (userMenus != null && userMenus.contains("psngr_qr_scanner")) ? QRScannerActivity.class : TagIn.class;
                                                                     String[] parts = result.split("@&@");
                                                                     String gpsCheckId = parts.length > 2 ? parts[2] : "0";
                                                                     Intent i = new Intent(getApplicationContext(), targetClass);

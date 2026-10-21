@@ -56,7 +56,7 @@ public class AlarmService extends Service {
         timerTask = new TimerTask() {
             public void run() {
                 String userMenus = appConstants.getShrdPrefValByKey(getApplicationContext(), "UserMenus");
-                boolean isSchoolBusTracking = (userMenus != null && userMenus.contains("school_bus_tracking"));
+                boolean isSchoolBusTracking = (userMenus != null && userMenus.contains("psngr_school_bus_tracking"));
                 if (isSchoolBusTracking) {
                     String psngrId = appConstants.getShrdPrefValByKeyWithTag(getApplicationContext(), "passengerinfo", "PsngrId");
                     String result = webServices.GetPsngrNotifications(psngrId);
