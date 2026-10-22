@@ -4,6 +4,8 @@ import android.Manifest;
 import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import java.util.ArrayList;
+import java.util.List;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -67,6 +69,10 @@ public class LoginActivity extends AppCompatActivity {
         header=(TextView)findViewById(R.id.header);
         btnLogin=(Button) findViewById(R.id.btn_login);
         infotxt=(TextView) findViewById(R.id.info);
+        TextView txtVersion = (TextView) findViewById(R.id.txt_app_version);
+        if (txtVersion != null) {
+            txtVersion.setText("Passenger App v" + BuildConfig.VERSION_NAME);
+        }
 
         otpContainer = (android.widget.LinearLayout) findViewById(R.id.otp_section_container);
         otpBox1 = (EditText) findViewById(R.id.otp_digit_1);
@@ -256,13 +262,22 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void requestFineLocationForActivityLoggingIfNeeded() {
+        List<String> permissionsNeeded = new ArrayList<>();
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                == PackageManager.PERMISSION_GRANTED) {
-            return;
+                != PackageManager.PERMISSION_GRANTED) {
+            permissionsNeeded.add(Manifest.permission.ACCESS_FINE_LOCATION);
         }
-        ActivityCompat.requestPermissions(this,
-                new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                MY_PERMISSIONS_REQUEST_LOCATION_LOGIN);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
+                permissionsNeeded.add(Manifest.permission.POST_NOTIFICATIONS);
+            }
+        }
+        if (!permissionsNeeded.isEmpty()) {
+            ActivityCompat.requestPermissions(this,
+                    permissionsNeeded.toArray(new String[0]),
+                    MY_PERMISSIONS_REQUEST_LOCATION_LOGIN);
+        }
     }
 
     /** Defer login activity logs so GPS / fused can warm up after permission (see [PassengerActivityLogger]). */
